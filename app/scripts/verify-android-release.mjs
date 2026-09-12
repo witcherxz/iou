@@ -7,15 +7,38 @@ import { fileURLToPath } from 'node:url';
 import { releaseVersion } from './android-release-version.mjs';
 import { RELEASE_FIXTURE_MARKERS } from './release-fixture-markers.mjs';
 
+export function signerCertificateDigests(output) {
+  const lines = output.split(/\r?\n/).map(line => line.trim());
+  const counts = lines.filter(line => line.startsWith('Number of signers:'));
+  assert.equal(counts.length, 1, 'APK must have exactly one verified signer');
+  assert.equal(counts[0], 'Number of signers: 1', 'APK must have exactly one verified signer');
+  const certificates = lines.filter(line => line.includes(' certificate SHA-256')
+    && !/^Source Stamp Signer:? certificate SHA-256 /.test(line));
+  assert.ok(certificates.length, 'APK signer certificate SHA-256 digest is missing');
+  const labels = new Set();
+  return certificates.map(line => {
+    // AOSP ApkSignerTool can label certificates by number or SDK range. SDK 37
+    // adds scheme labels such as "V3.0 Signer:" (confirmed against its official
+    // apksigner binary). Require every APK certificate to match our pinned key;
+    // a source stamp or public-key digest must never substitute for it.
+    // https://android.googlesource.com/platform/tools/apksig/+/refs/heads/main/src/apksigner/java/com/android/apksigner/ApkSignerTool.java
+    const match = line.match(/^(Signer #1:?|Signer \(minSdkVersion=\d+(?: \(dev release=true\))?, maxSdkVersion=\d+\)|(?:Signer|V3\.[01] Signer):(?: \(minSdkVersion=\d+(?: \(dev release=true\))?, maxSdkVersion=\d+\))?) certificate SHA-256 digest: ([a-fA-F0-9]{64})$/);
+    assert.ok(match, `Malformed or unsupported APK signer certificate digest: ${line}`);
+    assert.ok(!labels.has(match[1]), 'APK signer certificate label is duplicated');
+    labels.add(match[1]);
+    return match[2].toLowerCase();
+  });
+}
+
 export function verifyInspection(inspected, expected) {
   assert.equal(inspected.debuggable.trim(), 'false', 'APK must not be debuggable');
   assert.equal(inspected.applicationId.trim(), expected.applicationId, 'APK application ID differs from release configuration');
   assert.equal(inspected.versionName.trim(), expected.version, 'APK version name differs from release configuration');
   assert.equal(inspected.versionCode.trim(), String(expected.versionCode), 'APK version code differs from release configuration');
-  assert.match(inspected.signature, /^Number of signers: 1\s*$/m, 'APK must have exactly one verified signer');
   assert.doesNotMatch(inspected.signature, /certificate DN:.*CN\s*=\s*Android Debug(?:,|$)/im, 'Android debug keys cannot sign a production APK');
-  const actualDigest = inspected.signature.match(/^Signer #1 certificate SHA-256 digest: ([a-fA-F0-9]{64})\s*$/m)?.[1];
-  assert.equal(actualDigest?.toLowerCase(), expected.certificateDigest.toLowerCase(), 'APK signer must match the configured release certificate');
+  for (const actualDigest of signerCertificateDigests(inspected.signature)) {
+    assert.equal(actualDigest, expected.certificateDigest.toLowerCase(), 'APK signer must match the configured release certificate');
+  }
 }
 
 export function verifyBundle(bundle) {
@@ -64,13 +87,17 @@ function verifyApk(apkPath) {
   assert.equal(createHash('sha256').update(certificate).digest('hex'), expected.certificateDigest, 'Signing key differs from the pinned release certificate');
   const { apksigner, analyzer } = androidTools();
   const inspect = field => command(analyzer, ['manifest', field, apk]);
-  verifyInspection({
+  const inspected = {
     debuggable: inspect('debuggable'),
     applicationId: inspect('application-id'),
     versionName: inspect('version-name'),
     versionCode: inspect('version-code'),
     signature: command(apksigner, ['verify', '--verbose', '--print-certs', apk]),
-  }, expected);
+  };
+  // apksigner prints public certificate details only. Keep them visible when an
+  // SDK changes its output format or an unexpected certificate fails the gate.
+  console.log(`Android APK signature verification:\n${inspected.signature.trim()}`);
+  verifyInspection(inspected, expected);
   verifyBundle(command('unzip', ['-p', apk, 'assets/index.android.bundle'], null));
 
   const destination = join(appRoot, 'release');

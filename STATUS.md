@@ -4,10 +4,10 @@ Goal: Provide a private Arabic debt ledger with clear balances and recoverable r
 Phase: verify
 
 ## Now
-Production-signed 0.1.0-alpha.1 is prepared with an empty initial ledger, production package identity and app branding. Push the reviewed release commit/tag, then verify the GitHub Actions APK and publish result.
+Production 0.1.0-alpha.1 was committed and pushed with an empty initial ledger, production package identity and app branding. The first GitHub APK compiled, but verification stopped on Android SDK 37's changed certificate labels. The parser fix passes against real SDK 36/37 output; retry the unpublished release and verify its download.
 
 Next:
-1. Push the release commit/tag and monitor signed APK verification and prerelease publication.
+1. Push the verifier correction, retry the unpublished tag and verify signed APK publication and download.
 2. Validate biometrics, app-switcher privacy, TalkBack, keyboard and notifications on a device.
 3. Verify folder providers and recovery on a device; direct Google Drive stays disabled until native authorization is completed.
 
@@ -15,10 +15,10 @@ Next:
 
 | metric | current | measured | previous | threshold | goal | source |
 |---|---:|---|---:|---:|---:|---|
-| Automated checks passing | 1061 count | 2026-09-12 | 1014 count | >= 1061 count | 1061 count | `cd app && npm run check`; `node scripts/release-workflow-checks.mjs`; `/tmp/iou-alpha/checks.log` |
+| Automated checks passing | 1076 count | 2026-09-12 | 1061 count | >= 1076 count | 1076 count | `cd app && npm run check`; `node scripts/release-workflow-checks.mjs`; `/tmp/iou-alpha/checks.log` |
 | TypeScript | PASS | 2026-09-12 | PASS | = PASS | PASS | `cd app && npm run typecheck` |
 | Clean launch and preservation scenarios | 8 count | 2026-09-12 | — | >= 8 count | 8 count | `/tmp/iou-release/clean-install-results.json`; `/tmp/iou-alpha/production-browser-results.json` |
-| GitHub production APK | UNMEASURED | — | — | = PASS | PASS | Awaiting release workflow after commit/tag push |
+| GitHub production APK | FAIL | 2026-09-12 | — | = PASS | PASS | [First run](https://github.com/witcherxz/iou/actions/runs/34679580743): compilation passed; signer-output parser fix awaiting retry |
 
 ## DoD — 0.1 Alpha production release
 
@@ -28,12 +28,12 @@ Next:
 - [x] Configure dedicated signing credentials outside Git and fail release builds without them.
 - [x] Check APK version, package, certificate, non-debuggable manifest and sample-free bundle before upload.
 - [x] Pass automated guards, TypeScript, clean-install/upgrade browser checks, workflow lint and prebuild.
-- [ ] Commit/push reviewed work and tag v0.1.0-alpha.1.
+- [x] Commit/push reviewed work and tag v0.1.0-alpha.1.
 - [ ] Verify GitHub's signed APK, checksum and published prerelease.
 
 ## Blockers / Risks
 
-- Native biometrics, app-switcher privacy, TalkBack/font scaling, folder grants, sharing and notification delivery are unmeasured without a device. Response: complete Next 1–2 before release; browser and bundle checks do not establish native behavior.
+- Native biometrics, app-switcher privacy, TalkBack/font scaling, folder grants, sharing and notification delivery are unmeasured without a device. Response: complete device validation before a stable release; browser and bundle checks do not establish native behavior.
 - Direct Google Drive authorization is unfinished. Response: keep `expo.extra.google.enabled` false until supported authorization and credentialed device tests pass.
 - The app lock controls access; ordinary local/folder/CSV/report data remains readable. Protected manual exports use a separate password. Response: explain the distinction and keep off-device copies private.
 - Automatic backups run after foreground edits and are suspended after local recovery; reminders retain the nearest 60 alerts plus weekly and refresh on foreground. Response: explain these operating limits in the feature notes.
@@ -52,6 +52,8 @@ Next:
 - 2026-09-12: Facing potential overwrite of external backups during startup or recovery, chose explicit first save and suspended automatic backup after local recovery, to protect older/newer copies, accepting a manual review step.
 
 ## Log
+
+- 2026-09-12 [incident]: First alpha APK compiled in GitHub Actions, but its certificate parser rejected SDK 37's new `V3.0 Signer:` label and prevented publication. Reproduced with the official SDK 37 binary, retained strict certificate pinning, and passed 43 release checks plus real SDK 36/37 output probes. Retrying the unpublished tag after the verifier correction.
 
 - 2026-09-12 [work]: Prepared 0.1.0-alpha.1 production packaging, fixture-free initialization, app branding, release signing secrets, guarded APK workflow and tagged prerelease publishing. Passed 1,061 automated assertions, TypeScript, eight clean-install/preservation scenarios, actionlint and Android prebuild. User authorized commit and push; GitHub APK validation remains pending.
 
