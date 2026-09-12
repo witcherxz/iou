@@ -4,35 +4,35 @@ Goal: Provide a private Arabic debt ledger with clear balances and recoverable r
 Phase: verify
 
 ## Now
-[Alpha 5](https://github.com/witcherxz/iou/releases/tag/v0.1.0-alpha.5) is published and installed on the S24 Ultra after 1,254 checks passed. The entry draft fix is verified in full UI and privacy lifecycle tests. Native backup testing exposed a separate blocker: opening the existing-backup confirmation triggers Android focus locking and cancels the save before writing. Preparing Alpha 6 with dialogs inside the Android app window and the user's requested removal of embedded number pads; amount fields use the OS keyboard.
+Alpha 6 is published and installed in an isolated Android 16 emulator; phone testing has stopped with Alpha 5 on the S24 Ultra. Native local folder save and older-version restore now pass with readable, matching JSON/HTML/CSV artifacts. Preparing Alpha 7 with one monthly due-day edit for all remaining installments, preserving completed rows and audit/undo history. TypeScript and 1,298 integrated checks pass; 18 full Expo screen scenarios pass, with no browser errors. Preparing the signed production build.
 
 Next:
-1. Publish and install the checked Alpha 6 production update.
-2. Test the existing folder's save and recovery-history flow plus native keyboard/draft preservation on the phone.
+1. Complete bulk installment-day screen validation and publish the signed Alpha 7 update.
+2. Install Alpha 7 in the emulator and verify the production bulk edit/save/undo flow.
 3. Complete broader native accessibility/reminder/provider validation; direct automatic Drive sync still requires native authorization and Google Cloud setup.
 
 ## Health
 
 | metric | current | measured | previous | threshold | goal | source |
 |---|---:|---|---:|---:|---:|---|
-| Automated checks passing | 1259 count | 2026-09-12 | 1254 count | >= 1259 count | 1259 count | `cd app && npm run check`; `node scripts/release-workflow-checks.mjs`; `JAVA_HOME=/tmp/iou-device-debug/jdk-17.0.20.1+1 node scripts/native-pin-checks.mjs` |
+| Automated checks passing | 1298 count | 2026-09-12 | 1259 count | >= 1298 count | 1298 count | `cd app && npm run check`; `node scripts/release-workflow-checks.mjs`; `JAVA_HOME=/tmp/iou-device-debug/jdk-17.0.20.1+1 node scripts/native-pin-checks.mjs` |
 | TypeScript | PASS | 2026-09-12 | PASS | = PASS | PASS | `cd app && npm run typecheck` |
-| Alpha 5 production APK | PASS | 2026-09-12 | PASS | = PASS | PASS | [Release workflow](https://github.com/witcherxz/iou/actions/runs/34705200101); [verification and device installation](app/docs/RELEASING.md#alpha-5) |
-| Native Dropbox folder save | FAIL | 2026-09-12 | UNMEASURED | = PASS | PASS | `/tmp/iou-device-debug/auto-biometric-20260912-194119/summary.json`; [Alpha 5 verification](app/docs/RELEASING.md#alpha-5) |
+| Alpha 6 production APK | PASS | 2026-09-12 | PASS | = PASS | PASS | [Release workflow](https://github.com/witcherxz/iou/actions/runs/34706442794); [independent APK verification](app/docs/RELEASING.md#alpha-6) |
+| Native local folder save/recovery | PASS | 2026-09-12 | UNMEASURED | = PASS | PASS | `/tmp/iou-emulator-qa/results.json`; `/tmp/iou-emulator-qa/backup-first-evidence.json`; `/tmp/iou-emulator-qa/backup-second-evidence.json` |
 
-## DoD — Alpha 6 system keyboard and usable backup confirmations
+## DoD — Alpha 7 bulk installment due-day editing
 
-- [x] Remove embedded number pads while retaining OS decimal input and 0–9 normalization.
-- [x] Verify full form/settlement flows and preserve unfinished entry drafts.
-- [x] Reproduce confirmation-triggered focus locking on the S24 Ultra without collecting private contents.
-- [x] Keep Android dialogs inside the app window while preserving background/notification-shade privacy.
-- [x] Pass integrated and dialog-specific checks.
-- [ ] Publish/install Alpha 6 with production signing and existing data preserved.
-- [ ] Verify native folder save, recovery previews, OS keyboard, and draft preservation.
+- [x] Change the monthly day for all remaining installments with one preview/apply action.
+- [x] Preserve completed rows, months, amounts, cash/forgiveness history, and exact unchanged legacy dates.
+- [x] Reject invalid day/date collisions and retain per-row editing plus audited save/undo.
+- [x] Pass integrated checks and TypeScript.
+- [x] Pass full Expo screen scenarios for both directions, partial/completed rows, cancellation, save, undo, and narrow layout.
+- [ ] Publish Alpha 7 with production signing and independently verify its APK.
+- [ ] Install and verify the bulk edit/save/undo flow in the isolated emulator.
 
 ## Blockers / Risks
 
-- PIN performance, automatic biometric prompting, cancellation/PIN fallback and native share/Drive upload-screen navigation are confirmed on the connected S24 Ultra. Alpha 5 native backup confirmations cancel due to focus locking; Alpha 6 dialog handling must unblock completed provider verification. Full app-switcher privacy, TalkBack/font scaling and notifications still need native validation. Response: test the updated folder flow and complete broader validation before a stable release.
+- PIN performance, automatic biometric prompting, cancellation/PIN fallback and native share/Drive upload-screen navigation are confirmed on the connected S24 Ultra. Alpha 6 local emulator folder save/recovery and in-window confirmations pass. Completed Dropbox-specific provider writes remain unverified after the Alpha 5 confirmation blocker; validate that provider separately. Full app-switcher privacy, TalkBack/font scaling and notifications still need native validation. Response: test the updated folder flow and complete broader validation before a stable release.
 - Direct Google Drive authorization is unfinished. Response: keep direct sync disabled and offer the tested manual share/download and file-restore flow. Drive upload-screen navigation is verified; upload completion remains unverified.
 - The app lock controls access; ordinary local/folder/CSV/report data remains readable. Protected manual exports use a separate password. Response: explain the distinction and keep off-device copies private.
 - Automatic backups run after foreground edits and are suspended after local recovery; reminders retain the nearest 60 alerts plus weekly and refresh on foreground. Response: explain these operating limits in the feature notes.
@@ -51,6 +51,12 @@ Next:
 - 2026-09-12: Facing potential overwrite of external backups during startup or recovery, chose explicit first save and suspended automatic backup after local recovery, to protect older/newer copies, accepting a manual review step.
 
 ## Log
+
+- 2026-09-12 [work]: Implemented bulk monthly installment-day previews with completed-row preservation, month-end clamping and single audited save/undo. Added 39 domain checks; 1,298 integrated checks and TypeScript pass. Android 16 emulator completed first and second local SAF backups and older-version restore; independently verified canonical, snapshots, readable report and CSV agreement. Alpha 7 screen validation and publication are in progress.
+
+- 2026-09-12 [release]: Published Alpha 6 from 17cb8c0 after both Actions runs and 1,259 integrated checks passed. Independently verified the downloaded production APK signature, manifest, offline bundle, and both native modules. Emulator setup and native confirmation/backup/amount tests are in progress; no further phone actions.
+
+- 2026-09-12 [work]: User requested ending dependence on the connected phone and using an Android emulator. Stopped phone actions; setting up an isolated emulator for Alpha 6 native backup, dialog, lock, and amount/draft tests. Phone remains on Alpha 5; no synthetic records were saved there.
 
 - 2026-09-12 [work]: Prepared Alpha 6 after the user requested OS keyboard input: removed embedded keypads from debt and settlement screens, with eight form and fourteen settlement/edit/export UI scenarios passing. Native Alpha 5 backup attempts reproduced confirmation-triggered focus locking while IoU remained resumed; replaced Android modal windows with in-window dialogs. Passed 1,259 integrated checks and TypeScript. A held-decryption regression confirmed a native restore alert could appear/apply after locking; confirmations now cancel when their private host is unavailable, and the same test confirms no preview or restore while locked. Eight independent real-provider/gate dialog scenarios passed for confirmation queues, Back ordering, background cancellation, and narrow dialog layouts.
 

@@ -10,6 +10,7 @@ import { validateState } from '../src/validation';
 import { STORAGE_KEY, STORAGE_RECOVERY_KEY } from '../src/config/app';
 import { availableLocalHistory, keepLocalSnapshot, LOCAL_HISTORY_KEY, LOCAL_HISTORY_LIMIT, LOCAL_HISTORY_QUARANTINE_KEY, readLocalHistory } from '../src/store/history';
 import { createWriteQueue, readStoredLedger } from '../src/store/persistence';
+import { preserveUnchangedDate, rescheduleRemainingInstallments } from '../src/installmentSchedule';
 
 declare const process: { exit(code: number): never };
 let checks = 0, sequence = 0;
@@ -33,6 +34,62 @@ const snapshot = (s: PersistedState, n: number) => ({ id: `snapshot-${n}`, creat
 
 async function main() {
   const original = state();
+  for (const direction of ['me', 'owe'] as const) {
+    const scheduled = debt({ amount: 400, dir: direction, createdAt: '2026-01-01', dueAt: '2026-01-15', freq: 'month',
+      installments: ['2026-01-15', '2026-02-15', '2026-03-15', '2026-04-15'].map((dueAt, index) => ({ dueAt, amount: 100, label: `قسط ${index + 1}` })),
+    });
+    const entries = [scheduled, payment({ amount: 60 }), payment({ id: 'waive', dir: 'forgive', amount: 90 }),
+      payment({ id: 'undone', amount: 100, voidedAt: at })];
+    const before = state(entries), savedDebt = getTx(before);
+    const rows = savedDebt.installments!;
+    const next = rescheduleRemainingInstallments(savedDebt, before.tx, rows, 31, '2026-01-01');
+    eq(`${direction}: completed mixed row stays unchanged and all remaining months clamp independently`, next.map(row => row.dueAt),
+      ['2026-01-15', '2026-02-28', '2026-03-31', '2026-04-30']);
+    eq(`${direction}: amounts labels and source remain untouched`, [next.map(row => [row.amount, row.label]), rows.map(row => row.dueAt)],
+      [rows.map(row => [row.amount, row.label]), ['2026-01-15', '2026-02-15', '2026-03-15', '2026-04-15']]);
+    const changed = editEntry(before, savedDebt.id, { installments: next, dueAt: next[0].dueAt }, id(), at);
+    eq(`${direction}: a bulk day edit retains exact paid forgiven remaining allocations`, installmentAllocations(changed.tx, getTx(changed)), installmentAllocations(before.tx, savedDebt));
+    eq(`${direction}: one explicit save records one audit change`, changed.changes.length, 1);
+    eq(`${direction}: exact original and changed schedules remain in audit`, [changed.changes[0].before, changed.changes[0].after], [savedDebt, getTx(changed)]);
+    eq(`${direction}: all cash forgiveness and cancelled events preserved`, changed.tx.slice(1), before.tx.slice(1));
+    eq(`${direction}: first completed due date remains primary`, getTx(changed).dueAt, '2026-01-15');
+    const undone = undoEntryEdit(changed, savedDebt.id, id(), at);
+    eq(`${direction}: undo restores the full original debt`, getTx(undone), savedDebt);
+    eq(`${direction}: helper includes overdue remaining rows`, next[1].dueAt, '2026-02-28');
+    rejects(`${direction}: unsaved amount redistribution cannot change remaining eligibility`, () => rescheduleRemainingInstallments(savedDebt, before.tx,
+      rows.map((row, index) => ({ ...row, amount: index === 0 ? 120 : index === 1 ? 80 : 100 })), 25, '2026-01-01'));
+  }
+  const monthEndSchedule = debt({ createdAt: '2024-01-01', amount: 300, dueAt: '2024-01-30', freq: 'month',
+    installments: ['2024-01-30', '2024-02-29', '2024-03-30'].map((dueAt, i) => ({ dueAt, amount: 100, label: `${i + 1}` })),
+  });
+  const monthEndRows = monthEndSchedule.installments!;
+  eq('leap February clamps without drifting March', rescheduleRemainingInstallments(monthEndSchedule, [monthEndSchedule], monthEndRows, 31, monthEndSchedule.createdAt).map(row => row.dueAt),
+    ['2024-01-31', '2024-02-29', '2024-03-31']);
+  const gapRows = [monthEndRows[0], { ...monthEndRows[1], dueAt: '2024-03-30' }, { ...monthEndRows[2], dueAt: '2025-01-30' }];
+  const gaps = { ...monthEndSchedule, installments: gapRows };
+  eq('month gaps and year transitions are preserved', rescheduleRemainingInstallments(gaps, [gaps], gapRows, 1, monthEndSchedule.createdAt).map(row => row.dueAt),
+    ['2024-01-01', '2024-03-01', '2025-01-01']);
+  for (const day of [0, 32, -1, 1.5, NaN, Infinity]) rejects(`invalid monthly day ${day}`, () =>
+    rescheduleRemainingInstallments(monthEndSchedule, [monthEndSchedule], monthEndRows, day, monthEndSchedule.createdAt));
+  rejects('invalid draft date is not repaired silently', () => rescheduleRemainingInstallments(monthEndSchedule, [monthEndSchedule],
+    monthEndRows.map((row, i) => i === 1 ? { ...row, dueAt: '2024-02-30' } : row), 15, monthEndSchedule.createdAt));
+  rejects('invalid edited debt date rejected', () => rescheduleRemainingInstallments(monthEndSchedule, [monthEndSchedule], monthEndRows, 15, '2024-02-30'));
+  rejects('day cannot place the first installment before edited debt date', () => rescheduleRemainingInstallments(monthEndSchedule, [monthEndSchedule], monthEndRows, 5, '2024-01-10'));
+  const sameMonth = monthEndRows.map((row, i) => i === 1 ? { ...row, dueAt: '2024-01-31' } : row);
+  rejects('same-month dates cannot collapse into one due date', () => rescheduleRemainingInstallments({ ...monthEndSchedule, installments: sameMonth }, [monthEndSchedule], sameMonth, 20, monthEndSchedule.createdAt));
+  const partialPaid = payment({ amount: 100, createdAt: '2024-01-15' });
+  rejects('new remaining day cannot move before a completed row in its month', () => rescheduleRemainingInstallments({ ...monthEndSchedule, installments: sameMonth }, [monthEndSchedule, partialPaid], sameMonth, 10, monthEndSchedule.createdAt));
+  const forgivenAll = payment({ dir: 'forgive', amount: 300, createdAt: '2024-01-15' });
+  rejects('fully forgiven schedule has no remaining dates to move', () => rescheduleRemainingInstallments(monthEndSchedule, [monthEndSchedule, forgivenAll], monthEndRows, 20, monthEndSchedule.createdAt));
+  rejects('fully paid schedule has no remaining dates to move', () => rescheduleRemainingInstallments(monthEndSchedule, [monthEndSchedule, { ...forgivenAll, dir: 'settle' }], monthEndRows, 20, monthEndSchedule.createdAt));
+  eq('early payments do not constrain the next due date', rescheduleRemainingInstallments(monthEndSchedule,
+    [monthEndSchedule, payment({ amount: 150, createdAt: '2024-03-15' })], monthEndRows, 1, monthEndSchedule.createdAt).map(row => row.dueAt),
+    ['2024-01-30', '2024-02-01', '2024-03-01']);
+  const legacyDate = '2026-02-15T12:00:00.000Z';
+  const displayedDate = calendarISO(new Date(legacyDate));
+  eq('untouched displayed legacy date preserves exact source timestamp', preserveUnchangedDate(legacyDate, displayedDate), legacyDate);
+  eq('edited legacy date uses the requested calendar day', preserveUnchangedDate(legacyDate, '2026-02-20'), '2026-02-20');
+  eq('ordinary unchanged calendar date stays unchanged', preserveUnchangedDate('2026-02-15', '2026-02-15'), '2026-02-15');
   const legacy = { ...original, version: 1, changes: undefined, reminderSettings: undefined };
   eq('v1 ledger migrates to v3', validateState(legacy).version, 3);
   eq('v1 migration adds empty correction log', validateState(legacy).changes, []);

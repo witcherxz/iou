@@ -1,20 +1,20 @@
 # Android alpha releases
 
-The application version is `0.1.0-alpha.6`, Android version code `6`, and production application ID `io.github.witcherxz.iou`. The same version is recorded in `app.json`, `package.json`, and the package-lock root. iOS uses the numeric marketing version `0.1.0` and build number `6` if built separately.
+The application version is `0.1.0-alpha.7`, Android version code `7`, and production application ID `io.github.witcherxz.iou`. The same version is recorded in `app.json`, `package.json`, and the package-lock root. iOS uses the numeric marketing version `0.1.0` and build number `7` if built separately.
 
 ## Build and publish
 
 1. Update the version in all three files, increase Android `versionCode`, and add `docs/releases/<version>.md`.
 2. Run `npm run typecheck` and `npm run check`. The release check traverses the production source graph and rejects test fixtures, mocks, sample ledger markers and seeding switches.
 3. Commit/push the reviewed changes. Main-branch Actions runs produce a signed APK artifact.
-4. Push a matching version tag, such as `v0.1.0-alpha.6`. Actions builds and verifies the APK, then publishes it and its `.apk.sha256` checksum to a GitHub prerelease. Tag/version mismatches fail.
+4. Push a matching version tag, such as `v0.1.0-alpha.7`. Actions builds and verifies the APK, then publishes it and its `.apk.sha256` checksum to a GitHub prerelease. Tag/version mismatches fail.
 
 The workflow runs checks for pull requests without exposing signing credentials. Release builds use Node 22, JDK 17, Expo prebuild, and Gradle `:app:assembleRelease`. A Gradle init script assigns the dedicated release signing configuration and disables debugging; it does not silently fall back to the template debug key.
 
 Before upload, the APK verifier checks package ID, version name/code, non-debuggable manifest, signature certificate, embedded Hermes/JavaScript and absence of demo fixture content. Downloaded APK checksums can be verified using:
 
 ```bash
-sha256sum -c iou-0.1.0-alpha.6.apk.sha256
+sha256sum -c iou-0.1.0-alpha.7.apk.sha256
 ```
 
 ## Signing key
@@ -38,6 +38,18 @@ The old debug package was `com.example.iou` and used the Expo template signing k
 Alpha release notes record remaining device verification, including biometrics, notification delivery, app-switcher privacy and folder-provider behavior. A successful production build establishes packaging and signing, not hardware behavior.
 
 ## Verified alpha release
+
+### Alpha 6
+
+On 2026-09-12, [v0.1.0-alpha.6](https://github.com/witcherxz/iou/releases/tag/v0.1.0-alpha.6) was published from `17cb8c026d902a3edfd0d0d4b8304efb30e9b3bd`. The [release workflow](https://github.com/witcherxz/iou/actions/runs/34706442794) and [main workflow](https://github.com/witcherxz/iou/actions/runs/34706444947) passed, including 1,259 integrated checks and the signed production build. Eight full entry-flow, fourteen settlement/edit/export, and eight independent privacy/dialog lifecycle scenarios passed locally. A held-decryption test confirms a locked app cannot display or apply a late restore confirmation.
+
+The independently verified APK is 72,407,090 bytes, version `0.1.0-alpha.6` / code `6`, with the unchanged production identity and signing key. Signature, manifest, fixture-free offline bundle, native PIN worker and native backup module checks passed.
+
+```text
+aa15ef8e40fea6fedeca4133960832debb68ff9143c7abca20d2ae9dfcc54145
+```
+
+The user requested switching remaining native testing to an emulator. Phone testing stopped with Alpha 5 installed; Alpha 6 was installed in an isolated Android 16/API 36 emulator. PIN setup/unlock, existing-backup confirmation without focus locking, local folder save, and older-version restore passed. Two native backups were independently verified across canonical JSON, retained snapshots, readable HTML, and CSV companions. Dropbox account/provider behavior remains separately unverified.
 
 ### Alpha 5
 

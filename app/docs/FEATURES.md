@@ -23,7 +23,7 @@ A debt cannot be reduced below its combined active payments and forgiveness, can
 
 Forgiveness uses its own transaction type with edit/undo/cancel/restore history. It never counts as cash received or paid. Full forgiveness closes as **معفى بالكامل**; mixed cash and forgiveness closes as **مغلق بسداد وإعفاء**. Ledger formats 1 and 2 migrate to format 3, preserving payments, correction history and reminder choices.
 
-Existing installment rows can be edited; their positive amounts must sum exactly to the debt in integer halalas, with strictly increasing dates. **توزيع المبلغ بالتساوي** explicitly redistributes an edited amount. Both old and new schedules appear in the correction history.
+Existing installment rows can be edited; their positive amounts must sum exactly to the debt in integer halalas, with strictly increasing dates. **توزيع المبلغ بالتساوي** explicitly redistributes an edited amount. Both old and new schedules appear in the correction history. **تغيير يوم الاستحقاق الشهري** applies a day from 1–31 to all remaining installments together, preserving fully paid/forgiven rows and each row’s month. Short months use their last day. Review the draft schedule before saving once; the latest edit can be undone. Save amount changes first before using this date-only control.
 
 New transaction dates cannot be in the future. A payment cannot predate its debt; a debt cannot move after one of its payments. New or changed due dates cannot predate the actual debt date. Due-date presets count from the actual debt date, and month presets retain calendar-month behavior. Existing version 1 data migrates without inventing recording timestamps or rejecting unchanged legacy date quirks.
 

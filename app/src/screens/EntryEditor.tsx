@@ -5,7 +5,8 @@ import { TransactionDateField } from '../components/TransactionDateField';
 import { Chip, OutlinedField, OutlineButton, PrimaryButton, ScreenHeader, Segment, T } from '../components/ui';
 import { confirmAction } from '../confirm';
 import { arDate, calendarISO, fmt, isCalendarDate, localDate, todayISO } from '../format';
-import { EntryPatch, isDebt, isReduction } from '../ledger';
+import { EntryPatch, installmentAllocations, isDebt, isReduction } from '../ledger';
+import { preserveUnchangedDate, rescheduleRemainingInstallments } from '../installmentSchedule';
 import { Colors, M3 } from '../theme';
 import { LedgerChange, Person, Tx } from '../types';
 
@@ -28,6 +29,9 @@ export function EntryEditor({ c, entry, people, transactions, changes, onBack, o
   const [note, setNote] = useState(entry.note ?? '');
   const [dueAt, setDueAt] = useState(entry.dueAt ? calendarISO(localDate(entry.dueAt)) : '');
   const [installments, setInstallments] = useState(entry.installments?.map(i => ({ ...i, amount: String(i.amount), dueAt: calendarISO(localDate(i.dueAt)) })) ?? []);
+  const [monthlyDay, setMonthlyDay] = useState('');
+  const [scheduleMessage, setScheduleMessage] = useState('');
+  const [scheduleError, setScheduleError] = useState('');
   const [busy, setBusy] = useState(false);
   const busyRef = useRef(false);
   const [error, setError] = useState('');
@@ -37,6 +41,11 @@ export function EntryEditor({ c, entry, people, transactions, changes, onBack, o
   const linked = transactions.filter(t => !t.voidedAt && isReduction(t) && t.debtId === entry.id);
   const targets = transactions.filter(t => !t.voidedAt && isDebt(t) && t.personId === personId);
   const relevant = changes.filter(change => change.txId === entry.id).slice().reverse();
+  const allocations = installmentAllocations(transactions, entry);
+  const remainingInstallments = allocations.filter(row => row.remainingAmount > 0).length;
+  const amountsChanged = Number(amount) !== entry.amount || installments.some((row, index) =>
+    !isValidAmountInput(row.amount) || Number(row.amount) !== entry.installments?.[index]?.amount);
+  const validMonthlyDay = /^\d{1,2}$/.test(monthlyDay) && Number(monthlyDay) >= 1 && Number(monthlyDay) <= 31;
   const validAmount = isValidAmountInput(amount);
   const validSchedule = installments.length === 0 || installments.every((i, index) =>
     isValidAmountInput(i.amount) && isCalendarDate(i.dueAt) && (index === 0 || i.dueAt > installments[index - 1].dueAt)) &&
@@ -61,6 +70,25 @@ export function EntryEditor({ c, entry, people, transactions, changes, onBack, o
     if (base < 1) { setError('المبلغ صغير جداً لعدد الدفعات.'); return; }
     setInstallments(installments.map((i, index) => ({ ...i, amount: String((base + (index === installments.length - 1 ? cents % installments.length : 0)) / 100) })));
   };
+
+  const applyMonthlyDay = () => {
+    setScheduleMessage(''); setScheduleError('');
+    try {
+      const next = rescheduleRemainingInstallments(entry, transactions,
+        installments.map(row => ({ ...row, amount: Number(row.amount) })), Number(monthlyDay), occurred);
+      const changed = next.filter((row, index) => row.dueAt !== installments[index].dueAt).length;
+      setInstallments(next.map(row => ({ ...row, amount: String(row.amount) })));
+      setScheduleMessage(changed
+        ? `حُدّثت مواعيد ${fmt(changed, 0)} أقساط في المسودة. راجع الجدول أدناه ثم احفظ التعديل.`
+        : 'المواعيد المتبقية توافق هذا اليوم بالفعل.');
+    } catch (error) {
+      setScheduleError(error instanceof Error ? error.message : 'تعذر تغيير المواعيد. تحقق من الجدول.');
+    }
+  };
+
+  const editedInstallments = installments.map((row, index) => ({ ...row, amount: Number(row.amount),
+    dueAt: entry.installments?.[index] ? preserveUnchangedDate(entry.installments[index].dueAt, row.dueAt) : row.dueAt,
+  }));
 
   return <View style={{ flex: 1 }}>
     <ScreenHeader c={c} title={entry.voidedAt ? 'عملية ملغاة' : forgiveness ? 'تعديل إعفاء' : payment ? 'تعديل دفعة' : 'تعديل دين'} glyph="→" onBack={onBack} />
@@ -101,22 +129,36 @@ export function EntryEditor({ c, entry, people, transactions, changes, onBack, o
         </View>}
         {!!installments.length && <View style={{ gap: 12 }}>
           <T accessibilityRole="header" style={{ ...M3.type.titleLarge, color: c.onSurface }}>الأقساط</T>
+          {remainingInstallments > 0 ? <View style={{ padding: 16, gap: 12, borderRadius: 12, backgroundColor: c.surfaceContainerLow }}>
+            <T accessibilityRole="header" style={{ ...M3.type.titleMedium, color: c.onSurface }}>تغيير يوم الاستحقاق الشهري</T>
+            <T style={{ ...M3.type.bodyMedium, color: c.onSurfaceVariant }}>يبقى كل قسط في شهره، ويُستخدم آخر يوم إذا كان الشهر أقصر. الأقساط المكتملة لا تتغير بهذا الخيار.</T>
+            <OutlinedField c={c} label="اليوم من الشهر" value={monthlyDay} keyboardType="number-pad" inputMode="numeric"
+              maxLength={2} placeholder="1–31" style={{ writingDirection: 'ltr', textAlign: 'left' }}
+              onChangeText={value => { setMonthlyDay(normalizeAmountInput(value)); setScheduleError(''); setScheduleMessage(''); }}
+              error={!!monthlyDay && !validMonthlyDay} helperText="أدخل يوماً من 1 إلى 31." />
+            {amountsChanged && <T style={{ ...M3.type.bodyMedium, color: c.onSurfaceVariant }}>احفظ تغييرات المبالغ أولاً لتحديد الأقساط المتبقية بدقة.</T>}
+            <OutlineButton c={c} label="تطبيق على الأقساط المتبقية" disabled={!validMonthlyDay || amountsChanged || busy} onPress={applyMonthlyDay} />
+            {!!scheduleError && <T accessibilityRole="alert" style={{ ...M3.type.bodyMedium, color: c.error }}>{scheduleError}</T>}
+            {!!scheduleMessage && <T accessibilityLiveRegion="polite" style={{ ...M3.type.bodyMedium, color: c.onSurfaceVariant }}>{scheduleMessage}</T>}
+          </View> : <T style={{ ...M3.type.bodyMedium, color: c.onSurfaceVariant }}>اكتملت جميع الأقساط؛ لا توجد مواعيد متبقية لتغييرها.</T>}
           {installments.map((ins, index) => <View key={index} style={{ padding: 12, gap: 12, borderRadius: 12, backgroundColor: c.surfaceContainerLow }}>
-            <T style={{ ...M3.type.titleMedium, color: c.onSurface }}>دفعة {index + 1}</T>
+            <T style={{ ...M3.type.titleMedium, color: c.onSurface }}>دفعة {index + 1}{allocations[index]?.remainingAmount === 0 ? ' · مكتمل' : ''}</T>
             <OutlinedField c={c} label={`مبلغ القسط ${index + 1}`} value={ins.amount} keyboardType="decimal-pad" inputMode="decimal"
               onChangeText={value => setInstallments(rows => rows.map((row, i) => i === index ? { ...row, amount: normalizeAmountInput(value) } : row))} />
             <OutlinedField c={c} label={`موعد القسط ${index + 1}`} value={ins.dueAt} placeholder="YYYY-MM-DD" maxLength={10}
               style={{ writingDirection: 'ltr', textAlign: 'left' }}
-              onChangeText={value => setInstallments(rows => rows.map((row, i) => i === index ? { ...row, dueAt: normalizeAmountInput(value) } : row))} />
+              helperText={entry.installments?.[index] && ins.dueAt !== calendarISO(localDate(entry.installments[index].dueAt))
+                ? `الموعد السابق: ${arDate(entry.installments[index].dueAt)}` : undefined}
+              onChangeText={value => { setScheduleMessage(''); setScheduleError(''); setInstallments(rows => rows.map((row, i) => i === index ? { ...row, dueAt: normalizeAmountInput(value) } : row)); }} />
           </View>)}
           <OutlineButton c={c} label="توزيع المبلغ بالتساوي" disabled={!validAmount || busy} onPress={splitEvenly} />
           {!validSchedule && <T accessibilityRole="alert" style={{ ...M3.type.bodyMedium, color: c.error }}>يجب أن يساوي مجموع الأقساط مبلغ الدين، وأن تكون مواعيدها صحيحة ومتتابعة.</T>}
         </View>}
         <OutlinedField c={c} label={forgiveness ? 'سبب الإعفاء' : 'الملاحظة'} value={note} onChangeText={setNote} maxLength={500} />
         <PrimaryButton c={c} label="حفظ التعديل" disabled={!canSave} loading={busy} onPress={() => run(() => onSave({
-          amount: Number(amount), personId, createdAt: occurred, note: note.trim(),
-          ...(payment ? { debtId } : { dir, dueAt: installments.length ? installments[0].dueAt : dueAt || null,
-            ...(installments.length ? { installments: installments.map(i => ({ ...i, amount: Number(i.amount) })), freq: 'month' as const } : {}) }),
+          amount: Number(amount), personId, createdAt: preserveUnchangedDate(entry.createdAt, occurred), note: note.trim(),
+          ...(payment ? { debtId } : { dir, dueAt: installments.length ? editedInstallments[0].dueAt : dueAt || null,
+            ...(installments.length ? { installments: editedInstallments, freq: 'month' as const } : {}) }),
         }))} />
         {relevant[0]?.kind === 'edit' && <OutlineButton c={c} label="التراجع عن آخر تعديل" disabled={busy}
           onPress={() => run(onUndoEdit, 'التراجع عن التعديل', 'ستعود القيم السابقة إذا كانت متوافقة مع الدفعات والإعفاءات الحالية. يُسجل التراجع في السجل.', 'تراجع')} />}
