@@ -63,3 +63,21 @@ The independent real-provider/controller/gate harness reproduced lost draft fiel
 The durable full-App browser regression enrolls a real web PIN, selects partial forgiveness in the non-default debt direction, fills amount/date/note, backgrounds, unlocks through the actual PIN screen, verifies every field and submits one exact exemption. It locks/unlocks the receipt and checks that no submit-ready form or duplicate record appears. This is part of the 19-scenario history/creation suite above.
 
 The published Alpha 8 APK passed the same native HOME/PIN cycle with the full draft intact. A single 13.50 exemption saved with its selected date/note, and its receipt remained after another lock/unlock. Native history distinguished both exemptions from the existing cash payment. A subsequent local folder backup advanced its displayed timestamp; all 14 exported files verified exactly against the ledger. Prior transactions/audits and six older snapshots remained unchanged, with one new exemption and snapshot, matching HTML/CSV companions, and no duplicates. Totals were paid 41.83, forgiven 33.50 and remaining 50.17. [Native after-fix evidence](verification/alpha8-native.json).
+
+## Alpha 9 regression — native RTL text alignment
+
+Read-only navigation in the production Alpha 8 emulator showed left-painted text inside correctly ordered RTL rows. Pixel measurements within UIAutomator text bounds gave a 3 px left margin and 167 px right margin for the Home name, and 1 px left / 245 px right for the operation count. Payment headings and debt descriptions behaved similarly; explicitly centered buttons were correctly centered. [Native baseline](verification/alpha9-native-before.json).
+
+The shared text component now uses native automatic alignment with explicit RTL paragraph direction; the browser retains right alignment. Four light/dark, 320/390 px browser cases verified Arabic/mixed names, matching right edges for names/counts and no overflow. Existing 19 history/privacy scenarios also passed. [Browser evidence](verification/alpha9-browser.json).
+
+The published Alpha 9 APK passed all 11 native text comparisons. Home name/count right margins changed from 167/245 px to 0/1 px; payment heading and reason margins changed from 256/283 px to 1/2 px. The debt heading is simply **يدين لي**, and the centered **سداد المتبقي** button retained equal 1 px margins. [Native comparison](verification/alpha9-native.json).
+
+Read-only form inspection confirmed the centered 50.17 amount, left-to-right ISO date and unchanged date through keyboard focus/dismissal, followed by cancellation without saving. A separate existing clipping issue affects a compact debt badge and the forgiveness selector. A fresh published Alpha 8 on temporary emulator-5582 reproduced the selector in both states; its unselected label was pixel-for-pixel identical to Alpha 9. The temporary AVD had separate writable data and was stopped cleanly; the main AVD was not changed by the baseline comparison.
+
+| Home before | Home after |
+|---|---|
+| ![Left-painted names and counts](screenshots/rtl-native-home-before.png) | ![Names and counts aligned to the right](screenshots/rtl-native-home-after.png) |
+
+| History before | History after |
+|---|---|
+| ![Left-painted transaction labels](screenshots/rtl-native-history-before.png) | ![Right-aligned descriptions and simplified debt heading](screenshots/rtl-native-history-after.png) |

@@ -1,0 +1,220 @@
+{
+  "version": "Alpha 8 (versionCode 8)",
+  "device": "isolated Android emulator 720x1600",
+  "mode": "read-only navigation; synthetic existing ledger; no ledger mutations",
+  "screenshots": [
+    "home.png",
+    "person-top.png",
+    "person-history.png",
+    "debt-header.png"
+  ],
+  "pixelMethod": "Within each exact UIAutomator TextView bounds, pixels whose maximum RGB channel is below 190 count as glyph ink. No image modifications.",
+  "measurements": [
+    {
+      "screen": "home",
+      "text": "EmulatorQA",
+      "nodeBounds": [
+        200,
+        744,
+        544,
+        792
+      ],
+      "inkBounds": [
+        203,
+        755,
+        377,
+        785
+      ],
+      "leftMarginPx": 3,
+      "rightMarginPx": 167
+    },
+    {
+      "screen": "home",
+      "text": "4 عمليات",
+      "nodeBounds": [
+        200,
+        800,
+        544,
+        840
+      ],
+      "inkBounds": [
+        201,
+        808,
+        299,
+        835
+      ],
+      "leftMarginPx": 1,
+      "rightMarginPx": 245
+    },
+    {
+      "screen": "person-history",
+      "text": "دفعة مستلمة",
+      "nodeBounds": [
+        124,
+        322,
+        552,
+        370
+      ],
+      "inkBounds": [
+        125,
+        331,
+        296,
+        358
+      ],
+      "leftMarginPx": 1,
+      "rightMarginPx": 256
+    },
+    {
+      "screen": "person-history",
+      "text": "السبب: privacy-waiver-qa",
+      "nodeBounds": [
+        64,
+        1150,
+        656,
+        1194
+      ],
+      "inkBounds": [
+        66,
+        1160,
+        373,
+        1187
+      ],
+      "leftMarginPx": 2,
+      "rightMarginPx": 283
+    },
+    {
+      "screen": "person-history",
+      "text": "دين · يدين لي",
+      "nodeBounds": [
+        238,
+        1260,
+        588,
+        1300
+      ],
+      "inkBounds": [
+        238,
+        1268,
+        382,
+        1300
+      ],
+      "leftMarginPx": 0,
+      "rightMarginPx": 206
+    },
+    {
+      "screen": "person-history",
+      "text": "native-check",
+      "nodeBounds": [
+        238,
+        1308,
+        588,
+        1348
+      ],
+      "inkBounds": [
+        240,
+        1316,
+        400,
+        1337
+      ],
+      "leftMarginPx": 2,
+      "rightMarginPx": 188
+    },
+    {
+      "screen": "debt-header",
+      "text": "EmulatorQA",
+      "nodeBounds": [
+        64,
+        410,
+        536,
+        458
+      ],
+      "inkBounds": [
+        67,
+        421,
+        243,
+        451
+      ],
+      "leftMarginPx": 3,
+      "rightMarginPx": 293
+    },
+    {
+      "screen": "debt-header",
+      "text": "native-check · 10 سبتمبر",
+      "nodeBounds": [
+        64,
+        458,
+        536,
+        498
+      ],
+      "inkBounds": [
+        66,
+        466,
+        357,
+        494
+      ],
+      "leftMarginPx": 2,
+      "rightMarginPx": 179
+    },
+    {
+      "screen": "debt-header",
+      "text": "المتبقي من 125.5 ر.س",
+      "nodeBounds": [
+        64,
+        646,
+        656,
+        678
+      ],
+      "inkBounds": [
+        65,
+        652,
+        278,
+        676
+      ],
+      "leftMarginPx": 1,
+      "rightMarginPx": 378
+    },
+    {
+      "screen": "debt-header",
+      "text": "المسدد: 41.83 ر.س",
+      "nodeBounds": [
+        88,
+        734,
+        580,
+        778
+      ],
+      "inkBounds": [
+        89,
+        744,
+        308,
+        772
+      ],
+      "leftMarginPx": 1,
+      "rightMarginPx": 272
+    },
+    {
+      "screen": "debt-header",
+      "text": "سداد المتبقي",
+      "nodeBounds": [
+        143,
+        1218,
+        287,
+        1258
+      ],
+      "inkBounds": [
+        144,
+        1226,
+        286,
+        1258
+      ],
+      "leftMarginPx": 1,
+      "rightMarginPx": 1
+    }
+  ],
+  "findings": [
+    "Names, operation counts, Arabic transaction labels, descriptions, and wide debt header text paint at physical left despite correct RTL row/avatar ordering.",
+    "History shows redundant heading دين · يدين لي.",
+    "Centered debt action buttons are centered and should retain caller alignment."
+  ],
+  "likelyCause": "RN 0.86 native TextLayoutManager maps explicit right alignment to opposite paragraph-relative alignment under direction rtl; shared T sets textAlign right under RTL root. Root has prepared native auto with explicit RTL writing direction fix.",
+  "handoffScreen": "DebtDetail top",
+  "filesUnchanged": true
+}

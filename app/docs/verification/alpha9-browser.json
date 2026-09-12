@@ -1,0 +1,94 @@
+{
+  "passed": 4,
+  "results": [
+    {
+      "theme": "light",
+      "width": 320,
+      "anchors": [
+        {
+          "name": "أحمد",
+          "right": 232,
+          "countRight": 232
+        },
+        {
+          "name": "Sara أحمد",
+          "right": 232,
+          "countRight": 232
+        },
+        {
+          "name": "فريق Team 12",
+          "right": 232,
+          "countRight": 232
+        }
+      ],
+      "passed": true
+    },
+    {
+      "theme": "light",
+      "width": 390,
+      "anchors": [
+        {
+          "name": "أحمد",
+          "right": 302,
+          "countRight": 302
+        },
+        {
+          "name": "Sara أحمد",
+          "right": 302,
+          "countRight": 302
+        },
+        {
+          "name": "فريق Team 12",
+          "right": 302,
+          "countRight": 302
+        }
+      ],
+      "passed": true
+    },
+    {
+      "theme": "dark",
+      "width": 320,
+      "anchors": [
+        {
+          "name": "أحمد",
+          "right": 232,
+          "countRight": 232
+        },
+        {
+          "name": "Sara أحمد",
+          "right": 232,
+          "countRight": 232
+        },
+        {
+          "name": "فريق Team 12",
+          "right": 232,
+          "countRight": 232
+        }
+      ],
+      "passed": true
+    },
+    {
+      "theme": "dark",
+      "width": 390,
+      "anchors": [
+        {
+          "name": "أحمد",
+          "right": 302,
+          "countRight": 302
+        },
+        {
+          "name": "Sara أحمد",
+          "right": 302,
+          "countRight": 302
+        },
+        {
+          "name": "فريق Team 12",
+          "right": 302,
+          "countRight": 302
+        }
+      ],
+      "passed": true
+    }
+  ],
+  "errors": []
+}

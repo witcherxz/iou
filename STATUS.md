@@ -4,12 +4,12 @@ Goal: Provide a private Arabic debt ledger with clear balances and recoverable r
 Phase: verify
 
 ## Now
-Preparing Alpha 9 for Arabic card alignment. The isolated Android 16 emulator reproduced left-aligned names and transaction counts inside correctly ordered RTL rows. Native text now uses RTL paragraph alignment, and person history omits the redundant «دين ·» prefix. TypeScript, 1,298 integrated checks, four focused browser RTL cases and 19 history/privacy workflows pass. Published-APK visual verification follows the production build. The user decides when core features are complete and the app can move from alpha to beta.
+Alpha 9 is published and verified on the isolated Android 16 emulator. Names, transaction counts and descriptions align right, and history omits the redundant «دين ·» prefix. TypeScript, 1,298 integrated checks, four browser RTL cases, 19 history/privacy workflows and all 11 native text comparisons pass. Amount/date behavior and centered controls are preserved. Separate compact-label clipping was confirmed to predate Alpha 9 and remains queued. The user decides when core features are complete and the app can move from alpha to beta.
 
 Next:
-1. Finish browser validation and publish the signed Alpha 9 APK.
-2. Verify right-aligned native cards and preserved input/control behavior on the emulator.
-3. Continue cloud-provider, accessibility, privacy and reminder validation before a stable release.
+1. Correct existing native clipping in compact selector and status labels.
+2. Validate completed cloud-provider backup/recovery before a stable release.
+3. Continue native accessibility, privacy and reminder validation.
 
 ## Health
 
@@ -17,8 +17,8 @@ Next:
 |---|---:|---|---:|---:|---:|---|
 | Automated checks passing | 1298 count | 2026-09-12 | 1298 count | >= 1298 count | 1298 count | `cd app && npm run check`; `node scripts/release-workflow-checks.mjs`; `JAVA_HOME=/tmp/iou-device-debug/jdk-17.0.20.1+1 node scripts/native-pin-checks.mjs` |
 | TypeScript | PASS | 2026-09-12 | PASS | = PASS | PASS | `cd app && npm run typecheck` |
-| Alpha 8 production APK | PASS | 2026-09-12 | PASS | = PASS | PASS | [Release workflow](https://github.com/witcherxz/iou/actions/runs/34710749894); [independent APK verification](app/docs/verification/alpha8-apk.json) |
-| Native card text alignment | UNMEASURED | — | FAIL | = PASS | PASS | Alpha 8 reproduction: `/tmp/iou-emulator-qa/rtl-alpha8/home.png`; Alpha 9 verification pending |
+| Alpha 9 production APK | PASS | 2026-09-12 | PASS | = PASS | PASS | [Release workflow](https://github.com/witcherxz/iou/actions/runs/34713790800); [independent APK verification](app/docs/verification/alpha9-apk.json) |
+| Native card text alignment | PASS | 2026-09-12 | FAIL | = PASS | PASS | [Native baseline](app/docs/verification/alpha9-native-before.json); [11 native comparisons](app/docs/verification/alpha9-native.json) |
 
 ## DoD — Alpha 9 Arabic card alignment
 
@@ -27,10 +27,12 @@ Next:
 - [x] Preserve explicit centered controls and existing number/date inputs.
 - [x] Pass TypeScript and integrated checks.
 - [x] Verify browser card alignment and existing history workflows.
-- [ ] Publish and independently verify the signed Alpha 9 APK.
-- [ ] Verify right-aligned native names, counts and transaction descriptions on the emulator.
+- [x] Publish and independently verify the signed Alpha 9 APK.
+- [x] Verify right-aligned native names, counts and transaction descriptions on the emulator.
 
 ## Blockers / Risks
+
+- Compact native labels clip in the forgiveness selector and a debt-status badge. A fresh Alpha 8 baseline reproduced the selector pixel-for-pixel, confirming this predates Alpha 9. Response: correct compact-label sizing in the next UI pass; full transaction type headings remain visible in history.
 
 - PIN performance, automatic biometric prompting, cancellation/PIN fallback and native share/Drive upload-screen navigation are confirmed on the connected S24 Ultra. Alpha 6 local emulator folder save/recovery and in-window confirmations pass. Completed Dropbox-specific provider writes remain unverified after the Alpha 5 confirmation blocker; validate that provider separately. Full app-switcher privacy, TalkBack/font scaling and notifications still need native validation. Response: test the updated folder flow and complete broader validation before a stable release.
 - Direct Google Drive authorization is unfinished. Response: keep direct sync disabled and offer the tested manual share/download and file-restore flow. Drive upload-screen navigation is verified; upload completion remains unverified.
@@ -53,6 +55,8 @@ Next:
 - 2026-09-12: Facing potential overwrite of external backups during startup or recovery, chose explicit first save and suspended automatic backup after local recovery, to protect older/newer copies, accepting a manual review step.
 
 ## Log
+
+- 2026-09-12 [release]: Published Alpha 9 from 9bd6af4 after both Actions runs passed. Independently verified the 72,416,386-byte APK and installed it over Alpha 8. All 11 native text comparisons passed, along with centered amount/action and ISO date checks. A separate temporary emulator confirmed compact selector clipping already existed in Alpha 8; it was stopped cleanly. No ledger saves occurred during the Alpha 9 comparison. [Native evidence](app/docs/verification/alpha9-native.json).
 
 - 2026-09-12 [work]: Reproduced native text painted on the left inside RTL Home card boxes. Traced the behavior to mirrored explicit right alignment in React Native; changed shared text to native automatic alignment with explicit RTL paragraphs and preserved web/caller overrides. Removed the redundant person-history debt prefix. TypeScript and 1,298 integrated checks pass; preparing Alpha 9 and visual verification.
 

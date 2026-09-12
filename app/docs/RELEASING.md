@@ -39,6 +39,20 @@ Alpha release notes record remaining device verification, including biometrics, 
 
 ## Verified alpha release
 
+### Alpha 9
+
+On 2026-09-12, [v0.1.0-alpha.9](https://github.com/witcherxz/iou/releases/tag/v0.1.0-alpha.9) was published from `9bd6af490df1f7d97e90de4b67a189bd708b56f7`. The [release workflow](https://github.com/witcherxz/iou/actions/runs/34713790800) and [main workflow](https://github.com/witcherxz/iou/actions/runs/34713790845) passed 1,298 integrated checks and the signed production build. Four focused RTL browser cases and 19 existing history/privacy workflows passed locally.
+
+The independently verified APK is 72,416,386 bytes, version `0.1.0-alpha.9` / code `9`, with the unchanged production identity and signing key. Signature, non-debuggable manifest, fixture-free offline bundle and both native module checks passed. [APK evidence](verification/alpha9-apk.json).
+
+```text
+6b8d5015271bdbd35cb48e4fd4101a31e0b575244a256774588ce1ee404b72ae
+```
+
+The APK installed over Alpha 8 on the isolated Android 16 emulator. All 11 before/after text comparisons passed: names, operation counts, transaction headings and descriptions align right, the debt heading is shorter, and centered controls retain their alignment. The centered amount and left-to-right ISO date remained correct through read-only focus/cancellation. [Native evidence](verification/alpha9-native.json) and [screenshots](ANDROID-TESTING.md#alpha-9-regression--native-rtl-text-alignment). No ledger saves or phone actions were used for this comparison.
+
+Separate compact-label clipping remains in the forgiveness selector and a debt-status badge. A fresh Alpha 8 install on a second temporary emulator reproduced the selector identically, confirming it predates this update; that emulator was stopped after the comparison. This issue is tracked for a separate UI correction.
+
 ### Alpha 8
 
 On 2026-09-12, [v0.1.0-alpha.8](https://github.com/witcherxz/iou/releases/tag/v0.1.0-alpha.8) was published from `111d81c6b9c85a73c436c332977b534802ec572e`. The [release workflow](https://github.com/witcherxz/iou/actions/runs/34710749894) and [main workflow](https://github.com/witcherxz/iou/actions/runs/34710749817) passed, including 1,298 integrated checks and the signed production build. Nineteen full-App history/creation/privacy UI scenarios, fourteen existing financial workflows and four real privacy lifecycle scenarios passed locally.

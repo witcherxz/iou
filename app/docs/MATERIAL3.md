@@ -19,6 +19,11 @@ seed and distinct receivable/payable colors remain part of the design.
   with additional Arabic body leading and no added letter spacing. Local subsets
   of Material Symbols Rounded replace text-like decorative icons. Selected
   destinations use filled icons. [Font provenance and license](../assets/fonts/README.md).
+- **RTL text:** The shared text component declares an RTL paragraph and uses
+  automatic native alignment. Explicit native `right` alignment is mirrored
+  inside an RTL paragraph; using its leading edge keeps Arabic and mixed-script
+  names, counts and descriptions on the right. Web text retains `right`, and
+  caller overrides keep centered controls centered. See the [native regression](ANDROID-TESTING.md#alpha-9-regression--native-rtl-text-alignment).
 - **Navigation:** Compact windows use an 80dp-minimum navigation bar. At 600dp,
   it becomes an 80dp rail on the right; content has a bounded, centered width.
   Destination labels can wrap and increase the bar height. See
@@ -31,7 +36,7 @@ seed and distinct receivable/payable colors remain part of the design.
   states are visible. See [interaction states](https://m3.material.io/foundations/interaction/states/applying-states).
 - **Forms:** Persistent labels, outlined fields, supporting text and associated
   error messages clarify person, date and note entry. The amount remains directly
-  editable with the custom keypad. See [text fields](https://m3.material.io/components/text-fields/guidelines).
+  editable with the system decimal keyboard. See [text fields](https://m3.material.io/components/text-fields/guidelines).
 - **Dialogs:** Restore/overwrite confirmations use a themed dialog with a clear
   title, explanation and explicit actions. Keyboard focus stays inside; Escape,
   cancel and backdrop dismissal preserve the current ledger. See

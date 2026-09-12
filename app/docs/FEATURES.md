@@ -19,6 +19,8 @@ Payment/exemption forms also preserve the selected type, full/partial mode, dire
 
 History shows a prominent type/direction heading, distinct icon and **مبلغ الإعفاء** or **مبلغ الدفعة** label. Notes remain separate. Existing incorrectly classified records are not guessed or relabelled: cancel the wrong payment and record the exemption with the original amount/date.
 
+Alpha 9 simplifies debt headings to **يدين لي** / **أدين له** and fixes native text alignment within RTL cards. Names, operation counts and descriptions share the right edge; explicitly centered controls retain their alignment.
+
 ## Financial corrections
 
 Corrections preserve exact before/after snapshots. Cancellation adds a `voidedAt` timestamp; cancelled records remain visible in person/payment history and exported tables, and contribute nothing to balances or reminders. Restoring an entry validates its relationships and outstanding balance again. Undo of the latest edit is itself recorded as a correction; it does not erase history.

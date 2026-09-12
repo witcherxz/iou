@@ -1,0 +1,330 @@
+{
+  "version": "Alpha 9 (versionCode 9)",
+  "mode": "read-only navigation; existing synthetic ledger; zero saves",
+  "baseline": "/tmp/iou-emulator-qa/rtl-alpha8/evidence.json",
+  "pixelMethod": "Within each exact UIAutomator TextView bounds, pixels whose maximum RGB channel is below 190 count as glyph ink. No image modifications.",
+  "measurements": [
+    {
+      "screen": "home",
+      "text": "EmulatorQA",
+      "beforeLeftMarginPx": 3,
+      "beforeRightMarginPx": 167,
+      "afterLeftMarginPx": 170,
+      "afterRightMarginPx": 0,
+      "afterNodeBounds": [
+        200,
+        744,
+        544,
+        792
+      ],
+      "afterInkBounds": [
+        370,
+        755,
+        544,
+        785
+      ],
+      "expectation": "right aligned",
+      "passed": true
+    },
+    {
+      "screen": "home",
+      "text": "4 عمليات",
+      "beforeLeftMarginPx": 1,
+      "beforeRightMarginPx": 245,
+      "afterLeftMarginPx": 245,
+      "afterRightMarginPx": 1,
+      "afterNodeBounds": [
+        200,
+        800,
+        544,
+        840
+      ],
+      "afterInkBounds": [
+        445,
+        808,
+        543,
+        835
+      ],
+      "expectation": "right aligned",
+      "passed": true
+    },
+    {
+      "screen": "person-history",
+      "text": "دفعة مستلمة",
+      "beforeLeftMarginPx": 1,
+      "beforeRightMarginPx": 256,
+      "afterLeftMarginPx": 256,
+      "afterRightMarginPx": 1,
+      "afterNodeBounds": [
+        124,
+        322,
+        552,
+        370
+      ],
+      "afterInkBounds": [
+        380,
+        331,
+        551,
+        358
+      ],
+      "expectation": "right aligned",
+      "passed": true
+    },
+    {
+      "screen": "person-history",
+      "text": "السبب: privacy-waiver-qa",
+      "beforeLeftMarginPx": 2,
+      "beforeRightMarginPx": 283,
+      "afterLeftMarginPx": 283,
+      "afterRightMarginPx": 2,
+      "afterNodeBounds": [
+        64,
+        1150,
+        656,
+        1194
+      ],
+      "afterInkBounds": [
+        347,
+        1160,
+        654,
+        1187
+      ],
+      "expectation": "right aligned",
+      "passed": true
+    },
+    {
+      "screen": "person-history",
+      "text": "يدين لي",
+      "beforeLeftMarginPx": 0,
+      "beforeRightMarginPx": 206,
+      "afterLeftMarginPx": 270,
+      "afterRightMarginPx": 0,
+      "afterNodeBounds": [
+        238,
+        1260,
+        588,
+        1300
+      ],
+      "afterInkBounds": [
+        508,
+        1268,
+        588,
+        1300
+      ],
+      "expectation": "right aligned",
+      "passed": true
+    },
+    {
+      "screen": "person-history",
+      "text": "native-check",
+      "beforeLeftMarginPx": 2,
+      "beforeRightMarginPx": 188,
+      "afterLeftMarginPx": 190,
+      "afterRightMarginPx": 0,
+      "afterNodeBounds": [
+        238,
+        1308,
+        588,
+        1348
+      ],
+      "afterInkBounds": [
+        428,
+        1316,
+        588,
+        1337
+      ],
+      "expectation": "right aligned",
+      "passed": true
+    },
+    {
+      "screen": "debt-header",
+      "text": "EmulatorQA",
+      "beforeLeftMarginPx": 3,
+      "beforeRightMarginPx": 293,
+      "afterLeftMarginPx": 295,
+      "afterRightMarginPx": 1,
+      "afterNodeBounds": [
+        64,
+        410,
+        536,
+        458
+      ],
+      "afterInkBounds": [
+        359,
+        421,
+        535,
+        451
+      ],
+      "expectation": "right aligned",
+      "passed": true
+    },
+    {
+      "screen": "debt-header",
+      "text": "native-check · 10 سبتمبر",
+      "beforeLeftMarginPx": 2,
+      "beforeRightMarginPx": 179,
+      "afterLeftMarginPx": 180,
+      "afterRightMarginPx": 1,
+      "afterNodeBounds": [
+        64,
+        458,
+        536,
+        498
+      ],
+      "afterInkBounds": [
+        244,
+        466,
+        535,
+        494
+      ],
+      "expectation": "right aligned",
+      "passed": true
+    },
+    {
+      "screen": "debt-header",
+      "text": "المتبقي من 125.5 ر.س",
+      "beforeLeftMarginPx": 1,
+      "beforeRightMarginPx": 378,
+      "afterLeftMarginPx": 377,
+      "afterRightMarginPx": 2,
+      "afterNodeBounds": [
+        64,
+        646,
+        656,
+        678
+      ],
+      "afterInkBounds": [
+        441,
+        652,
+        654,
+        676
+      ],
+      "expectation": "right aligned",
+      "passed": true
+    },
+    {
+      "screen": "debt-header",
+      "text": "المسدد: 41.83 ر.س",
+      "beforeLeftMarginPx": 1,
+      "beforeRightMarginPx": 272,
+      "afterLeftMarginPx": 271,
+      "afterRightMarginPx": 2,
+      "afterNodeBounds": [
+        88,
+        734,
+        580,
+        778
+      ],
+      "afterInkBounds": [
+        359,
+        744,
+        578,
+        772
+      ],
+      "expectation": "right aligned",
+      "passed": true
+    },
+    {
+      "screen": "debt-header",
+      "text": "سداد المتبقي",
+      "beforeLeftMarginPx": 1,
+      "beforeRightMarginPx": 1,
+      "afterLeftMarginPx": 1,
+      "afterRightMarginPx": 1,
+      "afterNodeBounds": [
+        143,
+        1218,
+        287,
+        1258
+      ],
+      "afterInkBounds": [
+        144,
+        1226,
+        286,
+        1258
+      ],
+      "expectation": "centered",
+      "passed": true
+    }
+  ],
+  "allTextChecksPassed": true,
+  "screenshots": [
+    "debt-header.png",
+    "home.png",
+    "person-history.png",
+    "person-top.png"
+  ],
+  "apkSha256": "6b8d5015271bdbd35cb48e4fd4101a31e0b575244a256774588ce1ee404b72ae",
+  "amountInput": {
+    "screen": "settle-amount",
+    "label": "مبلغ الدفعة بالريال السعودي",
+    "value": "50.17",
+    "enabled": "false",
+    "bounds": [
+      142,
+      904,
+      656,
+      1041
+    ],
+    "leftInkMarginPx": 165,
+    "rightInkMarginPx": 164
+  },
+  "dateInput": {
+    "screen": "settle-date",
+    "label": "تاريخ الدفعة",
+    "value": "2026-09-12",
+    "enabled": "true",
+    "bounds": [
+      34,
+      1119,
+      686,
+      1227
+    ],
+    "visualDirection": "left-to-right ISO date; screenshot inspected",
+    "inkMeasurementOmitted": "Outlined field border intersects native input bounds"
+  },
+  "dateAfterFocusAndKeyboardDismissal": {
+    "screen": "settle-date-after-focus",
+    "label": "تاريخ الدفعة",
+    "value": "2026-09-12",
+    "enabled": "true",
+    "bounds": [
+      36,
+      1121,
+      684,
+      1225
+    ],
+    "visualDirection": "left-to-right ISO date; screenshot inspected",
+    "inkMeasurementOmitted": "Outlined field border intersects native input bounds"
+  },
+  "cancelReturnedToDebtDetail": true,
+  "remainingBalanceAfterCancel": "50.17",
+  "observedLimitations": [
+    "Settle segment accessibility text إعفاء من الدين paints only إعفاء من in the screenshots. Confirmed pre-existing: fresh Alpha8 on isolated emulator5582 reproduces it; label pixels match Alpha9 exactly.",
+    "Debt badge accessibility text إعفاء جزئي paints only إعفاء in both Alpha8 and Alpha9 screenshots; this clipping predates Alpha9."
+  ],
+  "existingSelectorClipping": {
+    "question": "Did Alpha9 introduce clipping of the forgiveness selector?",
+    "conclusion": "No. The known published Alpha8 reproduces the same clipped selector in both unselected and selected states. Alpha8 and Alpha9 unselected label pixels are exactly identical.",
+    "alpha8ApkSha256": "f71bb165e954361c6956b81fcb53c4a2ab95f627758fe207708fbeb424722a67",
+    "alpha8ApkBytes": 72416406,
+    "baselineVersionCode": 8,
+    "baselineDevice": "temporary emulator-5582 with separate writable AVD path; cached Android36 system image;720x1600 at320dpi",
+    "syntheticSetup": "Fresh app, onboarding, one new RTLBaseline person/debt50.17; no lock or cloud account; no payment or forgiveness submitted",
+    "mainEmulator5580Untouched": true,
+    "temporaryEmulatorStopped": true,
+    "alpha8UnselectedScreenshot": "/tmp/iou-alpha8-rtl-avd/evidence/alpha8-settle-unselected.png",
+    "alpha8SelectedScreenshot": "/tmp/iou-alpha8-rtl-avd/evidence/alpha8-settle-selected.png",
+    "alpha9ComparisonScreenshot": "/tmp/iou-emulator-qa/rtl-alpha9/settle-amount.png",
+    "accessibleLabel": "إعفاء من الدين",
+    "visibleLabel": "إعفاء من",
+    "labelBounds": [
+      117,
+      364,
+      276,
+      404
+    ],
+    "alpha8Alpha9UnselectedLabelPixelsIdentical": true,
+    "differingPixels": 0
+  }
+}
