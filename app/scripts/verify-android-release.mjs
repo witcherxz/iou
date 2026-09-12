@@ -54,12 +54,13 @@ const NATIVE_PIN_CLASSES = [
   'Lexpo/modules/iouprivacycrypto/IouPrivacyCryptoModule;',
   'Lexpo/modules/iouprivacycrypto/PinKdf;',
 ];
+const NATIVE_BACKUP_CLASSES = ['Lexpo/modules/ioubackupdocuments/IouBackupDocumentsModule;'];
 
 /** Inspect actual class definitions, not unused descriptors or JavaScript strings.
  * DEX layout: https://source.android.com/docs/core/runtime/dex-format
  * Release builds currently retain class names (R8 minification is disabled).
  */
-export function verifyNativePinWorker(dexFiles) {
+function verifyNativeClasses(dexFiles, required, label) {
   assert.ok(Array.isArray(dexFiles) && dexFiles.length > 0 && dexFiles.length <= 64,
     'Production APK must contain a bounded set of compiled DEX files');
   const found = new Set();
@@ -94,19 +95,35 @@ export function verifyNativePinWorker(dexFiles) {
       const end = descriptorBytes.indexOf(0);
       assert.ok(end >= 0, 'Truncated or oversized DEX class descriptor');
       const descriptor = descriptorBytes.subarray(0, end).toString('utf8');
-      if (NATIVE_PIN_CLASSES.includes(descriptor)) found.add(descriptor);
+      if (required.includes(descriptor)) found.add(descriptor);
     }
   }
-  for (const name of NATIVE_PIN_CLASSES) assert.ok(found.has(name), `Production APK is missing native PIN worker class: ${name}`);
+  for (const name of required) assert.ok(found.has(name), `Production APK is missing ${label}: ${name}`);
 }
 
-/** Also exported for independent verification of the downloaded release APK. */
-export function verifyNativePinWorkerInApk(apkPath) {
+export function verifyNativePinWorker(dexFiles) {
+  verifyNativeClasses(dexFiles, NATIVE_PIN_CLASSES, 'native PIN worker class');
+}
+
+export function verifyNativeBackupDocuments(dexFiles) {
+  verifyNativeClasses(dexFiles, NATIVE_BACKUP_CLASSES, 'native backup documents module');
+}
+
+function dexFilesInApk(apkPath) {
   const apk = resolve(apkPath);
   const entries = command('unzip', ['-Z1', apk]).split(/\r?\n/)
     .filter(name => /^classes(?:[2-9]|[1-9][0-9]+)?\.dex$/.test(name));
   assert.ok(entries.length > 0 && entries.length <= 64, 'Production APK must contain compiled DEX files');
-  verifyNativePinWorker(entries.map(name => command('unzip', ['-p', apk, name], null)));
+  return entries.map(name => command('unzip', ['-p', apk, name], null));
+}
+
+/** Also exported for independent verification of the downloaded release APK. */
+export function verifyNativePinWorkerInApk(apkPath) {
+  verifyNativePinWorker(dexFilesInApk(apkPath));
+}
+
+export function verifyNativeBackupDocumentsInApk(apkPath) {
+  verifyNativeBackupDocuments(dexFilesInApk(apkPath));
 }
 
 function command(file, args, encoding = 'utf8') {
@@ -157,7 +174,9 @@ function verifyApk(apkPath) {
   console.log(`Android APK signature verification:\n${inspected.signature.trim()}`);
   verifyInspection(inspected, expected);
   verifyBundle(command('unzip', ['-p', apk, 'assets/index.android.bundle'], null));
-  verifyNativePinWorkerInApk(apk);
+  const dexFiles = dexFilesInApk(apk);
+  verifyNativePinWorker(dexFiles);
+  verifyNativeBackupDocuments(dexFiles);
 
   const destination = join(appRoot, 'release');
   mkdirSync(destination, { recursive: true });
@@ -165,7 +184,7 @@ function verifyApk(apkPath) {
   copyFileSync(apk, join(destination, name));
   const digest = createHash('sha256').update(readFileSync(apk)).digest('hex');
   writeFileSync(join(destination, `${name}.sha256`), `${digest}  ${name}\n`);
-  console.log(`Verified ${name}: non-debuggable, release certificate, correct identity/version, native PIN worker, no demo content, SHA-256 ${digest}`);
+  console.log(`Verified ${name}: non-debuggable, release certificate, correct identity/version, native PIN worker and backup documents module, no demo content, SHA-256 ${digest}`);
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

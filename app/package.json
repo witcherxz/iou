@@ -1,6 +1,6 @@
 {
   "name": "app",
-  "version": "0.1.0-alpha.4",
+  "version": "0.1.0-alpha.5",
   "main": "index.ts",
   "dependencies": {
     "@expo-google-fonts/ibm-plex-sans-arabic": "^0.4.2",
@@ -38,7 +38,7 @@
     "web": "expo start --web",
     "check": "esbuild scripts/checks.ts --bundle --platform=node --format=cjs --outfile=node_modules/.cache/checks.js --log-level=error --alias:react-native=./scripts/rn-stub.js && node node_modules/.cache/checks.js && npm run check:backup && npm run check:ui && npm run check:encrypted && npm run check:privacy && npm run check:reminders && npm run check:entries && npm run check:release",
     "typecheck": "tsc --noEmit",
-    "check:backup": "esbuild scripts/backup-checks.ts --bundle --platform=node --format=cjs --outfile=node_modules/.cache/backup-checks.js --log-level=error --alias:react-native=./scripts/backup-native-stub.ts --alias:expo-file-system=./scripts/backup-filesystem-stub.ts && node node_modules/.cache/backup-checks.js",
+    "check:backup": "esbuild scripts/backup-checks.ts --bundle --platform=node --format=cjs --outfile=node_modules/.cache/backup-checks.js --log-level=error --alias:react-native=./scripts/backup-native-stub.ts --alias:expo-file-system=./scripts/backup-filesystem-stub.ts --alias:expo=./scripts/backup-expo-stub.ts && node node_modules/.cache/backup-checks.js",
     "check:ui": "esbuild scripts/material-checks.ts --bundle --platform=node --format=cjs --outfile=node_modules/.cache/material-checks.js --log-level=error && node node_modules/.cache/material-checks.js",
     "check:privacy": "esbuild scripts/privacy-checks.ts --bundle --platform=node --format=cjs --outfile=node_modules/.cache/privacy-checks.js --log-level=error && node node_modules/.cache/privacy-checks.js",
     "check:encrypted": "esbuild scripts/encrypted-backup-checks.ts --bundle --platform=node --format=cjs --outfile=node_modules/.cache/encrypted-backup-checks.js --log-level=error --alias:react-native=./scripts/backup-native-stub.ts --alias:expo-crypto=./scripts/backup-crypto-stub.ts && node node_modules/.cache/encrypted-backup-checks.js",

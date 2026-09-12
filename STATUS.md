@@ -4,34 +4,36 @@ Goal: Provide a private Arabic debt ledger with clear balances and recoverable r
 Phase: verify
 
 ## Now
-[Alpha 3](https://github.com/witcherxz/iou/releases/tag/v0.1.0-alpha.3) is installed on the S24 Ultra, with automatic biometrics, cancellation and PIN fallback verified on the phone. ADB reached Drive's upload screen through More and a scrolled apps list. Alpha 4 passed app checks (55 backup checks), TypeScript, 57 release guards and five partial-backup hook scenarios. Publishing clearer Drive instructions, explicit Android document truncation, and accurate partial-backup errors; the earlier generic folder failure's exact cause remains unconfirmed.
+[Alpha 4](https://github.com/witcherxz/iou/releases/tag/v0.1.0-alpha.4) is published and installed on the S24 Ultra. Automatic biometrics and PIN fallback are verified, and ADB reached Drive's upload screen. Saving to the existing Dropbox folder still failed with `FOLDER_SNAPSHOT_IO`. Preparing Alpha 5 with provider display-name metadata, owned Android output streams for new and existing documents, and preservation of the entry form when adding a person or temporarily locking/backgrounding the app.
 
 Next:
-1. Verify, publish and install Alpha 4, then test the selected folder's backup flow on the phone.
-2. Complete native restoration/provider validation and confirm Drive save completion when used.
+1. Publish and install the checked Alpha 5 production update.
+2. Test the existing folder's save and recovery-history flow on the phone; record any remaining provider limitation accurately.
 3. Complete broader native accessibility/reminder/provider validation; direct automatic Drive sync still requires native authorization and Google Cloud setup.
 
 ## Health
 
 | metric | current | measured | previous | threshold | goal | source |
 |---|---:|---|---:|---:|---:|---|
-| Automated checks passing | 1228 count | 2026-09-12 | 1206 count | >= 1228 count | 1228 count | `cd app && npm run check`; `node scripts/release-workflow-checks.mjs`; `node scripts/native-pin-checks.mjs`; [Alpha 3 checks](https://github.com/witcherxz/iou/actions/runs/34701892262) |
+| Automated checks passing | 1254 count | 2026-09-12 | 1231 count | >= 1254 count | 1254 count | `cd app && npm run check`; `node scripts/release-workflow-checks.mjs`; `JAVA_HOME=/tmp/iou-device-debug/jdk-17.0.20.1+1 node scripts/native-pin-checks.mjs` |
 | TypeScript | PASS | 2026-09-12 | PASS | = PASS | PASS | `cd app && npm run typecheck` |
-| Biometric React lifecycle scenarios | 16 count | 2026-09-12 | — | >= 16 count | 16 count | `/tmp/iou-biometric-lifecycle/results.json` |
-| Alpha 3 production APK | PASS | 2026-09-12 | PASS | = PASS | PASS | [Release workflow](https://github.com/witcherxz/iou/actions/runs/34701892262); [verification and device installation](app/docs/RELEASING.md#alpha-3) |
+| Alpha 4 production APK | PASS | 2026-09-12 | PASS | = PASS | PASS | [Release workflow](https://github.com/witcherxz/iou/actions/runs/34703133871); [verification and device installation](app/docs/RELEASING.md#alpha-4) |
+| Native Dropbox folder save | FAIL | 2026-09-12 | UNMEASURED | = PASS | PASS | `/tmp/iou-device-debug/backup-observation-20260912-185954.json`; [Alpha 4 verification](app/docs/RELEASING.md#alpha-4) |
 
-## DoD — Alpha 4 native backup follow-up
+## DoD — Alpha 5 provider backups and entry drafts
 
-- [x] Reproduce native export and reach Drive's upload screen without changing the backup folder.
-- [x] Explain the observed More/scroll/Drive/upload route in the app.
-- [x] Prevent stale bytes in shorter Android document rewrites and distinguish verified recovery from incomplete reports.
-- [ ] Pass checks and publish/install Alpha 4 with production signing and existing data preserved.
-- [ ] Test the existing folder-save flow and record any remaining provider limitation accurately.
+- [x] Reproduce the native folder failure and preserve private data during diagnostics.
+- [x] Use paired provider display names and exact document identities for folder history/recovery.
+- [x] Complete owning Android output streams and safe operation-specific failures.
+- [x] Preserve the full unfinished entry across person creation and temporary privacy-gate remounts.
+- [x] Pass integrated checks after the final native writer change and focused draft/backup lifecycle scenarios.
+- [ ] Publish/install Alpha 5 with production signing and existing data preserved.
+- [ ] Verify native folder save and readable recovery history.
 
 ## Blockers / Risks
 
-- PIN performance, automatic biometric prompting, cancellation/PIN fallback and native share/Drive upload-screen navigation are confirmed on the connected S24 Ultra. Folder completion/recovery, full app-switcher privacy, TalkBack/font scaling and notifications still need native validation. Response: test the updated folder flow and complete broader validation before a stable release.
-- Direct Google Drive authorization is unfinished. Response: keep direct sync disabled and offer the tested manual share/download and file-restore flow. Native Drive upload completion remains user-confirmed.
+- PIN performance, automatic biometric prompting, cancellation/PIN fallback and native share/Drive upload-screen navigation are confirmed on the connected S24 Ultra. Dropbox folder saves still fail on Alpha 4; Alpha 5 provider compatibility changes need device verification. Full app-switcher privacy, TalkBack/font scaling and notifications still need native validation. Response: test the updated folder flow and complete broader validation before a stable release.
+- Direct Google Drive authorization is unfinished. Response: keep direct sync disabled and offer the tested manual share/download and file-restore flow. Drive upload-screen navigation is verified; upload completion remains unverified.
 - The app lock controls access; ordinary local/folder/CSV/report data remains readable. Protected manual exports use a separate password. Response: explain the distinction and keep off-device copies private.
 - Automatic backups run after foreground edits and are suspended after local recovery; reminders retain the nearest 60 alerts plus weekly and refresh on foreground. Response: explain these operating limits in the feature notes.
 
@@ -49,6 +51,12 @@ Next:
 - 2026-09-12: Facing potential overwrite of external backups during startup or recovery, chose explicit first save and suspended automatic backup after local recovery, to protect older/newer copies, accepting a manual review step.
 
 ## Log
+
+- 2026-09-12 [work]: Prepared Alpha 5 with paired native document metadata, owned and explicitly closed native output streams, strict recovery identities, and entry drafts held above the privacy gate. Passed 1,254 integrated checks, TypeScript, eight full Expo form-flow scenarios, seven real privacy-gate lifecycle scenarios (including the failing previous source), and six asynchronous backup-hook scenarios. Provider tests cover opaque IDs, duplicates, actual Expo URL parsing, and stalled metadata queries. Native verification follows the production build.
+
+- 2026-09-12 [release]: Published and installed Alpha 4 from 6f4a4f2 after both Actions runs and 1,231 checks passed. Independent APK verification passed. Native retry failed with FOLDER_SNAPSHOT_IO before a new recovery snapshot was verified; no JS error or native crash occurred. This remaining Dropbox provider failure is the Alpha 5 target.
+
+- 2026-09-12 [review]: Corrected stale Alpha 4 preparation status after publication and installation; native folder completion remains failed rather than assumed successful from automated checks.
 
 - 2026-09-12 [work]: Prepared Alpha 4 after direct ADB reproduction reached Drive's upload screen through More and scrolling. Added matching guidance, explicit truncation for Android document rewrites, and sanitized partial-backup errors. Full app checks (55 backup assertions), TypeScript, 57 release guards and five real-hook bookkeeping scenarios passed. Provider truncation is a verified compatibility issue; the phone's earlier generic folder failure remains unconfirmed pending the updated native test.
 

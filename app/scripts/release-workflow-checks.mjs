@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { releaseVersion } from './android-release-version.mjs';
-import { verifyBundle, verifyInspection, verifyNativePinWorker } from './verify-android-release.mjs';
+import { verifyBundle, verifyInspection, verifyNativePinWorker, verifyNativeBackupDocuments } from './verify-android-release.mjs';
 import { RELEASE_FIXTURE_MARKERS } from './release-fixture-markers.mjs';
 
 let count = 0;
@@ -223,5 +223,24 @@ check('out-of-range DEX tables cannot masquerade as compiled native classes', ()
   const malformed = dexFixture(nativeClasses);
   malformed.writeUInt32LE(malformed.length, 100);
   assert.throws(() => verifyNativePinWorker([malformed]), /Truncated DEX table/);
+});
+const backupDocumentClass = 'Lexpo/modules/ioubackupdocuments/IouBackupDocumentsModule;';
+check('compiled native backup documents module is accepted alongside the PIN worker', () => {
+  const dex = [dexFixture([...nativeClasses, backupDocumentClass])];
+  assert.doesNotThrow(() => verifyNativePinWorker(dex));
+  assert.doesNotThrow(() => verifyNativeBackupDocuments(dex));
+});
+check('backup documents and PIN modules may reside in different DEX files', () => {
+  const dex = [dexFixture(nativeClasses), dexFixture([backupDocumentClass])];
+  assert.doesNotThrow(() => verifyNativePinWorker(dex));
+  assert.doesNotThrow(() => verifyNativeBackupDocuments(dex));
+});
+check('PIN worker presence cannot hide an absent backup documents module', () => {
+  const dex = [dexFixture(nativeClasses)];
+  assert.doesNotThrow(() => verifyNativePinWorker(dex));
+  assert.throws(() => verifyNativeBackupDocuments(dex), /missing native backup documents module/);
+});
+check('an unused backup module descriptor cannot satisfy the compiled-module guard', () => {
+  assert.throws(() => verifyNativeBackupDocuments([dexFixture([backupDocumentClass], [])]), /missing native backup documents module/);
 });
 console.log(`${count} Android release checks passed.`);

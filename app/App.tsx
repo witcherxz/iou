@@ -28,7 +28,7 @@ import { PrivacySettings } from './src/privacy/PrivacySettings';
 import { PersistedState } from './src/types';
 import { ensurePermission, ReminderStatus, syncReminders } from './src/reminders';
 import { allDebts, peopleView } from './src/selectors';
-import { AddDebt } from './src/screens/AddDebt';
+import { AddDebt, createAddDebtDraft } from './src/screens/AddDebt';
 import { DebtDetail } from './src/screens/DebtDetail';
 import { DebtList, StatusFilter } from './src/screens/DebtList';
 import { Home } from './src/screens/Home';
@@ -89,7 +89,9 @@ function Root() {
   const [entryId, setEntryId] = useState<string | null>(null);
   const [cameFrom, setCameFrom] = useState<Screen>('main');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('open');
-  const [addDir, setAddDir] = useState<'me' | 'owe'>('me');
+  // Keep the current form session above PrivacyGate: locking hides the form
+  // without discarding unsaved input. This draft never enters ledger storage.
+  const [addDraft, setAddDraft] = useState(createAddDebtDraft);
   const [addPersonId, setAddPersonId] = useState<string | null>(null);
   const [settleDebtId, setSettleDebtId] = useState<string | null>(null);
   const [settleMode, setSettleMode] = useState<'full' | 'partial'>('full');
@@ -127,6 +129,7 @@ function Root() {
     setPersonId(null);
     setDebtId(null);
     setEntryId(null);
+    setAddDraft(createAddDebtDraft());
     return applied;
   }, [replaceAll, privacy.enabled]);
 
@@ -153,7 +156,13 @@ function Root() {
   const goHome = useCallback(() => {
     setScreen('main');
     setTab('home');
+    setAddDraft(createAddDebtDraft());
   }, []);
+
+  const closeAdd = useCallback(() => {
+    setAddDraft(createAddDebtDraft());
+    setScreen(personId && addPersonId ? 'person' : 'main');
+  }, [personId, addPersonId]);
 
   const back = useCallback((): boolean => {
     if (!privacy.unlocked) return false;
@@ -163,8 +172,9 @@ function Root() {
       setScreen(cameFrom === 'person' ? 'person' : 'main');
       return true;
     }
-    if (screen === 'person' || screen === 'add') {
-      setScreen(screen === 'add' && personId && addPersonId ? 'person' : 'main');
+    if (screen === 'add') { closeAdd(); return true; }
+    if (screen === 'person') {
+      setScreen('main');
       return true;
     }
     if (screen === 'settle') {
@@ -180,7 +190,7 @@ function Root() {
       return true;
     }
     return false; // let Android close the app
-  }, [screen, tab, cameFrom, personId, addPersonId, settleFrom, privacy.unlocked]);
+  }, [screen, tab, cameFrom, closeAdd, settleFrom, privacy.unlocked]);
 
   useEffect(() => {
     const sub = BackHandler.addEventListener('hardwareBackPress', back);
@@ -199,7 +209,7 @@ function Root() {
   const openAdd = useCallback(
     (forPersonId: string | null, dir: 'me' | 'owe') => {
       setAddPersonId(forPersonId);
-      setAddDir(dir);
+      setAddDraft(createAddDebtDraft(dir, forPersonId));
       setScreen('add');
     },
     [],
@@ -383,9 +393,9 @@ function Root() {
               <AddDebt
                 c={c}
                 people={state.people}
-                initialDir={addDir}
-                initialPersonId={addPersonId}
-                onClose={() => setScreen(personId && addPersonId ? 'person' : 'main')}
+                draft={addDraft}
+                onDraftChange={setAddDraft}
+                onClose={closeAdd}
                 onAddPerson={addPerson}
                 onSave={input => {
                   if (!addDebt(input)) return false;

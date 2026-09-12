@@ -185,7 +185,7 @@ export function useBackup({ state, ready, suspendAutomatic = false, onRestored, 
       if (!automatic && !manualFile && AUTOMATIC_TARGETS.includes(source) &&
         (automaticSuspended.current || !isBackupTimestamp(snapshot.lastBackup))) {
         const existing = source === 'folder'
-          ? snapshot.backupFolderUri && folderHasBackup(snapshot.backupFolderUri)
+          ? snapshot.backupFolderUri && await folderHasBackup(snapshot.backupFolderUri)
           : await withDrive(() => downloadBackup());
         if (existing === undefined) return;
         if (existing && !(await confirmAction(

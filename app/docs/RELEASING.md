@@ -1,20 +1,20 @@
 # Android alpha releases
 
-The application version is `0.1.0-alpha.4`, Android version code `4`, and production application ID `io.github.witcherxz.iou`. The same version is recorded in `app.json`, `package.json`, and the package-lock root. iOS uses the numeric marketing version `0.1.0` and build number `4` if built separately.
+The application version is `0.1.0-alpha.5`, Android version code `5`, and production application ID `io.github.witcherxz.iou`. The same version is recorded in `app.json`, `package.json`, and the package-lock root. iOS uses the numeric marketing version `0.1.0` and build number `5` if built separately.
 
 ## Build and publish
 
 1. Update the version in all three files, increase Android `versionCode`, and add `docs/releases/<version>.md`.
 2. Run `npm run typecheck` and `npm run check`. The release check traverses the production source graph and rejects test fixtures, mocks, sample ledger markers and seeding switches.
 3. Commit/push the reviewed changes. Main-branch Actions runs produce a signed APK artifact.
-4. Push a matching version tag, such as `v0.1.0-alpha.4`. Actions builds and verifies the APK, then publishes it and its `.apk.sha256` checksum to a GitHub prerelease. Tag/version mismatches fail.
+4. Push a matching version tag, such as `v0.1.0-alpha.5`. Actions builds and verifies the APK, then publishes it and its `.apk.sha256` checksum to a GitHub prerelease. Tag/version mismatches fail.
 
 The workflow runs checks for pull requests without exposing signing credentials. Release builds use Node 22, JDK 17, Expo prebuild, and Gradle `:app:assembleRelease`. A Gradle init script assigns the dedicated release signing configuration and disables debugging; it does not silently fall back to the template debug key.
 
 Before upload, the APK verifier checks package ID, version name/code, non-debuggable manifest, signature certificate, embedded Hermes/JavaScript and absence of demo fixture content. Downloaded APK checksums can be verified using:
 
 ```bash
-sha256sum -c iou-0.1.0-alpha.4.apk.sha256
+sha256sum -c iou-0.1.0-alpha.5.apk.sha256
 ```
 
 ## Signing key
@@ -38,6 +38,18 @@ The old debug package was `com.example.iou` and used the Expo template signing k
 Alpha release notes record remaining device verification, including biometrics, notification delivery, app-switcher privacy and folder-provider behavior. A successful production build establishes packaging and signing, not hardware behavior.
 
 ## Verified alpha release
+
+### Alpha 4
+
+On 2026-09-12, [v0.1.0-alpha.4](https://github.com/witcherxz/iou/releases/tag/v0.1.0-alpha.4) was published from `6f4a4f28824585fc20543cce0da914726fb95f84`. The [release workflow](https://github.com/witcherxz/iou/actions/runs/34703133871) and main workflow passed, including 1,231 automated checks, TypeScript and the signed production build. Five partial-backup hook scenarios also passed locally.
+
+The independently verified APK is 72,379,134 bytes, version `0.1.0-alpha.4` / code `4`, with the unchanged production identity and pinned signing key.
+
+```text
+8df8e101d4c2bc71dd4b4b5a367bff692e331f9ea58b065005664b9bebde66b0
+```
+
+The update installed over Alpha 3 and preserved PIN/biometric entry. Retrying the existing Dropbox folder through the app produced `FOLDER_SNAPSHOT_IO` before a recovery snapshot could be verified, without a JavaScript error or native crash. This exposed a remaining provider-specific path despite the successful generic provider tests. Alpha 5 addresses new-document writes and provider display-name metadata; Alpha 4 should not be treated as verified Dropbox folder recovery.
 
 ### Alpha 3
 

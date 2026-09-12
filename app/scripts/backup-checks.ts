@@ -6,7 +6,9 @@ import { csvCell, embeddedJson, parseReadableBackup, readableFiles, REPORT_FILEN
 import { BACKUP_FILENAME } from '../src/config/app';
 import { editEntry, voidEntry } from '../src/ledger';
 import { PersistedState } from '../src/types';
-import { failNextWrite, failNextWriteMatching, files, folders, nonTruncatingFolders, openHandles } from './backup-filesystem-stub';
+import { listAndroidDocuments, validateAndroidDocumentEntries, writeAndroidDocument } from '../src/backup/androidDocuments';
+import { URL as ExpoURL } from 'whatwg-url-minimum';
+import { failNextWrite, failNextWriteMatching, failNextCreate, failNextRead, failNextClose, mismatchNextRead, failNextListing, hangNextListing, files, folders, nonTruncatingFolders, openHandles, opaqueFolders, reorderedFolders, metadata, readCalls, addDocument, documentUriNamed, freshSafWriteAttempts, expoSafOpenAttempts, nativeWriteCalls } from './backup-filesystem-stub';
 
 // Keep these checks dependency-free, like the existing ledger checks.
 const assert = {
@@ -194,9 +196,10 @@ async function main() {
   const uri = 'memory://backup';
   folders.add(uri);
   await writeToFolder(uri, text);
+  const hasFirstBackup = await folderHasBackup(uri);
   check('first folder write creates readable primary', () => {
     assert.equal(files.get(`${uri}/${BACKUP_FILENAME}`), text);
-    assert.equal(folderHasBackup(uri), true);
+    assert.equal(hasFirstBackup, true);
     assert.deepEqual(parseReadableBackup(files.get(`${uri}/${REPORT_FILENAME}`)!), payload);
     assert.ok(files.has(`${uri}/iou-transactions.csv`));
   });
@@ -227,7 +230,7 @@ async function main() {
 
   const initialVersions = await listFolderVersions(uri);
   check('folder history deduplicates primary and previous mirrors', () => assert.equal(initialVersions.length, 3));
-  const oldId = initialVersions.find(version => version.peopleCount === source.people.length && files.get(`${uri}/${version.id}`) === text)!.id;
+  const oldId = initialVersions.find(version => version.peopleCount === source.people.length && files.get(version.id) === text)!.id;
   const selected = await readFolderVersion(uri, oldId);
   check('older dated backup can be explicitly read for restore', () => assert.equal(selected, text));
   await assert.rejects(readFolderVersion(uri, '../other.json'), InvalidBackupError);
@@ -236,7 +239,7 @@ async function main() {
   await assert.rejects(writeToFolder(uri, serialize({ ...source, profileName: 'failed' })));
   check('partial immutable snapshot write leaves current and older backups valid', () => {
     assert.equal(files.get(`${uri}/${BACKUP_FILENAME}`), third);
-    assert.equal(files.get(`${uri}/${oldId}`), text);
+    assert.equal(files.get(oldId), text);
   });
   const afterFailure = await listFolderVersions(uri);
   check('corrupt partial files are excluded from selectable history', () => assert.equal(afterFailure.length, 3));
@@ -244,10 +247,13 @@ async function main() {
   for (let i = 0; i < 14; i++) await writeToFolder(uri, JSON.stringify({ ...parseBackup(text), profileName: `revision ${i}`, backedUpAt: new Date(Date.UTC(2026, 8, 12, 12, i)).toISOString() }));
   const versions = await listFolderVersions(uri);
   check('successful backups retain the last ten immutable versions', () => {
-    assert.equal([...files.keys()].filter(key => key.startsWith(`${uri}/iou-snapshot-`)).length, SNAPSHOT_LIMIT);
+    assert.equal([...files.entries()].filter(([key, value]) => {
+      if (!key.startsWith(`${uri}/iou-snapshot-`)) return false;
+      try { parseBackup(value); return true; } catch { return false; }
+    }).length, SNAPSHOT_LIMIT);
     assert.equal(versions.length, SNAPSHOT_LIMIT);
     assert.equal(files.get(`${uri}/other-user-file.txt`), 'keep me');
-    assert.ok(versions.every(version => parseBackup(files.get(`${uri}/${version.id}`)!).profileName.startsWith('revision ')));
+    assert.ok(versions.every(version => parseBackup(files.get(version.id)!).profileName.startsWith('revision ')));
   });
   files.set(`${uri}/${BACKUP_FILENAME}`, '{broken');
   files.set(`${uri}/${PREVIOUS_BACKUP_FILENAME}`, '{also broken');
@@ -258,7 +264,8 @@ async function main() {
   });
   files.delete(`${uri}/${BACKUP_FILENAME}`);
   files.delete(`${uri}/${PREVIOUS_BACKUP_FILENAME}`);
-  check('folder with snapshots alone is still recognized as containing backups', () => assert.equal(folderHasBackup(uri), true));
+  const hasSnapshots = await folderHasBackup(uri);
+  check('folder with snapshots alone is still recognized as containing backups', () => assert.equal(hasSnapshots, true));
   failNextWrite(REPORT_FILENAME);
   let reportFailure: unknown;
   try { await writeToFolder(uri, text); } catch (error) { reportFailure = error; }
@@ -269,7 +276,7 @@ async function main() {
     const failure = reportFailure as FolderBackupWriteError;
     assert.equal(failure.snapshotSaved, true);
     assert.equal(failure.stage, 'report');
-    assert.equal(failure.code, 'FOLDER_REPORT_IO');
+    assert.equal(failure.code, 'FOLDER_REPORT_WRITE');
     assert.ok(failure.message.includes('حُفظت نسخة للاستعادة'));
     assert.ok(!failure.message.includes(uri));
   });
@@ -284,20 +291,180 @@ async function main() {
   await writeToFolder(safUri, longer);
   await writeToFolder(safUri, shorter);
   check('SAF short rewrites explicitly truncate JSON and all companion files', () => {
-    assert.equal(files.get(`${safUri}/${BACKUP_FILENAME}`), shorter);
-    for (const report of readableFiles(shorter)) assert.equal(files.get(`${safUri}/${report.name}`), report.text);
-    assert.equal(files.get(`${safUri}/${PREVIOUS_BACKUP_FILENAME}`), longer);
+    assert.equal(files.get(documentUriNamed(safUri, BACKUP_FILENAME)), shorter);
+    for (const report of readableFiles(shorter)) assert.equal(files.get(documentUriNamed(safUri, report.name)), report.text);
+    assert.equal(files.get(documentUriNamed(safUri, PREVIOUS_BACKUP_FILENAME)), longer);
     assert.equal(openHandles, 0);
+    assert.equal(freshSafWriteAttempts, 0);
+    assert.equal(expoSafOpenAttempts, 0);
+    assert.ok(nativeWriteCalls.includes(documentUriNamed(safUri, BACKUP_FILENAME)));
+    assert.ok(nativeWriteCalls.includes(documentUriNamed(safUri, PREVIOUS_BACKUP_FILENAME)));
+    for (const report of readableFiles(shorter)) assert.ok(nativeWriteCalls.includes(documentUriNamed(safUri, report.name)));
+    assert.ok(nativeWriteCalls.some(uri => metadata.get(uri)?.name.startsWith('iou-snapshot-')));
   });
   failNextWrite(REPORT_FILENAME);
   let handleFailure: unknown;
   try { await writeToFolder(safUri, text); } catch (error) { handleFailure = error; }
-  check('SAF write failures close the handle and preserve verified snapshot diagnostics', () => {
+  check('native SAF write failures close the owned stream and preserve verified snapshot diagnostics', () => {
     assert.equal(openHandles, 0);
     assert.ok(handleFailure instanceof FolderBackupWriteError);
     assert.equal((handleFailure as FolderBackupWriteError).snapshotSaved, true);
     assert.equal((handleFailure as FolderBackupWriteError).stage, 'report');
-    assert.equal(files.get(`${safUri}/${BACKUP_FILENAME}`), text);
+    assert.equal(files.get(documentUriNamed(safUri, BACKUP_FILENAME)), text);
+  });
+  failNextClose(REPORT_FILENAME);
+  let closeFailure: unknown;
+  try { await writeToFolder(safUri, shorter); } catch (error) { closeFailure = error; }
+  check('provider close failure remains a partial save even when bytes appear readable', () => {
+    assert.equal(openHandles, 0);
+    assert.equal((closeFailure as FolderBackupWriteError).snapshotSaved, true);
+    assert.equal((closeFailure as FolderBackupWriteError).code, 'FOLDER_REPORT_WRITE');
+    assert.ok(!(closeFailure as Error).message.includes('private'));
+    assert.equal(files.get(documentUriNamed(safUri, BACKUP_FILENAME)), shorter);
+  });
+  const initialSafFailureUri = 'content://provider/tree/initial-write-failure';
+  folders.add(initialSafFailureUri);
+  failNextWriteMatching(/^iou-snapshot-/);
+  let initialSafFailure: unknown;
+  try { await writeToFolder(initialSafFailureUri, text); } catch (error) { initialSafFailure = error; }
+  check('native failure before a verified snapshot cannot claim a successful recovery copy', () => {
+    assert.equal(openHandles, 0);
+    assert.equal((initialSafFailure as FolderBackupWriteError).snapshotSaved, false);
+    assert.equal((initialSafFailure as FolderBackupWriteError).code, 'FOLDER_SNAPSHOT_WRITE');
+    assert.ok(![...metadata.values()].some(entry => entry.folder === initialSafFailureUri && entry.name === BACKUP_FILENAME));
+  });
+  const nativeWritesBeforeRejectedUris = nativeWriteCalls.length;
+  await assert.rejects(writeAndroidDocument(safUri, text));
+  await assert.rejects(writeAndroidDocument('file:///private/unrelated-file', text));
+  check('native write adapter rejects non-document URIs before invoking the provider', () => assert.equal(nativeWriteCalls.length, nativeWritesBeforeRejectedUris));
+  const opaqueUri = 'content://opaque.provider/tree/granted%3Atree';
+  folders.add(opaqueUri);
+  opaqueFolders.add(opaqueUri);
+  reorderedFolders.add(opaqueUri);
+  const sharedName = 'iou-snapshot-2026-09-12T12-00-00-000Z-0.json';
+  const firstOpaque = addDocument(opaqueUri, sharedName, longer);
+  const secondOpaque = addDocument(opaqueUri, sharedName, shorter);
+  const ignoredName = addDocument(opaqueUri, 'personal notes.txt', text, 'iou-backup.json');
+  const ignoredDirectory = addDocument(opaqueUri, BACKUP_FILENAME, '', 'directory', true);
+  const unvalidatedSnapshot = addDocument(opaqueUri, 'iou-snapshot-2020-01-01T00-00-00-000Z-0.json', 'user file, not an IoU ledger');
+  readCalls.length = 0;
+  const opaqueVersions = await listFolderVersions(opaqueUri + '/');
+  check('opaque provider IDs use paired names and retain duplicate-name identities', () => {
+    assert.equal(opaqueVersions.length, 2);
+    assert.ok(opaqueVersions.some(version => version.id === firstOpaque));
+    assert.ok(opaqueVersions.some(version => version.id === secondOpaque));
+    assert.ok(!readCalls.includes(ignoredName));
+    assert.ok(!readCalls.includes(ignoredDirectory));
+  });
+  const firstSelected = await readFolderVersion(opaqueUri, firstOpaque);
+  const secondSelected = await readFolderVersion(opaqueUri, secondOpaque);
+  check('reordered listings cannot substitute another backup with the same display name', () => {
+    assert.equal(firstSelected, longer);
+    assert.equal(secondSelected, shorter);
+  });
+  const readsBeforeRejection = readCalls.length;
+  await assert.rejects(readFolderVersion(opaqueUri, 'content://other.provider/tree/foreign/document/secret'), InvalidBackupError);
+  await assert.rejects(readFolderVersion(opaqueUri, ignoredName), InvalidBackupError);
+  await assert.rejects(readFolderVersion(opaqueUri, ignoredDirectory), InvalidBackupError);
+  check('foreign URIs and unrecognized or directory metadata are rejected before file reads', () => assert.equal(readCalls.length, readsBeforeRejection));
+  metadata.get(firstOpaque)!.name = 'renamed personal file.txt';
+  await assert.rejects(readFolderVersion(opaqueUri, firstOpaque), InvalidBackupError);
+  check('selected identity is checked against a fresh provider display name', () => assert.equal(readCalls.length, readsBeforeRejection));
+  metadata.get(firstOpaque)!.name = sharedName;
+  await writeToFolder(opaqueUri, text);
+  await writeToFolder(opaqueUri, shorter);
+  check('opaque providers reuse canonical files and discover freshly created snapshots', () => {
+    assert.equal([...metadata.values()].filter(entry => entry.folder === opaqueUri && entry.name === BACKUP_FILENAME && !entry.isDirectory).length, 1);
+    assert.equal(files.get(documentUriNamed(opaqueUri, BACKUP_FILENAME)), shorter);
+    assert.equal(freshSafWriteAttempts, 0);
+  });
+  const opaqueHistory = await listFolderVersions(opaqueUri);
+  check('saved history exposes real document identities after opaque-provider writes', () => assert.ok(opaqueHistory.some(version => files.get(version.id) === text)));
+  for (let i = 0; i < 11; i++) await writeToFolder(opaqueUri, serialize({ ...source, profileName: `opaque revision ${i}` }));
+  check('retention leaves user files, directories and unvalidated snapshot-like files untouched', () => {
+    assert.equal(files.get(ignoredName), text);
+    assert.ok(metadata.has(ignoredDirectory));
+    assert.equal(files.get(unvalidatedSnapshot), 'user file, not an IoU ledger');
+  });
+  const beforeMetadataFailure = JSON.stringify([...files]);
+  failNextListing();
+  let listingFailure: unknown;
+  try { await writeToFolder(opaqueUri, text); } catch (error) { listingFailure = error; }
+  check('metadata failure blocks writes and pruning without falling back to URI basenames', () => {
+    assert.equal(JSON.stringify([...files]), beforeMetadataFailure);
+    assert.equal((listingFailure as FolderBackupWriteError).code, 'FOLDER_READ_LIST');
+  });
+  check('metadata validation accepts trailing directory separators and child-directory grants', () => {
+    const paired = [{ uri: firstOpaque, name: sharedName, isDirectory: false }];
+    assert.equal(validateAndroidDocumentEntries(opaqueUri + '/', paired)[0].uri, firstOpaque);
+    assert.equal(validateAndroidDocumentEntries(opaqueUri + '/document/nested/', paired)[0].name, sharedName);
+  });
+  check('metadata validation rejects foreign trees, duplicate URIs and malformed records', () => {
+    const paired = { uri: firstOpaque, name: sharedName, isDirectory: false };
+    for (const entries of [[paired, paired], [{ ...paired, uri: 'content://opaque.provider/tree/other/document/1' }], [{ ...paired, name: null }], [{ ...paired, isDirectory: 'false' }]]) {
+      assert.throws(() => validateAndroidDocumentEntries(opaqueUri, entries), Error);
+    }
+  });
+  // Expo installs this URL implementation before application modules load.
+  const originalURL = Object.getOwnPropertyDescriptor(globalThis, 'URL')!;
+  try {
+    Object.defineProperty(globalThis, 'URL', { ...originalURL, value: ExpoURL });
+    const expoEntries = await listAndroidDocuments(opaqueUri + '/');
+    check('Expo runtime URL preserves opaque SAF identities and trailing directory separators', () => {
+      assert.ok(expoEntries.some(entry => entry.uri === ignoredName && entry.name === 'personal notes.txt'));
+      const paired = [{ uri: firstOpaque, name: sharedName, isDirectory: false }];
+      assert.equal(validateAndroidDocumentEntries(opaqueUri + '/document/nested/', paired)[0].uri, firstOpaque);
+    });
+  } finally { Object.defineProperty(globalThis, 'URL', originalURL); }
+  const originalSetTimeout = globalThis.setTimeout;
+  let deadlineScheduled = false;
+  try {
+    globalThis.setTimeout = ((...args: Parameters<typeof setTimeout>) => {
+      if (args[1] === 30_000) { deadlineScheduled = true; args[1] = 0; }
+      return originalSetTimeout(...args);
+    }) as typeof setTimeout;
+    hangNextListing();
+    const beforeTimedOutListing = JSON.stringify([...files]);
+    await assert.rejects(listAndroidDocuments(opaqueUri));
+    check('a provider that never resolves its listing reaches the read-only timeout', () => {
+      assert.equal(deadlineScheduled, true);
+      assert.equal(JSON.stringify([...files]), beforeTimedOutListing);
+    });
+  } finally { globalThis.setTimeout = originalSetTimeout; }
+  let writeTimerScheduled = false;
+  try {
+    globalThis.setTimeout = ((...args: Parameters<typeof setTimeout>) => {
+      writeTimerScheduled = true;
+      return originalSetTimeout(...args);
+    }) as typeof setTimeout;
+    await writeAndroidDocument(documentUriNamed(safUri, BACKUP_FILENAME), shorter);
+    check('provider writes await stream completion without a timeout that permits late mutations', () => {
+      assert.equal(writeTimerScheduled, false);
+      assert.equal(openHandles, 0);
+    });
+  } finally { globalThis.setTimeout = originalSetTimeout; }
+  const diagnosticUri = 'content://provider/tree/diagnostics';
+  folders.add(diagnosticUri);
+  failNextCreate(BACKUP_FILENAME);
+  let createFailure: unknown;
+  try { await writeToFolder(diagnosticUri, text); } catch (error) { createFailure = error; }
+  check('safe diagnostics identify create failures after preserving a verified snapshot', () => {
+    assert.equal((createFailure as FolderBackupWriteError).code, 'FOLDER_LATEST_CREATE');
+    assert.equal((createFailure as FolderBackupWriteError).snapshotSaved, true);
+  });
+  failNextRead(BACKUP_FILENAME);
+  let readFailure: unknown;
+  try { await writeToFolder(diagnosticUri, shorter); } catch (error) { readFailure = error; }
+  check('safe diagnostics identify read-back failures without exposing provider details', () => {
+    assert.equal((readFailure as FolderBackupWriteError).code, 'FOLDER_LATEST_READ');
+    assert.ok(!(readFailure as Error).message.includes('private'));
+  });
+  mismatchNextRead(REPORT_FILENAME);
+  let verifyFailure: unknown;
+  try { await writeToFolder(diagnosticUri, text); } catch (error) { verifyFailure = error; }
+  check('safe diagnostics distinguish content verification from provider I/O failures', () => {
+    assert.equal((verifyFailure as FolderBackupWriteError).code, 'FOLDER_REPORT_VERIFY');
+    assert.equal(openHandles, 0);
   });
   const corruptUri = 'memory://corrupt-only';
   folders.add(corruptUri);

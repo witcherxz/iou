@@ -35,7 +35,7 @@ Thirteen isolated browser workflows passed for enrollment/confirmation, changing
 
 Sixteen independent React Provider/Gate lifecycle scenarios also passed with mocked native events, including synchronous Android prompt blur, cancellation/focus loops, cold startup readiness, real re-entry, stale success after backgrounding, iOS inactivity, manual lock, PIN fallback, and disabled/unavailable/corrupt storage states. They exercise the actual React integration but do not replace device biometric validation.
 
-Real-device checks still need to exercise fingerprint/Face ID success and cancellation, changed enrollment, device lock/unlock, notification shade, app switching during verification, and the app-switcher snapshot. Native modules require a new build; Expo Go does not support Face ID. No claim is made that a browser lock prevents a person with developer tools or storage access from reading browser data.
+Alpha 3 phone testing on the S24 Ultra confirmed automatic native biometric prompting, successful entry, cancellation without loops, PIN fallback, and re-entry from Drive. Remaining device checks include iOS Face ID, changed enrollment, device lock/unlock, notification shade, and the app-switcher snapshot. Native modules require a new build; Expo Go does not support Face ID. No claim is made that a browser lock prevents a person with developer tools or storage access from reading browser data.
 
 ## Primary references
 

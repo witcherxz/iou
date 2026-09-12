@@ -3,13 +3,35 @@ import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
 
 import { AmountInput, applyKey, isValidAmountInput, Keypad, normalizeAmountInput } from '../components/Keypad';
 import { TransactionDateField } from '../components/TransactionDateField';
-import { Chip, MaterialPressable, OutlinedField, PrimaryButton, ScreenHeader, Segment, T } from '../components/ui';
+import { Chip, MaterialPressable, OutlineButton, OutlinedField, PrimaryButton, ScreenHeader, Segment, T } from '../components/ui';
 import { addDays, addMonths, arDate, fmt, isCalendarDate, todayISO } from '../format';
 import { Colors } from '../theme';
 import { Person } from '../types';
 
 type Dir = 'me' | 'owe';
 type Plan = 'single' | 'install';
+
+export interface AddDebtDraft {
+  dir: Dir;
+  amount: string;
+  note: string;
+  personId: string | null;
+  plan: Plan;
+  dueDays: number | null;
+  installN: number;
+  newPersonMode: boolean;
+  newPersonName: string;
+  customDate: boolean;
+  dateText: string;
+  transactionDate: string;
+}
+
+export function createAddDebtDraft(dir: Dir = 'me', personId: string | null = null): AddDebtDraft {
+  return {
+    dir, personId, amount: '', note: '', plan: 'single', dueDays: 7, installN: 3,
+    newPersonMode: false, newPersonName: '', customDate: false, dateText: '', transactionDate: todayISO(),
+  };
+}
 
 const DUE_CHIPS: { days: number | null; label: string }[] = [
   { days: 0, label: 'نفس اليوم' },
@@ -22,8 +44,8 @@ const DUE_CHIPS: { days: number | null; label: string }[] = [
 interface Props {
   c: Colors;
   people: Person[];
-  initialDir: Dir;
-  initialPersonId: string | null;
+  draft: AddDebtDraft;
+  onDraftChange: React.Dispatch<React.SetStateAction<AddDebtDraft>>;
   onClose: () => void;
   onAddPerson: (name: string) => string;
   onSave: (input: {
@@ -38,19 +60,9 @@ interface Props {
   }) => boolean | Promise<boolean>;
 }
 
-export function AddDebt({ c, people, initialDir, initialPersonId, onClose, onAddPerson, onSave }: Props) {
-  const [dir, setDir] = useState<Dir>(initialDir);
-  const [amount, setAmount] = useState('');
-  const [note, setNote] = useState('');
-  const [personId, setPersonId] = useState<string | null>(initialPersonId);
-  const [plan, setPlan] = useState<Plan>('single');
-  const [dueDays, setDueDays] = useState<number | null>(7);
-  const [installN, setInstallN] = useState(3);
-  const [newPersonMode, setNewPersonMode] = useState(false);
-  const [newPersonName, setNewPersonName] = useState('');
-  const [customDate, setCustomDate] = useState(false);
-  const [dateText, setDateText] = useState('');
-  const [transactionDate, setTransactionDate] = useState(todayISO);
+export function AddDebt({ c, people, draft, onDraftChange, onClose, onAddPerson, onSave }: Props) {
+  const { dir, amount, note, personId, plan, dueDays, installN, newPersonMode, newPersonName, customDate, dateText, transactionDate } = draft;
+  const updateDraft = (patch: Partial<AddDebtDraft>) => onDraftChange(current => ({ ...current, ...patch }));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const savingRef = useRef(false);
@@ -63,7 +75,7 @@ export function AddDebt({ c, people, initialDir, initialPersonId, onClose, onAdd
   const transactionDateValid = isCalendarDate(transactionDate) && transactionDate <= todayISO();
   const baseDate = transactionDateValid ? transactionDate : todayISO();
   const dueDateValid = dateIsValid && dateText >= transactionDate;
-  const canSave = validAmount && !!personId && transactionDateValid && installmentAmountIsValid && (!customDate || dueDateValid);
+  const canSave = validAmount && people.some(person => person.id === personId) && !newPersonMode && transactionDateValid && installmentAmountIsValid && (!customDate || dueDateValid);
   const selectedDueAt = customDate ? dateText : dueDays === null ? null : dueDays === 30 ? addMonths(baseDate, 1) : addDays(baseDate, dueDays);
   const totalCents = Math.round(amt * 100);
   const perInstallment = Math.floor(totalCents / installN) / 100;
@@ -78,10 +90,8 @@ export function AddDebt({ c, people, initialDir, initialPersonId, onClose, onAdd
       setError('تعذرت إضافة الشخص. حاول مرة أخرى.');
       return;
     }
-    setPersonId(id);
+    updateDraft({ personId: id, newPersonMode: false, newPersonName: '' });
     setError('');
-    setNewPersonMode(false);
-    setNewPersonName('');
   };
 
   return (
@@ -99,16 +109,16 @@ export function AddDebt({ c, people, initialDir, initialPersonId, onClose, onAdd
         <Segment
           c={c}
           value={dir}
-          onChange={setDir}
+          onChange={dir => updateDraft({ dir })}
           options={[{ value: 'me', label: 'يدين لي' }, { value: 'owe', label: 'أدين له' }]}
         />
 
         <AmountInput
-          value={amount} onChange={setAmount} label="المبلغ" c={c} color={color}
+          value={amount} onChange={amount => updateDraft({ amount })} label="المبلغ" c={c} color={color}
           error={amount !== '' && !validAmount ? 'أدخل مبلغاً أكبر من صفر، بحد أقصى منزلتين عشريتين و9 أرقام قبل الفاصلة.' : undefined}
         />
 
-        <TransactionDateField c={c} label="تاريخ الدين" value={transactionDate} onChange={setTransactionDate} />
+        <TransactionDateField c={c} label="تاريخ الدين" value={transactionDate} onChange={transactionDate => updateDraft({ transactionDate })} />
 
         <View>
           <T style={{ fontSize: 14, lineHeight: 20, fontWeight: '500', color: c.onSurfaceVariant, marginBottom: 8 }}>الشخص</T>
@@ -118,11 +128,11 @@ export function AddDebt({ c, people, initialDir, initialPersonId, onClose, onAdd
                 key={p.id}
                 label={p.name}
                 selected={personId === p.id}
-                onPress={() => setPersonId(p.id)}
+                onPress={() => updateDraft({ personId: p.id })}
                 c={c}
               />
             ))}
-            <Chip label="+ شخص جديد" dashed onPress={() => setNewPersonMode(true)} c={c} />
+            <Chip label="+ شخص جديد" dashed onPress={() => updateDraft({ newPersonMode: true })} c={c} />
           </View>
 
           {newPersonMode && (
@@ -131,7 +141,7 @@ export function AddDebt({ c, people, initialDir, initialPersonId, onClose, onAdd
                 c={c}
                 label="اسم الشخص"
                 value={newPersonName}
-                onChangeText={setNewPersonName}
+                onChangeText={newPersonName => updateDraft({ newPersonName })}
                 onSubmitEditing={confirmNewPerson}
                 accessibilityLabel="اسم الشخص الجديد"
                 maxLength={100}
@@ -139,6 +149,10 @@ export function AddDebt({ c, people, initialDir, initialPersonId, onClose, onAdd
                 autoFocus
               />
               <PrimaryButton label="إضافة" c={c} onPress={confirmNewPerson} disabled={!newPersonName.trim()} />
+              <OutlineButton label="إلغاء إضافة الشخص" c={c} onPress={() => {
+                updateDraft({ newPersonMode: false, newPersonName: '' });
+                setError('');
+              }} />
             </View>
           )}
         </View>
@@ -148,7 +162,7 @@ export function AddDebt({ c, people, initialDir, initialPersonId, onClose, onAdd
           <Segment
             c={c}
             value={plan}
-            onChange={value => { setPlan(value); if (value === 'install' && dueDays === null) setDueDays(30); }}
+            onChange={plan => updateDraft({ plan, dueDays: plan === 'install' && dueDays === null ? 30 : dueDays })}
             options={[{ value: 'single', label: 'دفعة واحدة' }, { value: 'install', label: 'دفعات مقسّطة' }]}
           />
         </View>
@@ -158,11 +172,11 @@ export function AddDebt({ c, people, initialDir, initialPersonId, onClose, onAdd
             <View>
               <T style={{ fontSize: 14, lineHeight: 20, fontWeight: '500', color: c.onSurfaceVariant, marginBottom: 8 }}>عدد الدفعات (شهرياً)</T>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
-                <Stepper c={c} glyph="−" disabled={installN <= 2} onPress={() => setInstallN(n => Math.max(2, n - 1))} />
+                <Stepper c={c} glyph="−" disabled={installN <= 2} onPress={() => onDraftChange(current => ({ ...current, installN: Math.max(2, current.installN - 1) }))} />
                 <T style={{ flex: 1, textAlign: 'center', fontSize: 24, lineHeight: 32, fontWeight: '500', color: c.onSurface }}>
                   {fmt(installN, 0)}
                 </T>
-                <Stepper c={c} glyph="+" disabled={installN >= 36} onPress={() => setInstallN(n => Math.min(36, n + 1))} />
+                <Stepper c={c} glyph="+" disabled={installN >= 36} onPress={() => onDraftChange(current => ({ ...current, installN: Math.min(36, current.installN + 1) }))} />
               </View>
             </View>
             <View style={{ backgroundColor: c.surfaceContainerLow, borderRadius: 12, padding: 16 }}>
@@ -184,18 +198,18 @@ export function AddDebt({ c, people, initialDir, initialPersonId, onClose, onAdd
                   key={String(ch.days)}
                   label={ch.label}
                   selected={!customDate && dueDays === ch.days}
-                  onPress={() => { setDueDays(ch.days); setCustomDate(false); }}
+                  onPress={() => updateDraft({ dueDays: ch.days, customDate: false })}
                   c={c}
                 />
               ))}
-              <Chip label="تاريخ آخر" selected={customDate} onPress={() => setCustomDate(true)} c={c} />
+              <Chip label="تاريخ آخر" selected={customDate} onPress={() => updateDraft({ customDate: true })} c={c} />
             </View>
             {customDate ? (
               <OutlinedField
                 c={c}
                 label={plan === 'install' ? 'تاريخ أول دفعة' : 'تاريخ الاستحقاق'}
                 value={dateText}
-                onChangeText={text => setDateText(normalizeAmountInput(text))}
+                onChangeText={text => updateDraft({ dateText: normalizeAmountInput(text) })}
                 accessibilityLabel={plan === 'install' ? 'تاريخ أول دفعة، سنة ثم شهر ثم يوم' : 'تاريخ الاستحقاق، سنة ثم شهر ثم يوم'}
                 placeholder="YYYY-MM-DD"
                 autoCapitalize="none"
@@ -216,14 +230,14 @@ export function AddDebt({ c, people, initialDir, initialPersonId, onClose, onAdd
           c={c}
           label="ملاحظة (اختياري)"
           value={note}
-          onChangeText={setNote}
+          onChangeText={note => updateDraft({ note })}
           accessibilityLabel="ملاحظة عن الدين، اختياري"
           maxLength={500}
           placeholder="مثال: غداء، تذاكر، سلفة"
         />
 
         <View style={{ marginTop: 'auto' }}>
-          <Keypad c={c} onKey={k => setAmount(v => applyKey(v, k))} />
+          <Keypad c={c} onKey={k => onDraftChange(current => ({ ...current, amount: applyKey(current.amount, k) }))} />
         </View>
 
         {!personId && <T style={{ color: c.onSurfaceVariant, fontSize: 14, lineHeight: 20 }}>اختر شخصاً أو أضف شخصاً جديداً لحفظ الدين.</T>}
