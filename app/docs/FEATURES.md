@@ -63,3 +63,7 @@ Before a stable release, test native biometric success/cancellation, background/
 Alpha 2 adds native PIN derivation and bounded errors, manual Google Drive sharing/restoration, and distinct forgiveness. See [Alpha 2 release notes](releases/0.1.0-alpha.2.md) for changes and device-validation limits.
 
 Alpha 3 adds automatic biometric prompting on entry while preserving PIN fallback and existing biometric preferences. See [Alpha 3 release notes](releases/0.1.0-alpha.3.md).
+
+### Bulk installment due day
+
+![Monthly due-day preview showing two updated installments](screenshots/features-installment-day.png)

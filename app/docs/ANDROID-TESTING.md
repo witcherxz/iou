@@ -40,3 +40,15 @@ PLAYWRIGHT_MODULE=/path/to/@playwright/test node scripts/installment-day-ui-chec
 ```
 
 These complement native QA; they do not replace testing Android focus, keyboard and document-provider behavior.
+
+## Measured Alpha 6 result — 2026-09-12
+
+The signed production Alpha 6 APK passed native PIN setup/unlock, background lock, draft preservation after PIN unlock, and actual OS keyboard display. Filling an entry before adding its person preserved the saved amount, actual date, note and three-installment plan, as verified in the exported ledger.
+
+Local SAF backup completed, including the existing-backup confirmation that previously triggered focus locking on the phone. Android Back cancelled a restore preview without leaving the private screen. Restoring the older snapshot returned the ledger from two debts/175.50 to one debt/125.50. Saving again rewrote smaller JSON (965→773 bytes), HTML (14,303→13,183 bytes) and transactions CSV (721→545 bytes) exactly, with no trailing bytes. The previous two-debt copy and all three immutable snapshots remained intact. Canonical JSON, embedded report backup, downloaded CSVs and standalone files agreed.
+
+These are synthetic emulator results. Completed Dropbox account/provider writes and Drive uploads remain unverified.
+
+## Measured Alpha 7 result — 2026-09-12
+
+The independently verified published APK installed over Alpha 6 and retained the PIN and ledger. A synthetic debt had one fully paid installment, one partially forgiven installment and one open installment. The day-31 preview preserved September 17 for the completed row, changed October 17 to October 31, and clamped November 17 to November 30. Save produced exactly one audited correction. Exported backup records verified that only those two dates changed and all cash/forgiveness records remained exact. Native Undo then restored the complete original debt and recorded the reversal; another backup verified the result. See [the native verification record](verification/alpha7-native.json).

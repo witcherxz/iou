@@ -1,0 +1,24 @@
+{
+  "version": "0.1.0-alpha.7",
+  "serial": "emulator-5580",
+  "publishedApkInstalled": true,
+  "existingPinRetainedAndUnlocks": true,
+  "day31PreviewClamps": true,
+  "fullyPaidRowUnchanged": true,
+  "partialForgivenessRowMoved": true,
+  "cashAndForgivenessHistoryUnchanged": true,
+  "oneExactAuditedSave": true,
+  "savedDates": [
+    "2026-09-17",
+    "2026-10-31",
+    "2026-11-30"
+  ],
+  "nativeUndoRestoresExactOriginalDebtAndReductions": true,
+  "nativeUndoRecordsExactReversal": true,
+  "nativeConfirmationsStayUnlocked": true,
+  "nativeFolderBackupAfterEditAndUndo": true,
+  "passed": true,
+  "apkSha256": "8f7225eb6f1e78b27f4a743a9697f9f43bce2bea421906397fdadfe30ff132b9",
+  "testedAt": "2026-09-12",
+  "environment": "Android 16/API 36 Google APIs x86_64; isolated synthetic ledger, no cloud accounts"
+}

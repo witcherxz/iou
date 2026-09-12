@@ -4,12 +4,12 @@ Goal: Provide a private Arabic debt ledger with clear balances and recoverable r
 Phase: verify
 
 ## Now
-Alpha 6 is published and installed in an isolated Android 16 emulator; phone testing has stopped with Alpha 5 on the S24 Ultra. Native local folder save and older-version restore now pass with readable, matching JSON/HTML/CSV artifacts. Preparing Alpha 7 with one monthly due-day edit for all remaining installments, preserving completed rows and audit/undo history. TypeScript and 1,298 integrated checks pass; 18 full Expo screen scenarios pass, with no browser errors. Preparing the signed production build.
+[Alpha 7](https://github.com/witcherxz/iou/releases/tag/v0.1.0-alpha.7) is published, independently verified and tested in an isolated Android 16 emulator. One monthly due-day edit now updates all remaining installments with preview, short-month clamping and audited Undo. Native saved backups confirm completed rows and payment/forgiveness records stay intact. TypeScript, 1,298 integrated checks, 18 full Expo screen scenarios and both Actions runs pass. Local folder backup/recovery, OS keyboard and draft preservation also pass in the emulator. Phone testing has stopped; the S24 Ultra remains on Alpha 5 and can install the published update.
 
 Next:
-1. Complete bulk installment-day screen validation and publish the signed Alpha 7 update.
-2. Install Alpha 7 in the emulator and verify the production bulk edit/save/undo flow.
-3. Complete broader native accessibility/reminder/provider validation; direct automatic Drive sync still requires native authorization and Google Cloud setup.
+1. Validate completed cloud-provider backup/recovery when a suitable test account is available.
+2. Complete broader native accessibility and reminder delivery validation before a stable release.
+3. Keep direct automatic Drive sync disabled until native authorization and Google Cloud setup are complete.
 
 ## Health
 
@@ -17,7 +17,7 @@ Next:
 |---|---:|---|---:|---:|---:|---|
 | Automated checks passing | 1298 count | 2026-09-12 | 1259 count | >= 1298 count | 1298 count | `cd app && npm run check`; `node scripts/release-workflow-checks.mjs`; `JAVA_HOME=/tmp/iou-device-debug/jdk-17.0.20.1+1 node scripts/native-pin-checks.mjs` |
 | TypeScript | PASS | 2026-09-12 | PASS | = PASS | PASS | `cd app && npm run typecheck` |
-| Alpha 6 production APK | PASS | 2026-09-12 | PASS | = PASS | PASS | [Release workflow](https://github.com/witcherxz/iou/actions/runs/34706442794); [independent APK verification](app/docs/RELEASING.md#alpha-6) |
+| Alpha 7 production APK | PASS | 2026-09-12 | PASS | = PASS | PASS | [Release workflow](https://github.com/witcherxz/iou/actions/runs/34708711318); [independent APK verification](app/docs/RELEASING.md#alpha-7) |
 | Native local folder save/recovery | PASS | 2026-09-12 | UNMEASURED | = PASS | PASS | `/tmp/iou-emulator-qa/results.json`; `/tmp/iou-emulator-qa/backup-first-evidence.json`; `/tmp/iou-emulator-qa/backup-second-evidence.json` |
 
 ## DoD — Alpha 7 bulk installment due-day editing
@@ -27,8 +27,8 @@ Next:
 - [x] Reject invalid day/date collisions and retain per-row editing plus audited save/undo.
 - [x] Pass integrated checks and TypeScript.
 - [x] Pass full Expo screen scenarios for both directions, partial/completed rows, cancellation, save, undo, and narrow layout.
-- [ ] Publish Alpha 7 with production signing and independently verify its APK.
-- [ ] Install and verify the bulk edit/save/undo flow in the isolated emulator.
+- [x] Publish Alpha 7 with production signing and independently verify its APK.
+- [x] Install and verify the bulk edit/save/undo flow in the isolated emulator.
 
 ## Blockers / Risks
 
@@ -51,6 +51,8 @@ Next:
 - 2026-09-12: Facing potential overwrite of external backups during startup or recovery, chose explicit first save and suspended automatic backup after local recovery, to protect older/newer copies, accepting a manual review step.
 
 ## Log
+
+- 2026-09-12 [release]: Published Alpha 7 from 1685bed after both Actions runs and 1,298 integrated checks passed. Independently verified the 72,412,646-byte production APK, signature, manifest, fixture-free bundle and native modules, then installed it over Alpha 6 in the isolated Android 16 emulator. Native preview/save preserves paid rows, cash and forgiveness records while changing remaining days with short-month clamping; the exported ledger has one exact audit change. Native Undo and a subsequent backup restored the complete original debt exactly and retained the reversal; [verification record](app/docs/verification/alpha7-native.json).
 
 - 2026-09-12 [work]: Implemented bulk monthly installment-day previews with completed-row preservation, month-end clamping and single audited save/undo. Added 39 domain checks; 1,298 integrated checks and TypeScript pass. Android 16 emulator completed first and second local SAF backups and older-version restore; independently verified canonical, snapshots, readable report and CSV agreement. Alpha 7 screen validation and publication are in progress.
 

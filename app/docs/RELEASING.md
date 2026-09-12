@@ -39,6 +39,18 @@ Alpha release notes record remaining device verification, including biometrics, 
 
 ## Verified alpha release
 
+### Alpha 7
+
+On 2026-09-12, [v0.1.0-alpha.7](https://github.com/witcherxz/iou/releases/tag/v0.1.0-alpha.7) was published from `1685bed4f4e0b1d7b4ac3e5528fc02d6724cdc3b`. The [release workflow](https://github.com/witcherxz/iou/actions/runs/34708711318) and [main workflow](https://github.com/witcherxz/iou/actions/runs/34708711255) passed, including 1,298 integrated checks and the signed production build. Eighteen full Expo installment-day screen scenarios passed locally with no browser errors.
+
+The independently verified APK is 72,412,646 bytes, version `0.1.0-alpha.7` / code `7`, with the unchanged production identity and signing key. Signature, manifest, fixture-free offline bundle, native PIN worker and native backup module checks passed.
+
+```text
+8f7225eb6f1e78b27f4a743a9697f9f43bce2bea421906397fdadfe30ff132b9
+```
+
+The published APK installed over Alpha 6 in the isolated Android 16 emulator and retained the existing PIN and ledger. Native day-31 preview/save/undo passed: the paid first installment stayed on September 17; the partially forgiven next row moved to October 31 and the last row clamped to November 30. A folder backup verified one exact audit change with cash/forgiveness records intact. Undo and a second backup restored the original debt exactly and retained the reversal in history. [Native verification record](verification/alpha7-native.json). The physical phone remains on Alpha 5; no further phone connection or action was used.
+
 ### Alpha 6
 
 On 2026-09-12, [v0.1.0-alpha.6](https://github.com/witcherxz/iou/releases/tag/v0.1.0-alpha.6) was published from `17cb8c026d902a3edfd0d0d4b8304efb30e9b3bd`. The [release workflow](https://github.com/witcherxz/iou/actions/runs/34706442794) and [main workflow](https://github.com/witcherxz/iou/actions/runs/34706444947) passed, including 1,259 integrated checks and the signed production build. Eight full entry-flow, fourteen settlement/edit/export, and eight independent privacy/dialog lifecycle scenarios passed locally. A held-decryption test confirms a locked app cannot display or apply a late restore confirmation.
@@ -49,7 +61,7 @@ The independently verified APK is 72,407,090 bytes, version `0.1.0-alpha.6` / co
 aa15ef8e40fea6fedeca4133960832debb68ff9143c7abca20d2ae9dfcc54145
 ```
 
-The user requested switching remaining native testing to an emulator. Phone testing stopped with Alpha 5 installed; Alpha 6 was installed in an isolated Android 16/API 36 emulator. PIN setup/unlock, existing-backup confirmation without focus locking, local folder save, and older-version restore passed. Two native backups were independently verified across canonical JSON, retained snapshots, readable HTML, and CSV companions. Dropbox account/provider behavior remains separately unverified.
+The user requested switching remaining native testing to an emulator. Phone testing stopped with Alpha 5 installed; Alpha 6 was installed in an isolated Android 16/API 36 emulator. PIN setup/unlock, background draft preservation, actual OS keyboard display, existing-backup confirmation without focus locking, local folder save, older-version restore, and Android Back cancellation passed. Three native backups, including smaller-file rewrites, were independently verified across canonical JSON, retained snapshots, readable HTML, and CSV companions. Dropbox account/provider behavior remains separately unverified.
 
 ### Alpha 5
 
