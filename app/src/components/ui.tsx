@@ -45,7 +45,10 @@ export function T({ style, ...rest }: TextProps) {
     <Text
       {...rest}
       style={[
-        { fontFamily: fontFor(fontWeight as number), textAlign: 'right', writingDirection: 'rtl' },
+        // Native text alignment follows paragraph direction; explicit "right"
+        // is mirrored to the left inside RTL. Keep Arabic paragraphs at start.
+        { fontFamily: fontFor(fontWeight as number), direction: 'rtl',
+          textAlign: Platform.OS === 'web' ? 'right' : 'auto', writingDirection: 'rtl' },
         others as TextStyle,
       ]}
     />

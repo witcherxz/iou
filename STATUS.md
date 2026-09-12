@@ -4,12 +4,12 @@ Goal: Provide a private Arabic debt ledger with clear balances and recoverable r
 Phase: verify
 
 ## Now
-Alpha 8 is published and verified on the isolated Android 16 emulator. It fixes a reproduced lock/unlock bug that reset partial exemptions to full payments and makes payment/exemption history explicit. TypeScript and 1,298 integrated checks pass, plus 19 full-App history/creation/privacy UI scenarios, 14 existing financial workflows and 4 real privacy lifecycle scenarios. Native draft/receipt preservation and exported-ledger checks pass: exactly one correct exemption, no duplicate, all previous records unchanged and readable backups consistent. No phone connection was used. Broader native validation remains before a stable release.
+Preparing Alpha 9 for Arabic card alignment. The isolated Android 16 emulator reproduced left-aligned names and transaction counts inside correctly ordered RTL rows. Native text now uses RTL paragraph alignment, and person history omits the redundant «دين ·» prefix. TypeScript, 1,298 integrated checks, four focused browser RTL cases and 19 history/privacy workflows pass. Published-APK visual verification follows the production build. The user decides when core features are complete and the app can move from alpha to beta.
 
 Next:
-1. Validate completed cloud-provider backup/recovery before a stable release.
-2. Test native accessibility, font scaling and app-switcher privacy.
-3. Verify notification permission and reminder delivery on Android.
+1. Finish browser validation and publish the signed Alpha 9 APK.
+2. Verify right-aligned native cards and preserved input/control behavior on the emulator.
+3. Continue cloud-provider, accessibility, privacy and reminder validation before a stable release.
 
 ## Health
 
@@ -18,18 +18,17 @@ Next:
 | Automated checks passing | 1298 count | 2026-09-12 | 1298 count | >= 1298 count | 1298 count | `cd app && npm run check`; `node scripts/release-workflow-checks.mjs`; `JAVA_HOME=/tmp/iou-device-debug/jdk-17.0.20.1+1 node scripts/native-pin-checks.mjs` |
 | TypeScript | PASS | 2026-09-12 | PASS | = PASS | PASS | `cd app && npm run typecheck` |
 | Alpha 8 production APK | PASS | 2026-09-12 | PASS | = PASS | PASS | [Release workflow](https://github.com/witcherxz/iou/actions/runs/34710749894); [independent APK verification](app/docs/verification/alpha8-apk.json) |
-| Settlement lock lifecycle | PASS | 2026-09-12 | FAIL | = PASS | PASS | [Lifecycle regression](app/docs/verification/alpha8-lifecycle.json); [native before](app/docs/verification/alpha8-native-before.json); [native after](app/docs/verification/alpha8-native.json) |
+| Native card text alignment | UNMEASURED | — | FAIL | = PASS | PASS | Alpha 8 reproduction: `/tmp/iou-emulator-qa/rtl-alpha8/home.png`; Alpha 9 verification pending |
 
-## DoD — Alpha 8 exemption clarity and preserved transaction type
+## DoD — Alpha 9 Arabic card alignment
 
-- [x] Distinguish cash and exemptions using prominent Arabic titles, labelled amounts, icons and separate notes.
-- [x] Show paid/waived totals and full/partial/mixed closure accurately, including cancelled records.
-- [x] Preserve all transaction draft fields, pending submission and successful receipt across privacy locking.
-- [x] Isolate late callbacks from new sessions and clear drafts on explicit exit/restoration.
-- [x] Pass integrated, type, history/creation UI and real privacy lifecycle checks.
-- [x] Pass the durable full-App lock/unlock and receipt regression.
-- [x] Publish and independently verify the signed Alpha 8 APK.
-- [x] Verify corrected exemption submission and retained receipt on the isolated emulator.
+- [x] Remove the redundant debt prefix while retaining direction labels.
+- [x] Correct native RTL text alignment without reversing correctly ordered rows.
+- [x] Preserve explicit centered controls and existing number/date inputs.
+- [x] Pass TypeScript and integrated checks.
+- [x] Verify browser card alignment and existing history workflows.
+- [ ] Publish and independently verify the signed Alpha 9 APK.
+- [ ] Verify right-aligned native names, counts and transaction descriptions on the emulator.
 
 ## Blockers / Risks
 
@@ -39,6 +38,8 @@ Next:
 - Automatic backups run after foreground edits and are suspended after local recovery; reminders retain the nearest 60 alerts plus weekly and refresh on foreground. Response: explain these operating limits in the feature notes.
 
 ## Decisions
+
+- 2026-09-12: Facing an undefined alpha exit milestone, chose explicit user confirmation that core features are complete before beta, to match the product's intended scope, accepting further alpha builds until that confirmation.
 
 - 2026-09-12: Facing a template-signed APK with seeded records, chose a separate production identity and dedicated release key, to start clean while preserving the old app for export, accepting explicit backup import for users upgrading from debug builds.
 
@@ -52,6 +53,8 @@ Next:
 - 2026-09-12: Facing potential overwrite of external backups during startup or recovery, chose explicit first save and suspended automatic backup after local recovery, to protect older/newer copies, accepting a manual review step.
 
 ## Log
+
+- 2026-09-12 [work]: Reproduced native text painted on the left inside RTL Home card boxes. Traced the behavior to mirrored explicit right alignment in React Native; changed shared text to native automatic alignment with explicit RTL paragraphs and preserved web/caller overrides. Removed the redundant person-history debt prefix. TypeScript and 1,298 integrated checks pass; preparing Alpha 9 and visual verification.
 
 - 2026-09-12 [release]: Published Alpha 8 from 111d81c after both Actions runs passed. Independently verified the 72,416,406-byte production APK and installed it over Alpha 7 on the isolated emulator. Native HOME/PIN cycles preserved the entire exemption draft and its successful receipt. A local backup verified exactly one new 13.50 exemption with the selected date/note, unchanged previous records/audits, no duplicate, and exact agreement across 14 files and seven snapshots. [Native verification record](app/docs/verification/alpha8-native.json).
 

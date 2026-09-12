@@ -111,7 +111,7 @@ export function PersonDetail({ c, person, tx, debts, onBack, onSettle, onAdd, on
                 <MaterialIcon name={t.voidedAt ? 'close' : 'account_balance_wallet'} color={t.voidedAt ? c.onSurfaceVariant : color} size={22} />
                 <View style={{ flex: 1, minWidth: 0 }}>
                   <T style={{ fontSize: 14, lineHeight: 20, fontWeight: '600', color: c.onSurface }}>
-                    دين · {t.dir === 'me' ? 'يدين لي' : 'أدين له'}
+                    {t.dir === 'me' ? 'يدين لي' : 'أدين له'}
                   </T>
                   {!!t.note && <T numberOfLines={2} style={{ fontSize: 14, lineHeight: 20, color: c.onSurfaceVariant, marginTop: 4 }}>{t.note}</T>}
                   <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginTop: 4 }}>
