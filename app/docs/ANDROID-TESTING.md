@@ -81,3 +81,15 @@ Read-only form inspection confirmed the centered 50.17 amount, left-to-right ISO
 | History before | History after |
 |---|---|
 | ![Left-painted transaction labels](screenshots/rtl-native-history-before.png) | ![Right-aligned descriptions and simplified debt heading](screenshots/rtl-native-history-after.png) |
+
+## Alpha 10 — editing a person's name
+
+The user approved the actual pencil entry point and editor before publication. [Person page](screenshots/person-name-person-page.png) and [editor](screenshots/person-name-name-editor.png) show a fictional Arabic record in the web preview.
+
+Nine full-App browser scenarios passed with no browser errors: mixed-direction records and existing corrections stay identical after rename; Home, person/debt details, the person picker and reload use the new name; standalone HTML and all four CSV sheets agree; empty/duplicate/unchanged names, Cancel and Back create no canonical/recovery/history writes; the 100-character bound is enforced; a real PIN lock preserves the draft and allows exactly one save; light/dark layouts fit at 320 and 390 px. [Browser evidence](verification/alpha10-browser.json). The reproducible script is `scripts/person-name-ui-checks.cjs`, with `IOU_TEST_URL` pointing to an isolated web preview and `PLAYWRIGHT_MODULE` pointing to an installed Playwright module.
+
+The published production APK passed native acceptance after updating the existing Alpha 9 emulator ledger. Cancel and hardware Back discard drafts, the system keyboard opens, HOME/PIN unlock preserves the name draft, and one save updates the same person on Home and person/debt details. The pencil is visible in the header and the complete Save label is centered and unclipped. No phone was used.
+
+An independent comparison of the successful manual folder backup found only one person-name change and a new backup timestamp. Person IDs, all four transactions, audit history, settings and installment allocations are exact; paid 41.83, forgiven 33.50 and remaining 50.17 are unchanged. The previous backup is the original canonical file, seven previous snapshots remain intact, one new snapshot matches the canonical file, and all HTML/CSV companions and embedded downloads agree across 15 files. Automatic backup remains off. [Native evidence](verification/alpha10-native.json).
+
+[System keyboard](screenshots/person-name-native-keyboard.png) · [Draft after unlock](screenshots/person-name-native-unlocked.png) · [Renamed person](screenshots/person-name-native-person.png) · [Home after rename](screenshots/person-name-native-home.png).

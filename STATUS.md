@@ -4,12 +4,12 @@ Goal: Provide a private Arabic debt ledger with clear balances and recoverable r
 Phase: verify
 
 ## Now
-The user approved the person-name editor preview and authorized proceeding with Alpha 10. TypeScript, 1,354 integrated checks and nine full-app browser scenarios pass, including unchanged balances/history, readable exports, cancellation, duplicate validation and privacy-lock draft retention. Final review found no blocking issues; publication and native verification follow. Search is deferred at the user's request, and the user decides when core features are complete and the app can move from alpha to beta.
+Alpha 10 is published and verified after the user approved the person-name editor and pencil entry point. TypeScript, 1,354 integrated checks, nine full-app browser scenarios, both GitHub workflows and native Android 16 emulator checks pass. Renaming updates linked screens and readable exports; an exact native backup comparison confirms unchanged IDs, transactions, audits, installments and balances with all previous snapshots preserved. Search is deferred at the user's request, and the user decides when core features are complete and the app can move from alpha to beta.
 
 Next:
-1. Publish and independently verify the signed Alpha 10 APK.
-2. Verify native rename, privacy and backup preservation on the isolated emulator.
-3. Address existing compact-label clipping and remaining cloud-provider/accessibility/reminder validation before a stable release.
+1. Correct existing native clipping in compact selector and status labels.
+2. Validate completed cloud-provider backup/recovery before a stable release.
+3. Continue native accessibility, privacy and reminder validation.
 
 ## Health
 
@@ -17,8 +17,8 @@ Next:
 |---|---:|---|---:|---:|---:|---|
 | Automated checks passing | 1354 count | 2026-09-12 | 1298 count | >= 1354 count | 1354 count | `cd app && npm run check`; `node scripts/release-workflow-checks.mjs`; `JAVA_HOME=/tmp/iou-device-debug/jdk-17.0.20.1+1 node scripts/native-pin-checks.mjs` |
 | TypeScript | PASS | 2026-09-12 | PASS | = PASS | PASS | `cd app && npm run typecheck` |
-| Alpha 9 production APK | PASS | 2026-09-12 | PASS | = PASS | PASS | [Release workflow](https://github.com/witcherxz/iou/actions/runs/34713790800); [independent APK verification](app/docs/verification/alpha9-apk.json) |
-| Native card text alignment | PASS | 2026-09-12 | FAIL | = PASS | PASS | [Native baseline](app/docs/verification/alpha9-native-before.json); [11 native comparisons](app/docs/verification/alpha9-native.json) |
+| Alpha 10 production APK | PASS | 2026-09-12 | PASS | = PASS | PASS | [Release workflow](https://github.com/witcherxz/iou/actions/runs/34717292669); [independent APK verification](app/docs/verification/alpha10-apk.json) |
+| Native rename and backup preservation | PASS | 2026-09-12 | — | = PASS | PASS | [Native checks and exact backup comparison](app/docs/verification/alpha10-native.json) |
 
 ## DoD — Alpha 10 person name editing
 
@@ -28,8 +28,8 @@ Next:
 - [x] Pass TypeScript and integrated checks.
 - [x] Verify browser navigation, persistence, exports, validation and narrow light/dark layouts.
 - [x] Obtain the user's requested preview feedback before pushing.
-- [ ] Publish and independently verify the signed Alpha 10 APK.
-- [ ] Verify native rename and exact ledger/backup preservation on the emulator.
+- [x] Publish and independently verify the signed Alpha 10 APK.
+- [x] Verify native rename and exact ledger/backup preservation on the emulator.
 
 ## Blockers / Risks
 
@@ -58,6 +58,8 @@ Next:
 - 2026-09-12: Facing potential overwrite of external backups during startup or recovery, chose explicit first save and suspended automatic backup after local recovery, to protect older/newer copies, accepting a manual review step.
 
 ## Log
+
+- 2026-09-12 [release]: Published Alpha 10 from a6ea918 after both Actions runs passed. Independently verified the 72,420,418-byte signed production APK and installed over Alpha 9 on the isolated Android 16 emulator. Cancel/Back, keyboard, full Save label, privacy-lock draft retention and name propagation passed. The exact 15-file backup comparison confirmed only one person name plus backup timestamp changed, with all records/allocations intact and seven old snapshots preserved. [Native evidence](app/docs/verification/alpha10-native.json).
 
 - 2026-09-12 [work]: User approved actual screenshots of the name editor and pencil entry point and authorized proceeding. Final read-only feature review found no blocking issues; preparing the Alpha 10 commit and signed release.
 

@@ -1,0 +1,123 @@
+{
+  "result": "passed",
+  "version": "0.1.0-alpha.10",
+  "serial": "emulator-5580",
+  "scope": "Synthetic person rename and native local folder backup",
+  "validatedAt": "2026-09-12T20:47:20.569Z",
+  "nativeChecks": {
+    "initialPersonAndBalanceUnchanged": true,
+    "nativeNameKeyboardShown": true,
+    "cancelDiscardsDraft": true,
+    "hardwareBackDiscardsDraft": true,
+    "renameDraftPrepared": true,
+    "nameDraftSurvivesHomePinUnlock": true,
+    "personShowsNewName": true,
+    "homeAndDebtUseSameNewName": true,
+    "operationCountAndBalanceUnchanged": true,
+    "manualBackupSucceeded": true,
+    "automaticBackupRemainsOff": true,
+    "pencilPlacementVisuallyVerified": true,
+    "fullSaveLabelVisuallyVerified": true
+  },
+  "ledger": {
+    "oldName": "EmulatorQA",
+    "newName": "EmulatorRenamedQA",
+    "personIdUnchanged": true,
+    "personCount": 1,
+    "transactionCount": 4,
+    "allTransactionsExactlyUnchanged": true,
+    "allAuditsExactlyUnchanged": true,
+    "allOtherPortableFieldsUnchanged": true,
+    "paid": 41.83,
+    "forgiven": 33.5,
+    "remaining": 50.17,
+    "installmentAllocationsUnchanged": true
+  },
+  "backups": {
+    "previousExactBaseline": true,
+    "oldSnapshotsUnchanged": 7,
+    "totalSnapshots": 8,
+    "newestSnapshotMatchesCanonical": true,
+    "htmlRestoresCanonical": true,
+    "allCompanionsExactlyRegenerated": true,
+    "allHtmlDownloadsAgree": true,
+    "validUtf8": true
+  },
+  "artifacts": [
+    {
+      "name": "iou-backup.json",
+      "bytes": 3236,
+      "sha256": "a124a295c17d86b3af1f5e91ac531b9da5c697bad91e5955cfeddefb918f88ca"
+    },
+    {
+      "name": "iou-backup.previous.json",
+      "bytes": 3229,
+      "sha256": "91ae9ebb91fca2662539f914a61d1a6d118ba40390e3490f58edc08c1dd5fb5e"
+    },
+    {
+      "name": "iou-balances.csv",
+      "bytes": 195,
+      "sha256": "6efe37a11513d260a7ecf1e13533b6850540aafceabe02a9dfd306a9906c58b0"
+    },
+    {
+      "name": "iou-history.csv",
+      "bytes": 2663,
+      "sha256": "fa3b9bc6feecd2d527523ae3f66f6e9c77e9d51fd6835a81155966356637740a"
+    },
+    {
+      "name": "iou-installments.csv",
+      "bytes": 605,
+      "sha256": "9e357fbf9ea5fd3b5434a7c295de6489edf2707625ca76b9524c33b0f3182cc6"
+    },
+    {
+      "name": "iou-ledger.html",
+      "bytes": 30520,
+      "sha256": "d4a77b87f6873378a7269d89dfcc902c2b9bdaa2e92d8f7cdf8491c7556f1d83"
+    },
+    {
+      "name": "iou-snapshot-2026-09-12T17-29-00-017Z-0.json",
+      "bytes": 773,
+      "sha256": "25662adebb0dfc360558eaa43e2debfa32320e14be020af603966adc22beebb4"
+    },
+    {
+      "name": "iou-snapshot-2026-09-12T17-30-05-551Z-0.json",
+      "bytes": 965,
+      "sha256": "f181043435c41e22e3ecd50b81c6e8184c681fd5c4c21f91ffb652614b3f655e"
+    },
+    {
+      "name": "iou-snapshot-2026-09-12T17-32-50-687Z-0.json",
+      "bytes": 773,
+      "sha256": "75fd3925ab52ec6e6193d83f7a3efa4842808b008301d69060a83cc26a4ec972"
+    },
+    {
+      "name": "iou-snapshot-2026-09-12T17-40-41-441Z-0.json",
+      "bytes": 1168,
+      "sha256": "21d636f0ab9cad89bf93d93e66ace0afe0eb1efa162619313ba8c12687a0ab29"
+    },
+    {
+      "name": "iou-snapshot-2026-09-12T17-49-27-979Z-0.json",
+      "bytes": 2092,
+      "sha256": "337782fd1b47cf10d3f25b77ba17ef245496f1466d9112f309ea822c6f5d7e4c"
+    },
+    {
+      "name": "iou-snapshot-2026-09-12T17-50-31-544Z-0.json",
+      "bytes": 3017,
+      "sha256": "e38f845f680d2986a338334940c2fc85996d586d80011a5485d456da4a38f76b"
+    },
+    {
+      "name": "iou-snapshot-2026-09-12T18-33-37-918Z-0.json",
+      "bytes": 3229,
+      "sha256": "91ae9ebb91fca2662539f914a61d1a6d118ba40390e3490f58edc08c1dd5fb5e"
+    },
+    {
+      "name": "iou-snapshot-2026-09-12T20-46-36-001Z-0.json",
+      "bytes": 3236,
+      "sha256": "a124a295c17d86b3af1f5e91ac531b9da5c697bad91e5955cfeddefb918f88ca"
+    },
+    {
+      "name": "iou-transactions.csv",
+      "bytes": 1174,
+      "sha256": "1a474b45b6d899686843873fe24548d226d8abf58ed80c99c1905b4ac0e07e6e"
+    }
+  ]
+}

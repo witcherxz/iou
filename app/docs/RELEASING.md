@@ -39,6 +39,18 @@ Alpha release notes record remaining device verification, including biometrics, 
 
 ## Verified alpha release
 
+### Alpha 10
+
+On 2026-09-12, [v0.1.0-alpha.10](https://github.com/witcherxz/iou/releases/tag/v0.1.0-alpha.10) was published from `a6ea9180aa8e145905399312f6e4f38db11a045c` after the user approved the name editor and pencil entry point. The [release workflow](https://github.com/witcherxz/iou/actions/runs/34717292669) and [main workflow](https://github.com/witcherxz/iou/actions/runs/34717292797) passed 1,354 integrated checks and the signed production build. Nine full-App browser scenarios passed locally with no browser errors; [browser evidence](verification/alpha10-browser.json).
+
+The independently verified APK is 72,420,418 bytes, version `0.1.0-alpha.10` / code `10`, with the unchanged production identity and signing key. Signature, non-debuggable manifest, fixture-free offline bundle and both native module checks passed. [APK evidence](verification/alpha10-apk.json).
+
+```text
+a0a0652e412b801c3c25d5b19dcb1fe5bce5afd31e6ba7dc5ab122a267d974d2
+```
+
+The published APK installed over Alpha 9 on the isolated Android 16 emulator. Native Cancel and hardware Back discard drafts; the system keyboard opens, the full Save label fits, and HOME/PIN unlock preserves the name before a single save. Home, person and debt details use the new name with four transactions and the unchanged 50.17 balance. A successful folder backup independently confirmed that only one person name and the backup timestamp changed: IDs, all transactions, audits, settings and installment allocations remained exact. The previous backup and seven old snapshots stayed intact, and HTML/CSV companions matched the new canonical data across all 15 files. [Native evidence](verification/alpha10-native.json) and [screenshots](ANDROID-TESTING.md#alpha-10--editing-a-persons-name). Search remains deferred, and alpha-to-beta promotion requires the user's confirmation that core scope is complete.
+
 ### Alpha 9
 
 On 2026-09-12, [v0.1.0-alpha.9](https://github.com/witcherxz/iou/releases/tag/v0.1.0-alpha.9) was published from `9bd6af490df1f7d97e90de4b67a189bd708b56f7`. The [release workflow](https://github.com/witcherxz/iou/actions/runs/34713790800) and [main workflow](https://github.com/witcherxz/iou/actions/runs/34713790845) passed 1,298 integrated checks and the signed production build. Four focused RTL browser cases and 19 existing history/privacy workflows passed locally.
