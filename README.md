@@ -42,7 +42,15 @@ repository. See [`app/README.md`](app/README.md) for how to add your own.
 
 Every push to `main` builds an APK in CI. Open the latest run under
 [**Actions → Build Android APK**](../../actions/workflows/android.yml) and
-download the `iou-apk` artifact.
+download the `iou-apk` artifact, or from a clone:
+
+```bash
+gh run download --name iou-apk -D .
+adb install iou-debug-signed.apk
+```
+
+It is a universal APK (~69 MB) carrying all four ABIs, so it installs on any
+Android device without picking a variant.
 
 > The CI APK is signed with the React Native template's **debug** keystore. It
 > installs on any device, but it is not suitable for the Play Store. To publish,
