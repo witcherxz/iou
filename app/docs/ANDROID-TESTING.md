@@ -37,6 +37,7 @@ Start a separate Expo web preview on port 8147 and use fresh browser contexts wi
 ```bash
 PLAYWRIGHT_MODULE=/path/to/@playwright/test node scripts/add-debt-ui-checks.cjs
 PLAYWRIGHT_MODULE=/path/to/@playwright/test node scripts/installment-day-ui-checks.cjs
+PLAYWRIGHT_MODULE=/path/to/@playwright/test node scripts/forgiveness-history-ui-checks.cjs
 ```
 
 These complement native QA; they do not replace testing Android focus, keyboard and document-provider behavior.
@@ -52,3 +53,13 @@ These are synthetic emulator results. Completed Dropbox account/provider writes 
 ## Measured Alpha 7 result — 2026-09-12
 
 The independently verified published APK installed over Alpha 6 and retained the PIN and ledger. A synthetic debt had one fully paid installment, one partially forgiven installment and one open installment. The day-31 preview preserved September 17 for the completed row, changed October 17 to October 31, and clamped November 17 to November 30. Save produced exactly one audited correction. Exported backup records verified that only those two dates changed and all cash/forgiveness records remained exact. Native Undo then restored the complete original debt and recorded the reversal; another backup verified the result. See [the native verification record](verification/alpha7-native.json).
+
+## Alpha 8 regression — exemption form after locking
+
+The previous production Alpha 7 APK reproduced a partial exemption changing to a full cash payment on returning from HOME and unlocking with PIN. The selected 13.50 exemption/date/note were replaced by 63.67 full payment/today/empty note. The wrong form was cancelled without saving. [Native reproduction](verification/alpha8-native-before.json).
+
+The independent real-provider/controller/gate harness reproduced lost draft fields, a lost receipt and an enabled duplicate-submission form after remount on old code. The updated production session hook passed all four lifecycle scenarios, including pending work and late callbacks into a replacement session. [Before/after lifecycle evidence](verification/alpha8-lifecycle.json).
+
+The durable full-App browser regression enrolls a real web PIN, selects partial forgiveness in the non-default debt direction, fills amount/date/note, backgrounds, unlocks through the actual PIN screen, verifies every field and submits one exact exemption. It locks/unlocks the receipt and checks that no submit-ready form or duplicate record appears. This is part of the 19-scenario history/creation suite above.
+
+The published Alpha 8 APK passed the same native HOME/PIN cycle with the full draft intact. A single 13.50 exemption saved with its selected date/note, and its receipt remained after another lock/unlock. Native history distinguished both exemptions from the existing cash payment. A subsequent local folder backup advanced its displayed timestamp; all 14 exported files verified exactly against the ledger. Prior transactions/audits and six older snapshots remained unchanged, with one new exemption and snapshot, matching HTML/CSV companions, and no duplicates. Totals were paid 41.83, forgiven 33.50 and remaining 50.17. [Native after-fix evidence](verification/alpha8-native.json).

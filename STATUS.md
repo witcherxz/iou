@@ -4,12 +4,12 @@ Goal: Provide a private Arabic debt ledger with clear balances and recoverable r
 Phase: verify
 
 ## Now
-Preparing Alpha 8 after a reported exemption appeared as a cash payment. Reproduced a real Alpha 7 native lock/unlock bug: the settlement form reset a selected partial exemption to its original full-payment defaults. The fix keeps the complete session and receipt above the privacy gate; histories now prominently distinguish exempted amounts from cash paid. TypeScript and 1,298 integrated checks pass, plus 19 full-App history/creation/privacy UI scenarios, 14 existing financial workflows and 4 real privacy lifecycle scenarios. The durable full-App PIN/background regression passes; preparing the signed release. Testing uses the isolated emulator; no phone connection is needed.
+Alpha 8 is published and verified on the isolated Android 16 emulator. It fixes a reproduced lock/unlock bug that reset partial exemptions to full payments and makes payment/exemption history explicit. TypeScript and 1,298 integrated checks pass, plus 19 full-App history/creation/privacy UI scenarios, 14 existing financial workflows and 4 real privacy lifecycle scenarios. Native draft/receipt preservation and exported-ledger checks pass: exactly one correct exemption, no duplicate, all previous records unchanged and readable backups consistent. No phone connection was used. Broader native validation remains before a stable release.
 
 Next:
-1. Publish the signed Alpha 8 update.
-2. Verify the published APK and repeat the failed exemption flow on the emulator.
-3. Continue cloud-provider, accessibility and reminder validation before a stable release.
+1. Validate completed cloud-provider backup/recovery before a stable release.
+2. Test native accessibility, font scaling and app-switcher privacy.
+3. Verify notification permission and reminder delivery on Android.
 
 ## Health
 
@@ -17,8 +17,8 @@ Next:
 |---|---:|---|---:|---:|---:|---|
 | Automated checks passing | 1298 count | 2026-09-12 | 1298 count | >= 1298 count | 1298 count | `cd app && npm run check`; `node scripts/release-workflow-checks.mjs`; `JAVA_HOME=/tmp/iou-device-debug/jdk-17.0.20.1+1 node scripts/native-pin-checks.mjs` |
 | TypeScript | PASS | 2026-09-12 | PASS | = PASS | PASS | `cd app && npm run typecheck` |
-| Alpha 7 production APK | PASS | 2026-09-12 | PASS | = PASS | PASS | [Release workflow](https://github.com/witcherxz/iou/actions/runs/34708711318); [independent APK verification](app/docs/RELEASING.md#alpha-7) |
-| Settlement lock lifecycle | PASS | 2026-09-12 | FAIL | = PASS | PASS | `/tmp/iou-settle-lifecycle/before-results.json`; `/tmp/iou-settle-lifecycle/after-results.json`; native before: `/tmp/iou-emulator-qa/alpha8-before-native.json` |
+| Alpha 8 production APK | PASS | 2026-09-12 | PASS | = PASS | PASS | [Release workflow](https://github.com/witcherxz/iou/actions/runs/34710749894); [independent APK verification](app/docs/verification/alpha8-apk.json) |
+| Settlement lock lifecycle | PASS | 2026-09-12 | FAIL | = PASS | PASS | [Lifecycle regression](app/docs/verification/alpha8-lifecycle.json); [native before](app/docs/verification/alpha8-native-before.json); [native after](app/docs/verification/alpha8-native.json) |
 
 ## DoD — Alpha 8 exemption clarity and preserved transaction type
 
@@ -28,8 +28,8 @@ Next:
 - [x] Isolate late callbacks from new sessions and clear drafts on explicit exit/restoration.
 - [x] Pass integrated, type, history/creation UI and real privacy lifecycle checks.
 - [x] Pass the durable full-App lock/unlock and receipt regression.
-- [ ] Publish and independently verify the signed Alpha 8 APK.
-- [ ] Verify corrected exemption submission and retained receipt on the isolated emulator.
+- [x] Publish and independently verify the signed Alpha 8 APK.
+- [x] Verify corrected exemption submission and retained receipt on the isolated emulator.
 
 ## Blockers / Risks
 
@@ -52,6 +52,8 @@ Next:
 - 2026-09-12: Facing potential overwrite of external backups during startup or recovery, chose explicit first save and suspended automatic backup after local recovery, to protect older/newer copies, accepting a manual review step.
 
 ## Log
+
+- 2026-09-12 [release]: Published Alpha 8 from 111d81c after both Actions runs passed. Independently verified the 72,416,406-byte production APK and installed it over Alpha 7 on the isolated emulator. Native HOME/PIN cycles preserved the entire exemption draft and its successful receipt. A local backup verified exactly one new 13.50 exemption with the selected date/note, unchanged previous records/audits, no duplicate, and exact agreement across 14 files and seven snapshots. [Native verification record](app/docs/verification/alpha8-native.json).
 
 - 2026-09-12 [work]: Reproduced Alpha 7 native settlement draft reset after background/PIN unlock (partial exemption13.50 became full payment63.67); cancelled without saving. Lifted the whole session/receipt above PrivacyGate and guarded stale completions. Added clear shared payment/exemption history rows, separate amount labels/icons/notes and paid/waived summaries. TypeScript, 1,298 integrated checks, 19 full-App history/creation/privacy UI, 14 financial workflows and 4 actual privacy lifecycle scenarios pass; preparing Alpha 8.
 

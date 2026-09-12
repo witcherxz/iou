@@ -74,4 +74,6 @@ Alpha 3 adds automatic biometric prompting on entry while preserving PIN fallbac
 
 ### Distinct exemption and payment history
 
-![Separate200SAR exemption and550SAR cash payment](screenshots/features-forgiveness-history.png)
+![Separate 200 SAR exemption and 550 SAR cash payment](screenshots/features-forgiveness-history.png)
+
+![Distinct exemption and payment history in dark mode](screenshots/features-forgiveness-history-dark.png)

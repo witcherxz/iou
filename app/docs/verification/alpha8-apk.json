@@ -1,0 +1,17 @@
+{
+  "file": "iou-0.1.0-alpha.8.apk",
+  "sha256": "f71bb165e954361c6956b81fcb53c4a2ab95f627758fe207708fbeb424722a67",
+  "certificateSha256": "9a191eff750459eb5a2508e7875c9bad4bf4062fa488de057f6b4cf491faf5a6",
+  "bytes": 72416406,
+  "bundleBytes": 1919156,
+  "nativePinWorker": true,
+  "nativeBackupDocuments": true,
+  "checks": [
+    "Published SHA-256 matches downloaded APK",
+    "Offline bundle present without demo fixtures",
+    "No signing key packaged",
+    "Native PIN module and worker compiled in DEX",
+    "Native backup documents module compiled in DEX",
+    "SDK37 verifies signature with existing production certificate"
+  ]
+}

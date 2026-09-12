@@ -39,6 +39,18 @@ Alpha release notes record remaining device verification, including biometrics, 
 
 ## Verified alpha release
 
+### Alpha 8
+
+On 2026-09-12, [v0.1.0-alpha.8](https://github.com/witcherxz/iou/releases/tag/v0.1.0-alpha.8) was published from `111d81c6b9c85a73c436c332977b534802ec572e`. The [release workflow](https://github.com/witcherxz/iou/actions/runs/34710749894) and [main workflow](https://github.com/witcherxz/iou/actions/runs/34710749817) passed, including 1,298 integrated checks and the signed production build. Nineteen full-App history/creation/privacy UI scenarios, fourteen existing financial workflows and four real privacy lifecycle scenarios passed locally.
+
+The independently verified APK is 72,416,406 bytes, version `0.1.0-alpha.8` / code `8`, with the unchanged production identity and signing key. Signature, non-debuggable manifest, fixture-free offline bundle, native PIN worker and native backup module checks passed.
+
+```text
+f71bb165e954361c6956b81fcb53c4a2ab95f627758fe207708fbeb424722a67
+```
+
+The published APK installed over Alpha 7 in the isolated Android 16 emulator and retained the PIN and ledger. The same HOME/PIN cycle that failed on Alpha 7 preserved the complete partial exemption draft on Alpha 8. Exactly one 13.50 exemption was saved with the selected date/note; another lock/unlock preserved the receipt without reopening a submission form. Cash and exemptions appeared distinctly in history. A successful local folder backup independently verified all previous transactions/audits unchanged, paid 41.83, forgiven 33.50 and remaining 50.17, with exact HTML/CSV companions and all retained snapshots intact. [Native verification record](verification/alpha8-native.json). No phone connection or action was used.
+
 ### Alpha 7
 
 On 2026-09-12, [v0.1.0-alpha.7](https://github.com/witcherxz/iou/releases/tag/v0.1.0-alpha.7) was published from `1685bed4f4e0b1d7b4ac3e5528fc02d6724cdc3b`. The [release workflow](https://github.com/witcherxz/iou/actions/runs/34708711318) and [main workflow](https://github.com/witcherxz/iou/actions/runs/34708711255) passed, including 1,298 integrated checks and the signed production build. Eighteen full Expo installment-day screen scenarios passed locally with no browser errors.

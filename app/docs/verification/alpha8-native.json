@@ -1,0 +1,165 @@
+{
+  "result": "passed",
+  "version": "0.1.0-alpha.8",
+  "serial": "emulator-5580",
+  "scope": "Synthetic emulator QA only: installed published APK; native UI lifecycle, scoped local SAF backup and offline artifact validation",
+  "validatedAt": "2026-09-12T18:34:00.096Z",
+  "backedUpAt": "2026-09-12T18:33:37.038Z",
+  "nativeChecks": {
+    "personRouteOpened": true,
+    "allDraftFieldsPreserved": true,
+    "receiptPreservedWithoutResubmissionForm": true,
+    "waiversAndCashAppearAsDistinctRows": true,
+    "manualBackupSucceeded": true,
+    "automaticBackupRemainsOff": true,
+    "backupTimestampAdvanced": true
+  },
+  "beforeLock": {
+    "kind": "forgiveness",
+    "mode": "partial",
+    "amount": "13.50",
+    "actualDate": "2026-09-11",
+    "note": "privacy-waiver-qa"
+  },
+  "afterUnlock": {
+    "kind": "forgiveness",
+    "mode": "partial",
+    "amount": "13.50",
+    "actualDate": "2026-09-11",
+    "note": "privacy-waiver-qa"
+  },
+  "receiptBeforeLock": {
+    "heading": "تم تسجيل الإعفاء",
+    "waiver": 13.5,
+    "remaining": 50.17,
+    "submitReadyForm": false
+  },
+  "receiptAfterUnlock": {
+    "heading": "تم تسجيل الإعفاء",
+    "waiver": 13.5,
+    "remaining": 50.17,
+    "submitReadyForm": false
+  },
+  "ledger": {
+    "priorTransactionsUnchanged": true,
+    "priorAuditUnchanged": true,
+    "newTransactions": 1,
+    "newKind": "forgive",
+    "newAmount": 13.5,
+    "actualDate": "2026-09-11",
+    "note": "privacy-waiver-qa",
+    "correctlyLinkedToOriginalDebt": true,
+    "paid": 41.83,
+    "forgiven": 33.5,
+    "remaining": 50.17,
+    "duplicateTransactions": 0,
+    "installmentAllocations": [
+      {
+        "paidAmount": 28.33,
+        "forgivenAmount": 13.5,
+        "remainingAmount": 0
+      },
+      {
+        "paidAmount": 13.5,
+        "forgivenAmount": 20,
+        "remainingAmount": 8.33
+      },
+      {
+        "paidAmount": 0,
+        "forgivenAmount": 0,
+        "remainingAmount": 41.84
+      }
+    ]
+  },
+  "backups": {
+    "previousExactBaseline": true,
+    "oldSnapshotsUnchanged": 6,
+    "totalSnapshots": 7,
+    "newestSnapshotMatchesCanonical": true,
+    "htmlRestoresCanonical": true,
+    "allCompanionsExactlyRegenerated": true,
+    "allHtmlDownloadsAgree": true,
+    "validUtf8": true
+  },
+  "artifacts": [
+    {
+      "name": "iou-backup.json",
+      "bytes": 3229,
+      "sha256": "91ae9ebb91fca2662539f914a61d1a6d118ba40390e3490f58edc08c1dd5fb5e"
+    },
+    {
+      "name": "iou-backup.previous.json",
+      "bytes": 3017,
+      "sha256": "e38f845f680d2986a338334940c2fc85996d586d80011a5485d456da4a38f76b"
+    },
+    {
+      "name": "iou-balances.csv",
+      "bytes": 188,
+      "sha256": "b3e0765e716d11d42101ff6e2e6abebd76db2e2b33d930f9e8a493e84eac7c29"
+    },
+    {
+      "name": "iou-history.csv",
+      "bytes": 2635,
+      "sha256": "6623aedd28eec8e4d4c54792db178071d57d772749d8a3dcf02ffeaa957523b6"
+    },
+    {
+      "name": "iou-installments.csv",
+      "bytes": 584,
+      "sha256": "0a03f8f5a657f7e5369079f688934387d0d982a4e065fcfbe72b5c72ded3fcfe"
+    },
+    {
+      "name": "iou-ledger.html",
+      "bytes": 30338,
+      "sha256": "70b972c1a0a8fcd8ff22f07c65c9e26759bc80341438cda6045e856583440498"
+    },
+    {
+      "name": "iou-snapshot-2026-09-12T17-29-00-017Z-0.json",
+      "bytes": 773,
+      "sha256": "25662adebb0dfc360558eaa43e2debfa32320e14be020af603966adc22beebb4"
+    },
+    {
+      "name": "iou-snapshot-2026-09-12T17-30-05-551Z-0.json",
+      "bytes": 965,
+      "sha256": "f181043435c41e22e3ecd50b81c6e8184c681fd5c4c21f91ffb652614b3f655e"
+    },
+    {
+      "name": "iou-snapshot-2026-09-12T17-32-50-687Z-0.json",
+      "bytes": 773,
+      "sha256": "75fd3925ab52ec6e6193d83f7a3efa4842808b008301d69060a83cc26a4ec972"
+    },
+    {
+      "name": "iou-snapshot-2026-09-12T17-40-41-441Z-0.json",
+      "bytes": 1168,
+      "sha256": "21d636f0ab9cad89bf93d93e66ace0afe0eb1efa162619313ba8c12687a0ab29"
+    },
+    {
+      "name": "iou-snapshot-2026-09-12T17-49-27-979Z-0.json",
+      "bytes": 2092,
+      "sha256": "337782fd1b47cf10d3f25b77ba17ef245496f1466d9112f309ea822c6f5d7e4c"
+    },
+    {
+      "name": "iou-snapshot-2026-09-12T17-50-31-544Z-0.json",
+      "bytes": 3017,
+      "sha256": "e38f845f680d2986a338334940c2fc85996d586d80011a5485d456da4a38f76b"
+    },
+    {
+      "name": "iou-snapshot-2026-09-12T18-33-37-918Z-0.json",
+      "bytes": 3229,
+      "sha256": "91ae9ebb91fca2662539f914a61d1a6d118ba40390e3490f58edc08c1dd5fb5e"
+    },
+    {
+      "name": "iou-transactions.csv",
+      "bytes": 1146,
+      "sha256": "9a94b92eaf9eb9291a9c8ea4de65a7eaad284db196f79b30c1ef10811680d039"
+    }
+  ],
+  "backupDisplayStatus": {
+    "before": "آخر نسخة: 12 سبتمبر 2026، 8:50 م",
+    "after": "آخر نسخة: 12 سبتمبر 2026، 9:33 م"
+  },
+  "releaseArtifactVerifiedByRoot": {
+    "versionCode": 8,
+    "bytes": 72416406,
+    "sha256": "f71bb165e954361c6956b81fcb53c4a2ab95f627758fe207708fbeb424722a67"
+  }
+}
