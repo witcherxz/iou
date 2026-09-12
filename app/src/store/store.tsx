@@ -102,7 +102,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     try {
       const result = await readInitialLedger(AsyncStorage);
       if (!mounted.current || generation !== loadingGeneration.current) return;
-      const next = result.state;
+      // Review an older fallback before allowing it to overwrite an external
+      // backup. Hydration remains read-only; the next normal save persists this
+      // pause so restarting after an edit cannot silently resume automatic writes.
+      const next = result.recovered ? { ...result.state, backupWritePaused: true } : result.state;
       // Recovery does not imply the primary has this content. Force the next save,
       // even if an imported snapshot is identical, while keeping recovery untouched.
       savedJSON.current = !result.isNew && !result.recovered ? JSON.stringify(result.state) : null;

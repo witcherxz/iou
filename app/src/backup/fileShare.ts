@@ -1,4 +1,5 @@
-import { File, Paths } from 'expo-file-system';
+import { Directory, File, Paths } from 'expo-file-system';
+import { randomUUID } from 'expo-crypto';
 import * as Sharing from 'expo-sharing';
 import { Platform } from 'react-native';
 
@@ -32,10 +33,14 @@ export async function exportArtifact({ name, text, mime }: ReadableFile): Promis
     return;
   }
   if (!(await Sharing.isAvailableAsync())) throw new SharingUnavailableError();
-  const file = new File(Paths.cache, name);
-  file.create({ overwrite: true });
+  // Receivers may open this URI after the sheet resolves. Keep each handoff
+  // immutable, including repeated exports with the same friendly filename.
+  const directory = new Directory(Paths.cache, 'iou-exports', randomUUID());
+  directory.create({ intermediates: true });
+  const file = new File(directory, name);
+  file.create();
   file.write(text);
-  // The receiving app may read the URI after the sheet closes; keep the cache file.
+  // Leave the file in OS-managed cache; closing a share sheet is not an upload acknowledgment.
   await Sharing.shareAsync(file.uri, {
     mimeType: mime,
     UTI: mime === 'text/html' ? 'public.html' : mime === 'text/csv' ? 'public.comma-separated-values-text' : 'public.json',
@@ -63,7 +68,9 @@ export async function importFromFile(): Promise<string | null> {
       input.click();
     });
   }
-  const picked = await File.pickFileAsync({ mimeTypes: '*/*' });
+  // SDK 57's Android record requires a list. Its JS wrapper accepts a string
+  // but forwards it unchanged, then disguises the conversion error as cancel.
+  const picked = await File.pickFileAsync({ mimeTypes: ['*/*'] });
   if (picked.canceled || !picked.result) return null;
   if (picked.result.size > MAX_PORTABLE_BYTES) throw new InvalidBackupError();
   return picked.result.text();

@@ -13,5 +13,8 @@ class IouPrivacyCryptoModule : Module() {
     AsyncFunction("derivePin") { pin: String, saltHex: String, iterations: Int ->
       PinKdf.derive(pin, saltHex, iterations)
     }
+    AsyncFunction("deriveBackupKey") { passwordHex: String, saltHex: String, iterations: Int ->
+      BackupKdf.derive(passwordHex, saltHex, iterations)
+    }
   }
 }

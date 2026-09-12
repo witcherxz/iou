@@ -15,6 +15,7 @@ export function emptyState(): PersistedState {
     reminderPrefs: {},
     weekly: true,
     autoBackup: true,
+    backupWritePaused: false,
     backupTarget: 'none',
     backupFolderUri: null,
     dark: null,

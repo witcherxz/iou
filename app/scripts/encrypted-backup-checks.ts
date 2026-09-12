@@ -5,6 +5,9 @@ import { BackupPasswordError, decryptBackup, encryptBackup, encryptedEnvelope, P
 import { parseReadableBackup, readableFiles } from '../src/backup/readable';
 import { InvalidBackupError, parseBackup, serialize } from '../src/backup/types';
 import { seedState } from './fixtures/ledger';
+import { deriveBackupKey } from '../src/backup/passwordKey';
+import { bytesToHex } from '@noble/hashes/utils.js';
+import { backupKeyNativeState, nativeBackupCrypto } from './backup-password-native-stub';
 
 let count = 0;
 const check = (name: string, run: () => void) => { run(); count++; console.log(`PASS ${name}`); };
@@ -56,6 +59,61 @@ async function main() {
   check('ordinary JSON and readable HTML remain unprotected formats', () => {
     assert.equal(encryptedEnvelope(original), null); assert.equal(encryptedEnvelope(readableFiles(original)[0].text), null);
   });
+  nativeBackupCrypto.supported = true;
+  const beforeNative = backupKeyNativeState.calls;
+  const nativeClear = await decryptBackup(independentEnvelope, password);
+  check('supported native backup method imports existing independently produced ciphertext', () => {
+    assert.equal(backupKeyNativeState.calls, beforeNative + 1);
+    assert.deepEqual(parseBackup(nativeClear), parseBackup(original));
+  });
+  const nativeEnvelope = encryptedEnvelope(await encryptBackup(original, password))!;
+  const nativeBytes = Buffer.from(nativeEnvelope.ciphertext, 'base64');
+  const nativeDecipher = createDecipheriv('aes-256-gcm', pbkdf2Sync(password, Buffer.from(nativeEnvelope.salt, 'hex'), PASSWORD_ITERATIONS, 32, 'sha256'), Buffer.from(nativeEnvelope.nonce, 'hex'));
+  nativeDecipher.setAAD(Buffer.from('IoU portable backup v1'));
+  nativeDecipher.setAuthTag(nativeBytes.subarray(-16));
+  const nativeExportClear = Buffer.concat([nativeDecipher.update(nativeBytes.subarray(0, -16)), nativeDecipher.final()]).toString('utf8');
+  check('native export keeps the existing portable format readable by independent crypto', () => assert.deepEqual(parseReadableBackup(nativeExportClear), parseBackup(original)));
+  backupKeyNativeState.fail = true;
+  await assert.rejects(decryptBackup(independentEnvelope, password), /Native derivation test failure/);
+  await assert.rejects(encryptBackup(original, password), /Native derivation test failure/);
+  check('actual native failure propagates without silently deriving through WebCrypto', () => assert.ok(true));
+  backupKeyNativeState.fail = false;
+  backupKeyNativeState.invalid = true;
+  await assert.rejects(encryptBackup(original, password), /Invalid native backup key/);
+  check('malformed native key fails before AES encryption', () => assert.ok(true));
+  backupKeyNativeState.invalid = false;
+  const nativeDerive = nativeBackupCrypto.deriveBackupKey!;
+  delete nativeBackupCrypto.deriveBackupKey;
+  const callsBeforeFallback = backupKeyNativeState.calls;
+  const compatibilityClear = await decryptBackup(independentEnvelope, password);
+  check('older native module without backup method retains compatibility fallback', () => {
+    assert.deepEqual(parseBackup(compatibilityClear), parseBackup(original));
+    assert.equal(backupKeyNativeState.calls, callsBeforeFallback);
+  });
+  nativeBackupCrypto.deriveBackupKey = nativeDerive;
+  const unicodeVectors = [
+    ['Arabic', 'عبارة اختبار عامة 123'], ['emoji', '🔐 public 😀 password'], ['combining', 'cafe\u0301 معرّف'],
+    ['whitespace', '  public\tpassword\n '], ['embedded NUL', 'public\u0000test password'],
+    ['lone high surrogate', 'public \ud800 password'], ['lone low surrogate', 'public \udc00 password'],
+    ['long HMAC input', 'عبارة اختبار '.repeat(20)], ['UTF16 limit', '😀'.repeat(512)],
+    ['multibyte limit', '字'.repeat(1024)],
+  ];
+  const vectorSalt = '0123456789abcdef0123456789abcdef';
+  for (const [label, value] of unicodeVectors) {
+    const expected = pbkdf2Sync(new TextEncoder().encode(value), Buffer.from(vectorSalt, 'hex'), PASSWORD_ITERATIONS, 32, 'sha256').toString('hex');
+    const nativeKey = await deriveBackupKey(value, vectorSalt, nativeDerive);
+    const webKey = await deriveBackupKey(value, vectorSalt);
+    check(`${label}: native UTF-8 bridge and WebCrypto match independent existing-format bytes`, () => {
+      assert.equal(bytesToHex(nativeKey), expected); assert.equal(bytesToHex(webKey), expected);
+    });
+    nativeKey.fill(0); webKey.fill(0);
+  }
+  const callsBeforeInvalid = backupKeyNativeState.calls;
+  await assert.rejects(deriveBackupKey('x'.repeat(1025), vectorSalt, nativeDerive));
+  await assert.rejects(deriveBackupKey('', vectorSalt, nativeDerive));
+  await assert.rejects(deriveBackupKey(password, 'invalid', nativeDerive));
+  check('invalid native KDF inputs are rejected before dispatch', () => assert.equal(backupKeyNativeState.calls, callsBeforeInvalid));
+  nativeBackupCrypto.supported = false;
   const priorCrypto = Object.getOwnPropertyDescriptor(globalThis, 'crypto');
   try {
     Object.defineProperty(globalThis, 'crypto', { configurable: true, value: undefined });

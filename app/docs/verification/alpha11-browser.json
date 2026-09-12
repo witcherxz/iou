@@ -1,0 +1,27 @@
+{
+  "passed": 19,
+  "checks": [
+    "me/light/320: payment550 and waiver200 stay distinct in both history screens",
+    "me/light/390: payment550 and waiver200 stay distinct in both history screens",
+    "me/dark/320: payment550 and waiver200 stay distinct in both history screens",
+    "me/dark/390: payment550 and waiver200 stay distinct in both history screens",
+    "owe/light/320: payment550 and waiver200 stay distinct in both history screens",
+    "owe/light/390: payment550 and waiver200 stay distinct in both history screens",
+    "owe/dark/320: payment550 and waiver200 stay distinct in both history screens",
+    "owe/dark/390: payment550 and waiver200 stay distinct in both history screens",
+    "me/full: forgiveness amount, status and cancellation stay explicit",
+    "me/partial: forgiveness amount, status and cancellation stay explicit",
+    "me/voided: forgiveness amount, status and cancellation stay explicit",
+    "owe/full: forgiveness amount, status and cancellation stay explicit",
+    "owe/partial: forgiveness amount, status and cancellation stay explicit",
+    "owe/voided: forgiveness amount, status and cancellation stay explicit",
+    "me/person: real entry flow stores cash550 then waiver200 without changing the opposite debt",
+    "me/debt: real entry flow stores cash550 then waiver200 without changing the opposite debt",
+    "owe/person: real entry flow stores cash550 then waiver200 without changing the opposite debt",
+    "owe/debt: real entry flow stores cash550 then waiver200 without changing the opposite debt",
+    "Real PIN lock/unlock preserves a partial waiver draft and its saved receipt without duplicate entries"
+  ],
+  "browserErrors": [],
+  "measuredAt": "2026-09-13",
+  "scope": "Full App browser workflows with synthetic data and final compact-label changes; native font behavior is recorded separately."
+}

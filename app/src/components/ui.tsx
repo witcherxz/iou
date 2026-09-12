@@ -1,4 +1,4 @@
-import React, { useId, useState } from 'react';
+import React, { useEffect, useId, useState } from 'react';
 import {
   ActivityIndicator,
   Platform,
@@ -11,6 +11,7 @@ import {
   TextInputProps,
   TextProps,
   TextStyle,
+  useWindowDimensions,
   View,
   ViewStyle,
 } from 'react-native';
@@ -121,9 +122,19 @@ export function Avatar({
 }
 
 export function Badge({ label, bg, fg }: { label: string; bg: string; fg: string }) {
+  const { fontScale } = useWindowDimensions();
+  const [width, setWidth] = useState<number>();
+  useEffect(() => setWidth(undefined), [label, fontScale]);
   return (
-    <View style={{ backgroundColor: bg, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 2 }}>
-      <T style={{ fontSize: 11, fontWeight: '600', color: fg }}>{label}</T>
+    <View style={{ backgroundColor: bg, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 2, flexShrink: 1, width }}>
+      <T style={{ ...M3.type.labelSmall, fontWeight: '600', color: fg, alignSelf: 'stretch' }}
+        onTextLayout={Platform.OS === 'android' ? event => {
+          // Android can round an intrinsic text width down between measurement
+          // and painting, wrapping a final word into an unmeasured second line.
+          // Include the badge padding and a small whole-dp rounding allowance.
+          const next = Math.ceil(event.nativeEvent.lines.reduce((maximum, line) => Math.max(maximum, line.width), 0)) + 18;
+          setWidth(current => current === next ? current : next);
+        } : undefined}>{label}</T>
     </View>
   );
 }
@@ -200,7 +211,7 @@ export function Segment<V extends string>({
               }}>
                 {(pressed || hovered) && <StateLayer color={fg} opacity={pressed ? 0.12 : 0.08} />}
                 {on && <SelectionCheck color={fg} />}
-                <T style={{ ...M3.type.labelLarge, color: fg, textAlign: 'center', flexShrink: 1 }}>{o.label}</T>
+                <T style={{ ...M3.type.labelLarge, color: fg, textAlign: 'center', flex: 1, minWidth: 0 }}>{o.label}</T>
               </View>
             )}
           </MaterialPressable>
@@ -232,7 +243,7 @@ export function Chip({
         }}>
           {(pressed || hovered) && <StateLayer color={fg} opacity={pressed ? 0.12 : 0.08} />}
           {selected && <SelectionCheck color={fg} />}
-          <T style={{ ...M3.type.labelLarge, color: fg }}>{label}</T>
+          <T style={{ ...M3.type.labelLarge, color: fg, flexShrink: 1 }}>{label}</T>
         </View>
       )}
     </MaterialPressable>
@@ -264,7 +275,7 @@ export function PrimaryButton({
         <>
           {(pressed || hovered) && <StateLayer color={fg} opacity={pressed ? 0.12 : 0.08} />}
           {loading ? <ActivityIndicator color={fg} /> : (
-            <T style={{ ...M3.type.labelLarge, color: fg, textAlign: 'center' }}>{label}</T>
+            <T style={{ ...M3.type.labelLarge, color: fg, textAlign: 'center', alignSelf: 'stretch' }}>{label}</T>
           )}
         </>
       )}
@@ -292,7 +303,7 @@ export function OutlineButton({
       {({ pressed, hovered }) => (
         <>
           {(pressed || hovered) && <StateLayer color={c.primary} opacity={pressed ? 0.12 : 0.08} />}
-          <T style={{ ...M3.type.labelLarge, color: disabled ? c.disabledContent : c.primary, textAlign: 'center' }}>{label}</T>
+          <T style={{ ...M3.type.labelLarge, color: disabled ? c.disabledContent : c.primary, textAlign: 'center', alignSelf: 'stretch' }}>{label}</T>
         </>
       )}
     </MaterialPressable>

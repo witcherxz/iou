@@ -35,7 +35,7 @@ export function DebtDetail({ c, debt, payments, onBack, onPay, onForgive, onMark
         showsVerticalScrollIndicator={false}
       >
         <View style={{ backgroundColor: debt.heroBg, borderRadius: 24, paddingVertical: 24, paddingHorizontal: 16 }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
             <Badge label={debt.badge} bg={debt.badgeBg} fg={debt.badgeFg} />
             <T style={{ fontSize: 12, lineHeight: 16, color: heroColor }}>{debt.dirLong}</T>
           </View>
@@ -71,14 +71,14 @@ export function DebtDetail({ c, debt, payments, onBack, onPay, onForgive, onMark
         <View
           style={{
             backgroundColor: c.surfaceContainerLow, borderRadius: 12, minHeight: 72, paddingVertical: 16, paddingHorizontal: 16,
-            flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+            flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 8,
           }}
         >
-          <View>
+          <View style={{ flexShrink: 1 }}>
             <T style={{ fontSize: 14, lineHeight: 20, color: c.onSurfaceVariant }}>{debt.hasSchedule && !debt.closed ? 'استحقاق الدفعة التالية' : 'تاريخ الاستحقاق'}</T>
             <T style={{ fontSize: 16, lineHeight: 24, fontWeight: '600', color: c.onSurface, marginTop: 4 }}>{debt.dueDateLabel}</T>
           </View>
-          <T style={{ fontSize: 14, lineHeight: 20, fontWeight: '600', color: debt.dueColor }}>{debt.dueLabel}</T>
+          <T style={{ fontSize: 14, lineHeight: 20, fontWeight: '600', color: debt.dueColor, flexShrink: 1 }}>{debt.dueLabel}</T>
         </View>
 
         <View style={{ flexDirection: compact ? 'column' : 'row', gap: 12 }}>

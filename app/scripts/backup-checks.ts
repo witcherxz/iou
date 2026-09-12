@@ -6,6 +6,7 @@ import { csvCell, embeddedJson, parseReadableBackup, readableFiles, REPORT_FILEN
 import { BACKUP_FILENAME } from '../src/config/app';
 import { editEntry, voidEntry } from '../src/ledger';
 import { PersistedState } from '../src/types';
+import { validateState } from '../src/validation';
 import { listAndroidDocuments, validateAndroidDocumentEntries, writeAndroidDocument } from '../src/backup/androidDocuments';
 import { URL as ExpoURL } from 'whatwg-url-minimum';
 import { failNextWrite, failNextWriteMatching, failNextCreate, failNextRead, failNextClose, mismatchNextRead, failNextListing, hangNextListing, files, folders, nonTruncatingFolders, openHandles, opaqueFolders, reorderedFolders, metadata, readCalls, addDocument, documentUriNamed, freshSafWriteAttempts, expoSafOpenAttempts, nativeWriteCalls } from './backup-filesystem-stub';
@@ -44,7 +45,7 @@ async function main() {
     assert.deepEqual(payload.changes, source.changes);
   });
   check('exports omit destination, local status and unexpected credentials', () => {
-    for (const key of ['backupTarget', 'backupFolderUri', 'autoBackup', 'lastBackup', 'onboarded', 'refreshToken']) assert.ok(!(key in payload), key);
+    for (const key of ['backupTarget', 'backupFolderUri', 'autoBackup', 'backupWritePaused', 'lastBackup', 'onboarded', 'refreshToken']) assert.ok(!(key in payload), key);
     assert.ok(!text.includes('private/device/grant'));
     assert.ok(!text.includes('must-not-export'));
   });
@@ -57,19 +58,31 @@ async function main() {
     assert.ok(!('backupFolderUri' in restored));
   });
   check('restore preserves destination and local automatic preference', () => {
-    const current = { ...emptyState(), backupTarget: 'folder' as const, backupFolderUri: 'content://new-device', autoBackup: false };
+    const current = { ...emptyState(), backupTarget: 'folder' as const, backupFolderUri: 'content://new-device', autoBackup: false, backupWritePaused: true };
     const restored = restoredState(current, payload);
     assert.equal(restored.backupFolderUri, current.backupFolderUri);
     assert.equal(restored.backupTarget, 'folder');
     assert.equal(restored.autoBackup, false);
+    assert.equal(restored.backupWritePaused, true);
     assert.equal(restored.onboarded, true);
     assert.equal(restored.lastBackup, payload.backedUpAt);
     assert.equal(restoredState(current, payload, 'file').lastBackup, null);
   });
   check('backup status does not change the automatic data fingerprint', () => {
     assert.equal(backupFingerprint(source), backupFingerprint({ ...source, lastBackup: payload.backedUpAt } as typeof source));
+    const paused = { ...source, backupWritePaused: true };
+    assert.equal(backupFingerprint(source), backupFingerprint(paused));
     assert.notEqual(backupFingerprint(source), backupFingerprint({ ...source, profileName: 'Different ledger' }));
     assert.notEqual(backupFingerprint(source), backupFingerprint({ ...source, reminderSettings: { ...source.reminderSettings, hour: 9 } }));
+  });
+  check('local backup failure pause survives persistence while older local data defaults safely', () => {
+    const paused = validateState(JSON.parse(JSON.stringify({ ...source, backupWritePaused: true })));
+    assert.equal(paused.backupWritePaused, true);
+    const legacy = JSON.parse(JSON.stringify(source));
+    delete legacy.backupWritePaused;
+    assert.equal(validateState(legacy).backupWritePaused, false);
+    assert.throws(() => validateState({ ...source, backupWritePaused: 'false' }), Error);
+    assert.ok(!('backupWritePaused' in parseBackup(serialize(paused))));
   });
   check('timestamps reject display labels and invalid calendar dates', () => {
     assert.equal(isBackupTimestamp('اليوم ١:٢٣ م'), false);
@@ -478,6 +491,24 @@ async function main() {
   files.set(`${zoneUri}/iou-snapshot-2026-09-12T12-00-00-000Z-1.json`, JSON.stringify({ ...payload, backedUpAt: '2026-09-12T10:00:00Z', profileName: 'later' }));
   const byTime = await readFolderBackup(zoneUri);
   check('history recovery orders actual instants across timezone offsets', () => assert.equal(parseBackup(byTime!.text).profileName, 'later'));
+  const staleMirrorUri = 'memory://stale-valid-mirror';
+  folders.add(staleMirrorUri);
+  const olderMirror = JSON.stringify({ ...payload, profileName: 'older mirror', backedUpAt: '2026-09-12T09:00:00Z' });
+  const newerSnapshot = JSON.stringify({ ...payload, profileName: 'verified after failed mirror write', backedUpAt: '2026-09-12T10:00:00Z' });
+  files.set(`${staleMirrorUri}/${BACKUP_FILENAME}`, olderMirror);
+  files.set(`${staleMirrorUri}/iou-snapshot-2026-09-12T10-00-00-000Z-0.json`, newerSnapshot);
+  const newestVerified = await readFolderBackup(staleMirrorUri);
+  check('default restore offers the newer verified snapshot even if the old mirror remains valid', () => {
+    assert.equal(newestVerified?.text, newerSnapshot);
+    assert.equal(newestVerified?.recovered, true);
+    assert.equal(files.get(`${staleMirrorUri}/${BACKUP_FILENAME}`), olderMirror);
+  });
+  files.set(`${staleMirrorUri}/${BACKUP_FILENAME}`, newerSnapshot);
+  const currentMirror = await readFolderBackup(staleMirrorUri);
+  check('matching latest canonical and snapshot do not claim fallback recovery', () => {
+    assert.equal(currentMirror?.text, newerSnapshot);
+    assert.equal(currentMirror?.recovered, false);
+  });
   console.log(`\n${checks} BACKUP CHECKS PASSED`);
 }
 main().catch(error => { console.error(error); process.exitCode = 1; });

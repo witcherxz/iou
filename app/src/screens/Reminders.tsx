@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ScrollView, View } from 'react-native';
+import { Platform, ScrollView, View } from 'react-native';
 
 import { BellIcon } from '../components/icons';
 import { normalizeAmountInput } from '../components/Keypad';
@@ -19,8 +19,9 @@ interface Props {
   onChangeSettings?: (settings: ReminderSettings) => void;
   onToggle: (debtId: string, on: boolean) => void;
   onToggleWeekly: () => void;
-  notificationStatus?: 'checking' | 'ready' | 'denied' | 'unavailable';
+  notificationStatus?: 'checking' | 'ready' | 'denied' | 'blocked' | 'unavailable';
   onEnable?: () => void;
+  onOpenSettings?: () => void;
 }
 
 const leadOptions = [{ value: 0, label: 'بدون' }, { value: 1, label: 'قبل يوم' }, { value: 3, label: 'قبل 3 أيام' }, { value: 7, label: 'قبل 7 أيام' }];
@@ -38,7 +39,7 @@ function SmallAction({ c, label, accessibilityLabel, onPress }: { c: Colors; lab
   </MaterialPressable>;
 }
 
-export function Reminders({ c, debts, prefs, weekly, settings: providedSettings, onChangeSettings, onToggle, onToggleWeekly, notificationStatus, onEnable }: Props) {
+export function Reminders({ c, debts, prefs, weekly, settings: providedSettings, onChangeSettings, onToggle, onToggleWeekly, notificationStatus, onEnable, onOpenSettings }: Props) {
   const settings = providedSettings ?? defaultReminderSettings();
   const [timeDraft, setTimeDraft] = useState(() => reminderTime(settings));
   useEffect(() => setTimeDraft(reminderTime(settings)), [settings.hour, settings.minute]);
@@ -67,12 +68,18 @@ export function Reminders({ c, debts, prefs, weekly, settings: providedSettings,
         <View style={{ ...card, backgroundColor: c.warnBg }}>
           <T accessibilityLiveRegion="polite" style={{ ...M3.type.bodyMedium, color: c.warnFg }}>
             {notificationStatus === 'unavailable'
-              ? 'الإشعارات غير متاحة هنا. يمكنك حفظ تفضيلاتك، وتعمل التنبيهات في تطبيق الهاتف بعد السماح بها.'
+              ? Platform.OS === 'web'
+                ? 'الإشعارات غير متاحة هنا. يمكنك حفظ تفضيلاتك، وتعمل التنبيهات في تطبيق الهاتف بعد السماح بها.'
+                : 'تعذر إعداد التذكيرات على هذا الجهاز. تفضيلاتك محفوظة؛ أعد المحاولة.'
+              : notificationStatus === 'blocked'
+                ? 'الإشعارات أو قناة التذكيرات متوقفة في إعدادات الجهاز. افتح الإعدادات للسماح بها؛ تفضيلاتك هنا محفوظة.'
               : notificationStatus === 'denied'
                 ? 'الإشعارات غير مفعّلة. اسمح بها هنا أو من إعدادات الجهاز لتصلك التذكيرات.'
                 : 'جارٍ التحقق من الإشعارات وجدولة التذكيرات…'}
           </T>
           {notificationStatus === 'denied' && onEnable && <PrimaryButton label="تفعيل الإشعارات" onPress={onEnable} c={c} />}
+          {notificationStatus === 'unavailable' && Platform.OS !== 'web' && onEnable && <PrimaryButton label="إعادة المحاولة" onPress={onEnable} c={c} />}
+          {notificationStatus === 'blocked' && onOpenSettings && <PrimaryButton label="إعدادات الجهاز" onPress={onOpenSettings} c={c} />}
         </View>
       )}
 

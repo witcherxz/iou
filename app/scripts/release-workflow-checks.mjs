@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { releaseVersion } from './android-release-version.mjs';
-import { verifyBundle, verifyInspection, verifyNativePinWorker, verifyNativeBackupDocuments } from './verify-android-release.mjs';
+import { verifyBundle, verifyInspection, verifyNativePinWorker, verifyNativeBackupDocuments, verifyNativeBackupKeyWorker } from './verify-android-release.mjs';
 import { RELEASE_FIXTURE_MARKERS } from './release-fixture-markers.mjs';
 
 let count = 0;
@@ -242,5 +242,20 @@ check('PIN worker presence cannot hide an absent backup documents module', () =>
 });
 check('an unused backup module descriptor cannot satisfy the compiled-module guard', () => {
   assert.throws(() => verifyNativeBackupDocuments([dexFixture([backupDocumentClass], [])]), /missing native backup documents module/);
+});
+const backupKeyClasses = [nativeClasses[0], 'Lexpo/modules/iouprivacycrypto/BackupKdf;'];
+check('compiled backup key worker and native bridge are accepted in one DEX', () => {
+  assert.doesNotThrow(() => verifyNativeBackupKeyWorker([dexFixture(backupKeyClasses)]));
+});
+check('backup key worker and native bridge may reside in different DEX files', () => {
+  assert.doesNotThrow(() => verifyNativeBackupKeyWorker(backupKeyClasses.map(name => dexFixture([name]))));
+});
+for (const missing of backupKeyClasses) {
+  check(`backup key release rejects missing compiled ${missing}`, () => {
+    assert.throws(() => verifyNativeBackupKeyWorker([dexFixture(backupKeyClasses.filter(name => name !== missing))]), /missing native backup key worker class/);
+  });
+}
+check('unused backup key descriptors cannot release the slow JavaScript fallback', () => {
+  assert.throws(() => verifyNativeBackupKeyWorker([dexFixture(backupKeyClasses, [])]), /missing native backup key worker class/);
 });
 console.log(`${count} Android release checks passed.`);

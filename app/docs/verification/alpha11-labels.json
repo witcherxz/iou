@@ -1,0 +1,51 @@
+{
+  "measuredAt": "2026-09-13",
+  "scope": "Local QA candidate2: Alpha10 native APK with production candidate JavaScript; not the final published Alpha11 APK",
+  "candidate": {
+    "scope": "LOCAL QA ONLY: unchanged native APK with candidate JavaScript",
+    "apk": "/tmp/iou-native-candidate/export-2/local-qa.apk",
+    "sha256": "e59e39f1818e9c29b699989b815fe749ba039e9baadbf622bbd2d3cdc9ce3db1",
+    "bundle": "/tmp/iou-native-candidate/export-2/_expo/static/js/android/index-947118cd6a88836cfa9740b289258b11.hbc",
+    "bundleSha256": "30bed9a5a0253243dea2f9d63cd02df97d9e80dabd0c2738eb5511e09ec59beb",
+    "nativeBase": "0.1.0-alpha.10",
+    "productionPublication": false
+  },
+  "device": {
+    "serial": "emulator-5580",
+    "android": 16,
+    "api": 36,
+    "resolution": "720x1600",
+    "density": 320,
+    "fontScales": [
+      1,
+      2
+    ]
+  },
+  "baseline": "Published Alpha10 reproduces clipped forgiveness selector and partial-forgiveness status badge; recents shield hides the ledger.",
+  "results": {
+    "completeForgivenessAndPaymentSelectorLabels": "PASS",
+    "completeDebtActionLabels": "PASS",
+    "completePartialForgivenessBadge": "PASS",
+    "dueDateRowAtDoubleFont": "PASS",
+    "recentsPrivacyCover": "PASS on published Alpha10 baseline"
+  },
+  "dataChanges": "No financial save. Font scale restored to 1.0; existing four transactions and remaining 50.17 retained.",
+  "screenshots": [
+    {
+      "file": "screenshots/alpha11-default-debt-status.png",
+      "sha256": "1a22bdd8bfd2ff673f16f433750ef80c42f31edb939877fe4cc76c6f7bf80215"
+    },
+    {
+      "file": "screenshots/alpha11-default-forgive-selector.png",
+      "sha256": "23e1c6b269b7a799e43994399b23638490d0ef04c1263fe039bb9a9d471899c9"
+    },
+    {
+      "file": "screenshots/alpha11-font2x-debt-actions.png",
+      "sha256": "7193be3795bf212c28ea178b9be216c644f9adcee09f2400193bab04db7389f6"
+    },
+    {
+      "file": "screenshots/alpha11-font2x-forgive-selector.png",
+      "sha256": "94b5af41f0b82a4e19799350f376d8423b2cdbd186315ecd99970d481feb69bb"
+    }
+  ]
+}

@@ -1,8 +1,10 @@
-import { addDays, todayISO } from '../src/format';
-import { syncReminders, ensurePermission } from '../src/reminders';
+import { addDays, calendarISO, todayISO } from '../src/format';
+import { syncReminders, ensurePermission, openReminderSettings } from '../src/reminders';
+import { reminderContent } from '../src/reminderContent';
+import { planReminders } from '../src/reminderPlan';
 import { defaultReminderSettings } from '../src/reminderSettings';
 import type { DebtView } from '../src/selectors';
-import { notificationHarness as h, Platform } from './reminder-notifications-stub';
+import { notificationHarness as h, Platform, AndroidImportance } from './reminder-notifications-stub';
 
 let checks = 0;
 function eq(label: string, actual: unknown, expected: unknown) {
@@ -42,7 +44,7 @@ async function run() {
   eq('newest rebuild keeps latest settings', [h.scheduled.get('iou-weekly')?.trigger.weekday, h.scheduled.get('iou-weekly')?.trigger.hour, h.scheduled.get('iou-weekly')?.trigger.minute], [6, 22, 45]);
 
   h.permission = { granted: false, canAskAgain: false };
-  eq('revoked permission returns denied', await syncReminders([debt], {}, true, settings), 'denied');
+  eq('permanently revoked permission returns blocked', await syncReminders([debt], {}, true, settings), 'blocked');
   eq('revoked permission cancels stale schedules', h.scheduled.size, 0);
   h.calls = [];
   eq('permission not reprompted if system disallows', await ensurePermission(), false);
@@ -51,6 +53,60 @@ async function run() {
   h.calls = [];
   eq('explicit enable requests notification permission', await ensurePermission(), true);
   eq('Android channel precedes permission request', h.calls.indexOf('channel') < h.calls.indexOf('request'), true);
+  h.permission = { granted: true, canAskAgain: true, status: 'denied' };
+  eq('Android granted flag cannot override denied overall status', await syncReminders([debt], {}, false, settings), 'denied');
+  eq('denied overall status removes stale native alarms', h.scheduled.size, 0);
+  h.permission = { granted: true, canAskAgain: true, status: 'granted' };
+  h.channelImportance = AndroidImportance.NONE;
+  eq('user-blocked Android channel returns blocked', await syncReminders([debt], {}, true, settings), 'blocked');
+  eq('user-blocked channel never installs alarms', h.scheduled.size, 0);
+  eq('permission enable does not claim a blocked channel is ready', await ensurePermission(), false);
+  h.calls = []; await openReminderSettings();
+  eq('explicit settings action opens native settings', h.calls.includes('openSettings'), true);
+  h.channelImportance = AndroidImportance.DEFAULT;
+  h.channelMissing = true;
+  eq('missing Android channel is reported unavailable', await syncReminders([debt], {}, false, settings), 'unavailable');
+  Platform.Version = 25;
+  eq('Android 7 has no channel requirement', await syncReminders([debt], {}, false, settings), 'ready');
+  Platform.Version = 36; h.channelMissing = false;
+
+  const lateDate = new Date(Date.now() - 90_000); lateDate.setSeconds(0, 0);
+  const lateDebt = { ...debt, nextDueAt: calendarISO(lateDate) };
+  const lateSettings = { ...defaultReminderSettings(), hour: lateDate.getHours(), minute: lateDate.getMinutes() };
+  const latePlan = planReminders([lateDebt], {}, lateDate.getTime() - 1, lateSettings)[0];
+  const lateId = `iou-${latePlan.id}`;
+  const setDelayed = () => {
+    h.scheduled.clear(); h.delivered.clear(); h.calls = [];
+    h.scheduled.set(lateId, { identifier: lateId, content: { ...reminderContent(latePlan, false), data: { debtId: lateDebt.id } }, trigger: { type: 'date', value: lateDate.getTime() } });
+  };
+  setDelayed();
+  eq('due but delayed Android alarm remains ready', await syncReminders([lateDebt], {}, false, lateSettings), 'ready');
+  eq('foreground refresh catches up a current delayed alarm once', h.delivered.has(lateId), true);
+  eq('catch-up does not retain an unarmed past row', h.scheduled.has(lateId), false);
+  eq('catch-up uses the existing reminder channel', h.delivered.get(lateId)?.trigger.channelId, 'iou-reminders');
+  h.calls = []; await syncReminders([lateDebt], {}, false, lateSettings);
+  eq('next foreground cannot duplicate the caught-up request', h.calls.includes('schedule'), false);
+  const staleDate = new Date(lateDate.getTime() - 2 * 86400000);
+  const staleDebt = { ...lateDebt, nextDueAt: calendarISO(staleDate) };
+  const stalePlan = planReminders([staleDebt], {}, staleDate.getTime() - 1, lateSettings)[0];
+  h.scheduled.set(`iou-${stalePlan.id}`, { identifier: `iou-${stalePlan.id}`, content: { ...reminderContent(stalePlan, false), data: { debtId: staleDebt.id } }, trigger: { type: 'date', value: staleDate.getTime() } });
+  h.delivered.clear(); await syncReminders([staleDebt], {}, false, lateSettings);
+  eq('old stale rows do not consume pending capacity indefinitely', h.scheduled.size, 0);
+  eq('old stale rows are not replayed after a long closure', h.delivered.size, 0);
+  setDelayed(); await syncReminders([{ ...lateDebt, amount: 16, rem: 16 }], {}, false, lateSettings);
+  eq('amount correction removes superseded delayed content', h.scheduled.size + h.delivered.size, 0);
+  setDelayed(); await syncReminders([lateDebt], { d1: false }, false, lateSettings);
+  eq('opt-out cancels even a due but delayed alarm', h.scheduled.size + h.delivered.size, 0);
+  setDelayed(); await syncReminders([{ ...lateDebt, rem: 0, closed: true }], {}, false, lateSettings);
+  eq('settlement cancels delayed alert', h.scheduled.size + h.delivered.size, 0);
+  setDelayed(); await syncReminders([lateDebt], {}, false, { ...lateSettings, privateNotifications: true });
+  eq('private preference change cancels superseded delayed details', h.scheduled.size + h.delivered.size, 0);
+  setDelayed(); await syncReminders([lateDebt], {}, false, { ...lateSettings, hour: (lateSettings.hour + 1) % 24 });
+  eq('time change removes old delayed request', h.scheduled.get(lateId)?.trigger.value === lateDate.getTime(), false);
+  await syncReminders([debt], {}, false, defaultReminderSettings());
+  h.calls = []; await syncReminders([debt], {}, false, defaultReminderSettings());
+  eq('unchanged future alarms reinstall after cold start or force-stop', h.calls.includes('schedule'), true);
+
   h.failOnSchedule = true;
   eq('native scheduling errors surfaced', await syncReminders([debt], {}, true, settings), 'unavailable');
   eq('failed native batch leaves no partial schedules', h.scheduled.size, 0);
@@ -62,10 +118,13 @@ async function run() {
   Platform.OS = 'ios';
   h.permission = { granted: false, canAskAgain: false, ios: { status: 3 } };
   eq('iOS provisional permission is usable', await syncReminders([debt], {}, false, defaultReminderSettings()), 'ready');
+  h.permission = { granted: true, canAskAgain: false, ios: { status: 1 } };
+  eq('iOS denied status overrides misleading root granted flag', await syncReminders([debt], {}, false, settings), 'blocked');
   Platform.OS = 'web'; h.calls = [];
   eq('web explicitly unavailable', await syncReminders([debt], {}, true, settings), 'unavailable');
   eq('web never touches native scheduling', h.calls.length, 0);
   eq('web never prompts native permission', await ensurePermission(), false);
+  await openReminderSettings(); eq('web settings action does not call native Linking', h.calls.length, 0);
   console.log(`${checks} native reminder adapter checks passed.`);
 }
 run().catch(error => { console.error(error); throw error; });

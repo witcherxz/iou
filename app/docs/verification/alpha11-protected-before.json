@@ -1,0 +1,38 @@
+{
+  "candidate": 3,
+  "emulator": "5580",
+  "protectedDialogPresent": true,
+  "credentialsLogged": false,
+  "restored": false,
+  "observations": [
+    {
+      "elapsedSeconds": 19.3,
+      "previewPresent": false,
+      "locked": false,
+      "passwordDialogPresent": true,
+      "passwordErrorPresent": false
+    },
+    {
+      "elapsedSeconds": 46.6,
+      "previewPresent": false,
+      "locked": false,
+      "passwordDialogPresent": true,
+      "passwordErrorPresent": false,
+      "appCpuLines": [
+        "1.2% 25697/io.github.witcherxz.iou: 1.1% user + 0.1% kernel / faults: 509 minor"
+      ]
+    }
+  ],
+  "finalElapsedSeconds": 78.4,
+  "previewBeforeCancel": false,
+  "passwordFieldEnabled": [
+    "false"
+  ],
+  "openButtonVisible": false,
+  "cancelledWithBack": true,
+  "stoppedBackgroundDerivation": true,
+  "releasedUnlocked": true,
+  "protectedDialogRemaining": false,
+  "measuredAt": "2026-09-13",
+  "scope": "Synthetic Android16 emulator, candidate3 with old JavaScript PBKDF2; correct password submitted, cancelled without restoring."
+}

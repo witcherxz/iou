@@ -1,6 +1,6 @@
 {
   "name": "app",
-  "version": "0.1.0-alpha.10",
+  "version": "0.1.0-alpha.11",
   "main": "index.ts",
   "dependencies": {
     "@expo-google-fonts/ibm-plex-sans-arabic": "^0.4.2",
@@ -36,16 +36,19 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
-    "check": "esbuild scripts/checks.ts --bundle --platform=node --format=cjs --outfile=node_modules/.cache/checks.js --log-level=error --alias:react-native=./scripts/rn-stub.js && node node_modules/.cache/checks.js && npm run check:backup && npm run check:ui && npm run check:encrypted && npm run check:privacy && npm run check:reminders && npm run check:entries && npm run check:people && npm run check:release",
+    "check": "esbuild scripts/checks.ts --bundle --platform=node --format=cjs --outfile=node_modules/.cache/checks.js --log-level=error --alias:react-native=./scripts/rn-stub.js && node node_modules/.cache/checks.js && npm run check:backup && npm run check:backup-share && npm run check:backup-picker && npm run check:ui && npm run check:encrypted && npm run check:privacy && npm run check:reminders && npm run check:entries && npm run check:people && npm run check:release",
     "typecheck": "tsc --noEmit",
     "check:backup": "esbuild scripts/backup-checks.ts --bundle --platform=node --format=cjs --outfile=node_modules/.cache/backup-checks.js --log-level=error --alias:react-native=./scripts/backup-native-stub.ts --alias:expo-file-system=./scripts/backup-filesystem-stub.ts --alias:expo=./scripts/backup-expo-stub.ts && node node_modules/.cache/backup-checks.js",
     "check:ui": "esbuild scripts/material-checks.ts --bundle --platform=node --format=cjs --outfile=node_modules/.cache/material-checks.js --log-level=error && node node_modules/.cache/material-checks.js",
     "check:privacy": "esbuild scripts/privacy-checks.ts --bundle --platform=node --format=cjs --outfile=node_modules/.cache/privacy-checks.js --log-level=error && node node_modules/.cache/privacy-checks.js",
-    "check:encrypted": "esbuild scripts/encrypted-backup-checks.ts --bundle --platform=node --format=cjs --outfile=node_modules/.cache/encrypted-backup-checks.js --log-level=error --alias:react-native=./scripts/backup-native-stub.ts --alias:expo-crypto=./scripts/backup-crypto-stub.ts && node node_modules/.cache/encrypted-backup-checks.js",
+    "check:encrypted": "esbuild scripts/encrypted-backup-checks.ts --bundle --platform=node --format=cjs --outfile=node_modules/.cache/encrypted-backup-checks.js --log-level=error --alias:react-native=./scripts/backup-native-stub.ts --alias:expo-crypto=./scripts/backup-crypto-stub.ts --alias:expo=./scripts/backup-password-native-stub.ts && node node_modules/.cache/encrypted-backup-checks.js",
     "check:reminders": "esbuild scripts/reminder-checks.ts --bundle --platform=node --format=cjs --outfile=node_modules/.cache/reminder-checks.js --log-level=error && node node_modules/.cache/reminder-checks.js && esbuild scripts/reminder-adapter-checks.ts --bundle --platform=node --format=cjs --outfile=node_modules/.cache/reminder-adapter-checks.js --log-level=error --alias:react-native=./scripts/reminder-notifications-stub.ts --alias:expo-notifications=./scripts/reminder-notifications-stub.ts && node node_modules/.cache/reminder-adapter-checks.js",
     "check:entries": "esbuild scripts/entry-checks.ts --bundle --platform=node --format=cjs --outfile=node_modules/.cache/entry-checks.js --log-level=error --alias:react-native=./scripts/rn-stub.js && node node_modules/.cache/entry-checks.js",
     "check:people": "esbuild scripts/person-name-checks.ts --bundle --platform=node --format=cjs --outfile=node_modules/.cache/person-name-checks.js --log-level=error --alias:react-native=./scripts/rn-stub.js && node node_modules/.cache/person-name-checks.js",
-    "check:release": "node scripts/release-checks.mjs"
+    "check:release": "node scripts/release-checks.mjs",
+    "check:backup-share": "esbuild scripts/backup-share-checks.ts --bundle --platform=node --format=cjs --outfile=node_modules/.cache/backup-share-checks.js --log-level=error --alias:react-native=./scripts/backup-share-stub.ts --alias:expo-file-system=./scripts/backup-share-stub.ts --alias:expo-sharing=./scripts/backup-share-stub.ts --alias:expo-crypto=./scripts/backup-share-stub.ts && node node_modules/.cache/backup-share-checks.js",
+    "check:backup-session": "node scripts/backup-session/run.cjs",
+    "check:backup-picker": "node scripts/backup-picker-checks.cjs"
   },
   "private": true
 }

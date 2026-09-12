@@ -55,6 +55,10 @@ const NATIVE_PIN_CLASSES = [
   'Lexpo/modules/iouprivacycrypto/PinKdf;',
 ];
 const NATIVE_BACKUP_CLASSES = ['Lexpo/modules/ioubackupdocuments/IouBackupDocumentsModule;'];
+const NATIVE_BACKUP_KEY_CLASSES = [
+  'Lexpo/modules/iouprivacycrypto/IouPrivacyCryptoModule;',
+  'Lexpo/modules/iouprivacycrypto/BackupKdf;',
+];
 
 /** Inspect actual class definitions, not unused descriptors or JavaScript strings.
  * DEX layout: https://source.android.com/docs/core/runtime/dex-format
@@ -109,6 +113,10 @@ export function verifyNativeBackupDocuments(dexFiles) {
   verifyNativeClasses(dexFiles, NATIVE_BACKUP_CLASSES, 'native backup documents module');
 }
 
+export function verifyNativeBackupKeyWorker(dexFiles) {
+  verifyNativeClasses(dexFiles, NATIVE_BACKUP_KEY_CLASSES, 'native backup key worker class');
+}
+
 function dexFilesInApk(apkPath) {
   const apk = resolve(apkPath);
   const entries = command('unzip', ['-Z1', apk]).split(/\r?\n/)
@@ -124,6 +132,10 @@ export function verifyNativePinWorkerInApk(apkPath) {
 
 export function verifyNativeBackupDocumentsInApk(apkPath) {
   verifyNativeBackupDocuments(dexFilesInApk(apkPath));
+}
+
+export function verifyNativeBackupKeyWorkerInApk(apkPath) {
+  verifyNativeBackupKeyWorker(dexFilesInApk(apkPath));
 }
 
 function command(file, args, encoding = 'utf8') {
@@ -177,6 +189,7 @@ function verifyApk(apkPath) {
   const dexFiles = dexFilesInApk(apk);
   verifyNativePinWorker(dexFiles);
   verifyNativeBackupDocuments(dexFiles);
+  verifyNativeBackupKeyWorker(dexFiles);
 
   const destination = join(appRoot, 'release');
   mkdirSync(destination, { recursive: true });
@@ -184,7 +197,7 @@ function verifyApk(apkPath) {
   copyFileSync(apk, join(destination, name));
   const digest = createHash('sha256').update(readFileSync(apk)).digest('hex');
   writeFileSync(join(destination, `${name}.sha256`), `${digest}  ${name}\n`);
-  console.log(`Verified ${name}: non-debuggable, release certificate, correct identity/version, native PIN worker and backup documents module, no demo content, SHA-256 ${digest}`);
+  console.log(`Verified ${name}: non-debuggable, release certificate, correct identity/version, native PIN and backup key workers, backup documents module, no demo content, SHA-256 ${digest}`);
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

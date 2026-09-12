@@ -1,0 +1,79 @@
+{
+  "mode": "current",
+  "baseline": null,
+  "passed": 17,
+  "failed": 0,
+  "scope": "Actual React hook/store with controlled I/O and private-host unmount; not native provider or encryption verification.",
+  "checks": [
+    {
+      "name": "protected restore cancelled during correct-password verification never previews or restores after remount",
+      "passed": true
+    },
+    {
+      "name": "protected restore cancelled during wrong-password verification never opens another password prompt",
+      "passed": true
+    },
+    {
+      "name": "wrong-password retry remains available while private host is mounted and succeeds once",
+      "passed": true
+    },
+    {
+      "name": "cancel while waiting for password finishes without a restore",
+      "passed": true
+    },
+    {
+      "name": "history and cancelled restore/export cannot resume automatic writes after partial failure",
+      "passed": true
+    },
+    {
+      "name": "successful explicit retry clears failure pause and later edits back up automatically",
+      "passed": true
+    },
+    {
+      "name": "switching destinations never starts an automatic first overwrite",
+      "passed": true
+    },
+    {
+      "name": "cold restart preserves the failure pause until successful explicit save",
+      "passed": true
+    },
+    {
+      "name": "persisted pause still requires review before replacing an existing backup",
+      "passed": true
+    },
+    {
+      "name": "explicit destination switch clears the durable failure pause",
+      "passed": true
+    },
+    {
+      "name": "older local fallback stays read-only at hydration and persists its pause through edit and restart",
+      "passed": true
+    },
+    {
+      "name": "selected ordinary file waits through picker lock and requires fresh preview confirmation after unlock",
+      "passed": true
+    },
+    {
+      "name": "cancelled native picker never queues a restore after unlock",
+      "passed": true
+    },
+    {
+      "name": "selected encrypted file waits for private host before requesting password",
+      "passed": true
+    },
+    {
+      "name": "another lock after file preview cancels it without resuming or applying after unlock",
+      "passed": true
+    },
+    {
+      "name": "another lock during imported-file verification cancels late decryption success",
+      "passed": true
+    },
+    {
+      "name": "ledger edit while selected file waits for unlock prevents applying its stale preview",
+      "passed": true
+    }
+  ],
+  "measuredAt": "2026-09-13",
+  "comparison": "Current candidate4 with selected-file host handoff"
+}

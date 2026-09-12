@@ -167,6 +167,7 @@ export function validateState(raw: unknown): PersistedState {
     onboarded: bool(s.onboarded, base.onboarded),
     profileName: s.profileName === undefined ? base.profileName : text(s.profileName, 'اسم دفتر غير صالح', true),
     weekly: bool(s.weekly, base.weekly), autoBackup: bool(s.autoBackup, base.autoBackup),
+    backupWritePaused: bool(s.backupWritePaused, base.backupWritePaused),
     dark, accent, backupTarget,
     backupFolderUri: s.backupFolderUri == null ? null : text(s.backupFolderUri, 'مجلد غير صالح', true),
     // Older builds stored an Arabic display label here rather than a timestamp.

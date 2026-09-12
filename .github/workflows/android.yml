@@ -72,6 +72,8 @@ jobs:
       - uses: android-actions/setup-android@v3
       - name: Native PIN compatibility checks
         run: node scripts/native-pin-checks.mjs
+      - name: Native protected-backup compatibility checks
+        run: node scripts/native-backup-key-checks.mjs
       - name: Prepare release signing key
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}

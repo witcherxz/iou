@@ -1,39 +1,40 @@
 # STATUS — IoU
-Updated: 2026-09-12 | State: ACTIVE
+Updated: 2026-09-13 | State: ACTIVE
 Goal: Provide a private Arabic debt ledger with clear balances and recoverable records.
-Phase: verify
+Phase: implement
 
 ## Now
-Alpha 10 is published and verified after the user approved the person-name editor and pencil entry point. TypeScript, 1,354 integrated checks, nine full-app browser scenarios, both GitHub workflows and native Android 16 emulator checks pass. Renaming updates linked screens and readable exports; an exact native backup comparison confirms unchanged IDs, transactions, audits, installments and balances with all previous snapshots preserved. Search is deferred at the user's request, and the user decides when core features are complete and the app can move from alpha to beta.
+Production stabilization source passes TypeScript, 1,460 integrated checks, 17 backup lifecycle checks and independent review. Native selected-file/PIN handoff, normal/doubled-font Arabic labels, and real background debt/weekly notification delivery pass on local candidates. Protected-backup verification exceeded 78 seconds on the old JavaScript path; a native worker now passes 23 Java compatibility checks and awaits a full Android build. Preparing the untagged Alpha 11 build while emulator channel/restart and folder recovery acceptance continue. Alpha 10 remains published; account-backed cloud tests are deferred as requested.
 
 Next:
-1. Correct existing native clipping in compact selector and status labels.
-2. Validate completed cloud-provider backup/recovery before a stable release.
-3. Continue native accessibility, privacy and reminder validation.
+1. Build the signed Alpha 11 candidate and finish offline folder recovery plus notification settings/restart checks.
+2. Verify native protected-backup speed, Unicode compatibility and update preservation on the full APK.
+3. Publish the tested alpha and independently verify its released artifact; retain account-backed cloud tests as deferred.
 
 ## Health
 
 | metric | current | measured | previous | threshold | goal | source |
 |---|---:|---|---:|---:|---:|---|
-| Automated checks passing | 1354 count | 2026-09-12 | 1298 count | >= 1354 count | 1354 count | `cd app && npm run check`; `node scripts/release-workflow-checks.mjs`; `JAVA_HOME=/tmp/iou-device-debug/jdk-17.0.20.1+1 node scripts/native-pin-checks.mjs` |
-| TypeScript | PASS | 2026-09-12 | PASS | = PASS | PASS | `cd app && npm run typecheck` |
-| Alpha 10 production APK | PASS | 2026-09-12 | PASS | = PASS | PASS | [Release workflow](https://github.com/witcherxz/iou/actions/runs/34717292669); [independent APK verification](app/docs/verification/alpha10-apk.json) |
-| Native rename and backup preservation | PASS | 2026-09-12 | — | = PASS | PASS | [Native checks and exact backup comparison](app/docs/verification/alpha10-native.json) |
+| Latest completed integrated suite | 1460 count | 2026-09-13 | 1354 count | >= 1460 count | 1460 count | `cd app && npm run check`; `node scripts/release-workflow-checks.mjs`; native PIN and backup key Java checks; `app/docs/verification/alpha11-checks.json` |
+| Stabilized offline recovery | UNMEASURED | — | — | = PASS | PASS | New regression checks and native recovery comparison pending |
+| Android reminder delivery | UNMEASURED | — | — | = PASS | PASS | Scoped emulator delivery/permission/return validation pending |
+| Native compact Arabic labels | PASS | 2026-09-13 | FAIL | = PASS | PASS | `app/docs/verification/alpha11-labels.json`; native candidate at font scales 1.0 and 2.0 |
 
-## DoD — Alpha 10 person name editing
+## DoD — production stabilization, emulator/offline pass
 
-- [x] Provide a pencil entry point and Arabic name editor with Save and Cancel.
-- [x] Validate names and preserve person identity, linked records, amounts and correction history.
-- [x] Preserve drafts across privacy locking and discard them on Cancel or Back.
-- [x] Pass TypeScript and integrated checks.
-- [x] Verify browser navigation, persistence, exports, validation and narrow light/dark layouts.
-- [x] Obtain the user's requested preview feedback before pushing.
-- [x] Publish and independently verify the signed Alpha 10 APK.
-- [x] Verify native rename and exact ledger/backup preservation on the emulator.
+- [ ] Prefer the newest valid backup and preserve recovery copies after interrupted writes.
+- [ ] Keep automatic writes paused across cancellation, local recovery and restart until explicit resolution.
+- [ ] Preserve each shared export and cancel stale protected-restore work after privacy locking.
+- [ ] Detect blocked Android notifications/channels and provide a usable system-settings route.
+- [ ] Preserve valid delayed reminders and verify real Android delivery and rescheduling.
+- [x] Verify complete Arabic compact labels and usable controls with larger fonts.
+- [ ] Pass TypeScript, integrated checks and focused browser/native regressions.
+- [ ] Publish and independently verify the signed stabilization APK.
+- [ ] Record remaining account/provider validation without claiming untested cloud uploads.
 
 ## Blockers / Risks
 
-- Compact native labels clip in the forgiveness selector and a debt-status badge. A fresh Alpha 8 baseline reproduced the selector pixel-for-pixel, confirming this predates Alpha 9. Response: correct compact-label sizing in the next UI pass; full transaction type headings remain visible in history.
+- Protected-backup verification stayed loading past 78 seconds with the old JavaScript password derivation. The separate native worker preserves UTF-8/envelope compatibility in independent tests. Response: verify actual Android speed, wrong-password handling and Unicode recovery before publication. iOS remains uncompiled and untested in this Android pass.
 
 - PIN performance, automatic biometric prompting, cancellation/PIN fallback and native share/Drive upload-screen navigation are confirmed on the connected S24 Ultra. Alpha 6 local emulator folder save/recovery and in-window confirmations pass. Completed Dropbox-specific provider writes remain unverified after the Alpha 5 confirmation blocker; validate that provider separately. Full app-switcher privacy, TalkBack/font scaling and notifications still need native validation. Response: test the updated folder flow and complete broader validation before a stable release.
 - Direct Google Drive authorization is unfinished. Response: keep direct sync disabled and offer the tested manual share/download and file-restore flow. Drive upload-screen navigation is verified; upload completion remains unverified.
@@ -41,6 +42,8 @@ Next:
 - Automatic backups run after foreground edits and are suspended after local recovery; reminders retain the nearest 60 alerts plus weekly and refresh on foreground. Response: explain these operating limits in the feature notes.
 
 ## Decisions
+
+- 2026-09-13: Facing the production-stabilization scope and an emulator without a cloud account, chose to finish emulator/offline tests first as the user requested, accepting that actual provider upload/restore verification remains for a later account-backed session.
 
 - 2026-09-12: Facing the user's selected core scope, chose person-name editing with search deferred, to support correcting names without changing records, accepting search as future work. The user approved the editor and pencil entry point before publication; retain alpha status until the user confirms core completion.
 
@@ -58,6 +61,10 @@ Next:
 - 2026-09-12: Facing potential overwrite of external backups during startup or recovery, chose explicit first save and suspended automatic backup after local recovery, to protect older/newer copies, accepting a manual review step.
 
 ## Log
+
+- 2026-09-13 [work]: Stabilization source passed 1,460 integrated checks, 17 hook/store/host scenarios and independent review. Native tests confirmed fixed file picker/PIN handoff, full Arabic labels at 1x/2x fonts and both background reminders (129-second Android inexact delay). A protected-backup spinner exceeding 78 seconds prompted a separate native key worker, preserving the file format in 23 Java/Node comparisons. Preparing a full signed build before publication.
+
+- 2026-09-13 [work]: Began authorized stabilization. Reproduced native compact-label clipping and confirmed the app-switcher privacy cover hides the ledger. Backup regressions exposed stale-canonical preference, shared-URI reuse, stale decryption after lock and automatic retry after partial failure. Reminder audit found blocked-channel/permission misreporting and cancellation of delayed alarms. Implementing bounded fixes and testing a local candidate before the normal signed release.
 
 - 2026-09-12 [release]: Published Alpha 10 from a6ea918 after both Actions runs passed. Independently verified the 72,420,418-byte signed production APK and installed over Alpha 9 on the isolated Android 16 emulator. Cancel/Back, keyboard, full Save label, privacy-lock draft retention and name propagation passed. The exact 15-file backup comparison confirmed only one person name plus backup timestamp changed, with all records/allocations intact and seven old snapshots preserved. [Native evidence](app/docs/verification/alpha10-native.json).
 

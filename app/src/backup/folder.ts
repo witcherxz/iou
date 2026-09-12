@@ -246,9 +246,14 @@ export async function readFolderBackup(folderUri: string): Promise<{ text: strin
   const entries = await listFiles(openFolder(folderUri));
   const copies = await validCopies(entries);
   copies.sort((a, b) => Date.parse(parseBackup(b.text).backedUpAt) - Date.parse(parseBackup(a.text).backedUpAt));
-  const primary = copies.find(copy => copy.name === BACKUP_FILENAME);
-  if (primary) return { text: primary.text, recovered: false };
-  if (copies[0]) return { text: copies[0].text, recovered: true };
+  const newest = copies[0];
+  if (newest) {
+    // A failed mirror write can leave a perfectly valid but older canonical
+    // file. Offer the newest verified data, with canonical preferred on ties.
+    const primary = copies.find(copy => copy.name === BACKUP_FILENAME &&
+      Date.parse(parseBackup(copy.text).backedUpAt) === Date.parse(parseBackup(newest.text).backedUpAt));
+    return primary ? { text: primary.text, recovered: false } : { text: newest.text, recovered: true };
+  }
   if (entries.some(entry => isBackupName(entry.name))) throw new InvalidBackupError();
   return null;
 }

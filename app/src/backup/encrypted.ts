@@ -1,14 +1,20 @@
-import { pbkdf2Async } from '@noble/hashes/pbkdf2.js';
-import { sha256 } from '@noble/hashes/sha2.js';
 import { bytesToHex, hexToBytes } from '@noble/hashes/utils.js';
+import { requireOptionalNativeModule } from 'expo';
 import { AESEncryptionKey, AESSealedData, aesDecryptAsync, aesEncryptAsync, getRandomBytesAsync } from 'expo-crypto';
+import { Platform } from 'react-native';
 
 import { embeddedBackup, embeddedJson, MAX_PORTABLE_BYTES, parseReadableBackup, readableFiles } from './readable';
 import { InvalidBackupError } from './types';
+import { deriveBackupKey, NativeBackupKeyDeriver, PASSWORD_ITERATIONS } from './passwordKey';
+
+export { PASSWORD_ITERATIONS } from './passwordKey';
 
 export const ENCRYPTED_DATA_ID = 'iou-encrypted-data';
-export const PASSWORD_ITERATIONS = 600_000;
 const AAD = 'IoU portable backup v1';
+const nativeCrypto = Platform.OS === 'web' ? null : requireOptionalNativeModule<{
+  supported: boolean;
+  deriveBackupKey?: NativeBackupKeyDeriver;
+}>('IouPrivacyCrypto');
 export interface EncryptedBackup {
   format: 'iou-encrypted-backup';
   version: 1;
@@ -39,23 +45,17 @@ export function encryptedEnvelope(text: string): EncryptedBackup | null {
 
 async function keyFor(password: string, salt: string): Promise<AESEncryptionKey> {
   if (!password || password.length > 1024) throw new BackupPasswordError();
-  const input = new TextEncoder().encode(password);
-  const saltBytes = hexToBytes(salt);
-  let bytes: Uint8Array;
-  if (globalThis.crypto?.subtle) {
-    const material = await globalThis.crypto.subtle.importKey('raw', input, 'PBKDF2', false, ['deriveBits']);
-    bytes = new Uint8Array(await globalThis.crypto.subtle.deriveBits({ name: 'PBKDF2', salt: new Uint8Array(saltBytes), iterations: PASSWORD_ITERATIONS, hash: 'SHA-256' }, material, 256));
-  } else {
-    bytes = await pbkdf2Async(sha256, input, saltBytes, { c: PASSWORD_ITERATIONS, dkLen: 32, asyncTick: 10 });
-  }
+  const bytes = await deriveBackupKey(password, salt, nativeCrypto?.supported && typeof nativeCrypto.deriveBackupKey === 'function'
+    ? (passwordHex, saltHex, iterations) => nativeCrypto.deriveBackupKey!(passwordHex, saltHex, iterations) : undefined);
   try { return await AESEncryptionKey.import(bytes); } finally { bytes.fill(0); }
 }
 
 export async function decryptBackup(text: string, password: string): Promise<string> {
   const envelope = encryptedEnvelope(text);
   if (!envelope) throw new InvalidBackupError();
+  // A failed native worker is an operation failure, not a wrong password retry.
+  const key = await keyFor(password, envelope.salt);
   try {
-    const key = await keyFor(password, envelope.salt);
     const sealed = AESSealedData.fromParts(hexToBytes(envelope.nonce), envelope.ciphertext, 16);
     const plaintext = new TextDecoder().decode(await aesDecryptAsync(sealed, key, { additionalData: new TextEncoder().encode(AAD) }));
     return JSON.stringify(parseReadableBackup(plaintext));

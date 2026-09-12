@@ -1,0 +1,31 @@
+{
+  "measuredAt": "2026-09-13",
+  "passed": 1460,
+  "typecheck": "PASS",
+  "actionlint": "PASS",
+  "checks": {
+    "core": 116,
+    "backup": 77,
+    "backupShare": 8,
+    "backupPicker": 6,
+    "materialContrast": 496,
+    "encryptedBackup": 28,
+    "privacy": 123,
+    "reminderPlanner": 152,
+    "reminderAdapter": 48,
+    "entryCorrectionRecovery": 249,
+    "personNames": 56,
+    "releaseGraph": 4,
+    "androidRelease": 66,
+    "nativePin": 8,
+    "nativeBackupKey": 23
+  },
+  "commands": [
+    "npm run typecheck",
+    "npm run check",
+    "node scripts/release-workflow-checks.mjs",
+    "node scripts/native-pin-checks.mjs (JDK17)",
+    "node scripts/native-backup-key-checks.mjs (JDK17)"
+  ],
+  "scope": "Production source and controlled API/unit/native-Java compatibility tests; emulator evidence is recorded separately."
+}

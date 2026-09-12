@@ -1,12 +1,13 @@
 import * as Notifications from 'expo-notifications';
-import { Platform } from 'react-native';
+import { Linking, Platform } from 'react-native';
 
 import { MAX_DEBT_REMINDERS, planReminders } from './reminderPlan';
 import { defaultReminderSettings, ReminderSettings } from './reminderSettings';
 import { reminderContent } from './reminderContent';
+import { isCurrentDelayedReminder, pendingReminderTime } from './pendingReminders';
 import type { DebtView } from './selectors';
 
-export type ReminderStatus = 'ready' | 'denied' | 'unavailable';
+export type ReminderStatus = 'ready' | 'denied' | 'blocked' | 'unavailable';
 const CHANNEL_ID = 'iou-reminders';
 let configured = false;
 
@@ -23,17 +24,28 @@ function configure() {
   configured = true;
 }
 
-async function ensureChannel() {
-  if (Platform.OS !== 'android') return;
-  await Notifications.setNotificationChannelAsync(CHANNEL_ID, {
+async function ensureChannel(): Promise<boolean> {
+  if (Platform.OS !== 'android') return true;
+  const channel = await Notifications.setNotificationChannelAsync(CHANNEL_ID, {
     name: 'التذكيرات',
     importance: Notifications.AndroidImportance.DEFAULT,
   });
+  // Channel APIs are absent before Android 8. Expo returns the actual saved
+  // channel, including the user's block; recreating it cannot override them.
+  if (Number(Platform.Version) < 26) return true;
+  if (!channel) throw new Error('Notification channel unavailable');
+  return channel.importance !== Notifications.AndroidImportance.NONE;
 }
 
 function hasPermission(status: Notifications.NotificationPermissionsStatus): boolean {
-  return status.granted || status.ios?.status === Notifications.IosAuthorizationStatus.PROVISIONAL ||
-    status.ios?.status === Notifications.IosAuthorizationStatus.EPHEMERAL;
+  if (Platform.OS === 'ios' && status.ios) {
+    return status.ios.status === Notifications.IosAuthorizationStatus.AUTHORIZED ||
+      status.ios.status === Notifications.IosAuthorizationStatus.PROVISIONAL ||
+      status.ios.status === Notifications.IosAuthorizationStatus.EPHEMERAL;
+  }
+  // Expo Android can report granted POST_NOTIFICATIONS together with a denied
+  // overall status when the system has disabled this app's notifications.
+  return status.status !== 'denied' && status.granted;
 }
 
 /** Only called after the owner explicitly enables device notifications. */
@@ -42,14 +54,18 @@ export async function ensurePermission(): Promise<boolean> {
   try {
     configure();
     // Android 13+ needs a channel before the permission prompt can appear.
-    await ensureChannel();
+    const channelEnabled = await ensureChannel();
     const current = await Notifications.getPermissionsAsync();
-    if (hasPermission(current)) return true;
+    if (hasPermission(current)) return channelEnabled;
     if (!current.canAskAgain) return false;
-    return hasPermission(await Notifications.requestPermissionsAsync());
+    return channelEnabled && hasPermission(await Notifications.requestPermissionsAsync());
   } catch {
     return false;
   }
+}
+
+export async function openReminderSettings(): Promise<void> {
+  if (Platform.OS !== 'web') await Linking.openSettings();
 }
 
 let tail: Promise<ReminderStatus> = Promise.resolve('unavailable');
@@ -67,20 +83,47 @@ export function syncReminders(
     try {
       configure();
       const permission = await Notifications.getPermissionsAsync();
-      // Cancellation also applies when permission was revoked in system settings.
-      await Notifications.cancelAllScheduledNotificationsAsync();
       // Enabling private previews also removes previously delivered details.
       if (settings.privateNotifications) await Notifications.dismissAllNotificationsAsync();
-      if (!hasPermission(permission)) return 'denied';
-      await ensureChannel();
+      if (!hasPermission(permission)) {
+        await Notifications.cancelAllScheduledNotificationsAsync();
+        return permission.canAskAgain ? 'denied' : 'blocked';
+      }
+      if (!await ensureChannel()) {
+        await Notifications.cancelAllScheduledNotificationsAsync();
+        return 'blocked';
+      }
+      const pending = await Notifications.getAllScheduledNotificationsAsync();
+      const now = Date.now();
+      const delayed = pending.filter(request => isCurrentDelayedReminder(request, debts, prefs, settings, now))
+        .sort((a, b) => pendingReminderTime(a)! - pendingReminderTime(b)!).slice(0, MAX_DEBT_REMINDERS);
+      // Past requests may survive in Expo's store after Android force-stop even
+      // though AlarmManager lost their PendingIntents. Do not retain dead rows.
+      await Notifications.cancelAllScheduledNotificationsAsync();
+      for (const request of delayed) {
+        if (requestedRevision !== revision) return lastStatus;
+        await Notifications.scheduleNotificationAsync({
+          identifier: request.identifier,
+          content: {
+            title: request.content.title ?? undefined,
+            body: request.content.body ?? undefined,
+            data: { debtId: request.content.data?.debtId, plannedAt: new Date(pendingReminderTime(request)!).toISOString() },
+          },
+          // Channel-only triggers present once immediately and are not persisted
+          // in the scheduled queue. The same ID cannot create two tray entries.
+          trigger: { channelId: CHANNEL_ID },
+        });
+      }
+      // Reinstall future alarms even if unchanged: Android force-stop can clear
+      // AlarmManager while Expo's stored requests still exist at the next launch.
       // Leave room beneath iOS's pending-notification limit for the weekly reminder.
-      for (const item of planReminders(debts, prefs, Date.now(), settings).slice(0, MAX_DEBT_REMINDERS)) {
+      for (const item of planReminders(debts, prefs, now, settings).slice(0, MAX_DEBT_REMINDERS)) {
         if (requestedRevision !== revision) return lastStatus;
         await Notifications.scheduleNotificationAsync({
           identifier: `iou-${item.id}`,
           content: {
             ...reminderContent(item, settings.privateNotifications),
-            data: { debtId: item.debt.id },
+            data: { debtId: item.debt.id, plannedAt: item.when.toISOString() },
           },
           trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: item.when, channelId: CHANNEL_ID },
         });

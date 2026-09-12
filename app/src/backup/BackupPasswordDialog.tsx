@@ -26,7 +26,7 @@ export function BackupPasswordDialog({ c, request, onSubmit, onCancel }: {
             editable={!request?.verifying} error={!!request?.error} helperText={request?.error ?? undefined}
             onSubmitEditing={() => password && onSubmit(password)} />
           <PrimaryButton c={c} label="فتح النسخة" onPress={() => onSubmit(password)} disabled={!password} loading={request?.verifying} />
-          <View style={{ flexDirection: 'row' }}><OutlineButton c={c} label="إلغاء" onPress={onCancel} disabled={request?.verifying} /></View>
+          <View style={{ flexDirection: 'row' }}><OutlineButton c={c} label="إلغاء" onPress={onCancel} /></View>
         </View>
         </ScrollView>
       </KeyboardAvoidingView>

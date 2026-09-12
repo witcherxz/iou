@@ -93,3 +93,11 @@ The published production APK passed native acceptance after updating the existin
 An independent comparison of the successful manual folder backup found only one person-name change and a new backup timestamp. Person IDs, all four transactions, audit history, settings and installment allocations are exact; paid 41.83, forgiven 33.50 and remaining 50.17 are unchanged. The previous backup is the original canonical file, seven previous snapshots remain intact, one new snapshot matches the canonical file, and all HTML/CSV companions and embedded downloads agree across 15 files. Automatic backup remains off. [Native evidence](verification/alpha10-native.json).
 
 [System keyboard](screenshots/person-name-native-keyboard.png) · [Draft after unlock](screenshots/person-name-native-unlocked.png) · [Renamed person](screenshots/person-name-native-person.png) · [Home after rename](screenshots/person-name-native-home.png).
+
+## Alpha 11 preparation — compact labels
+
+An isolated Android 16 emulator reproduced clipped **إعفاء من الدين** selector text and **إعفاء جزئي** status text in the published Alpha 10 APK. A local QA candidate with the updated JavaScript passed at font scales 1.0 and 2.0: selectors, debt action buttons, the status badge and wrapped due-date row show complete labels. No financial save occurred, and font scale returned to 1.0. The baseline app-switcher privacy cover also hid the ledger. This is candidate evidence, not a claim about the final published Alpha 11 binary. [Verification record](verification/alpha11-labels.json).
+
+| Default status | Default selector | Larger-font actions | Larger-font selector |
+|---|---|---|---|
+| ![Full status badge](screenshots/alpha11-default-debt-status.png) | ![Full forgiveness label](screenshots/alpha11-default-forgive-selector.png) | ![Actions at font scale 2](screenshots/alpha11-font2x-debt-actions.png) | ![Selector at font scale 2](screenshots/alpha11-font2x-forgive-selector.png) |

@@ -51,6 +51,7 @@ export function seedState(): PersistedState {
     reminderPrefs: { t1: true, t4: true, t5: false },
     weekly: true,
     autoBackup: true,
+    backupWritePaused: false,
     backupTarget: 'none',
     backupFolderUri: null,
     dark: null,

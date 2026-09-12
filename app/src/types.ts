@@ -61,6 +61,8 @@ export interface PersistedState {
   reminderSettings: ReminderSettings;
   weekly: boolean;
   autoBackup: boolean;
+  /** Local backup/recovery pause; cleared by a successful manual save or destination change. */
+  backupWritePaused: boolean;
   backupTarget: BackupTarget;
   /** Folder URI when backupTarget is 'folder'. */
   backupFolderUri: string | null;

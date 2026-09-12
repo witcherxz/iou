@@ -20,6 +20,7 @@ import { AppDialogLayer } from './src/components/AppDialog';
 import { exportToFile } from './src/backup/fileShare';
 import { portableData, serialize } from './src/backup/types';
 import { BackupPasswordDialog } from './src/backup/BackupPasswordDialog';
+import { BackupRestoreHost } from './src/backup/BackupRestoreHost';
 import { BackupTools } from './src/screens/BackupTools';
 import { EntryEditor } from './src/screens/EntryEditor';
 import { LocalRecovery } from './src/screens/LocalRecovery';
@@ -27,7 +28,8 @@ import { PrivacyProvider, usePrivacy } from './src/privacy/PrivacyProvider';
 import { PrivacyGate } from './src/privacy/PrivacyGate';
 import { PrivacySettings } from './src/privacy/PrivacySettings';
 import { PersistedState } from './src/types';
-import { ensurePermission, ReminderStatus, syncReminders } from './src/reminders';
+import { ensurePermission, openReminderSettings, ReminderStatus, syncReminders } from './src/reminders';
+import { readReminderClock, reminderClockChanged } from './src/reminderClock';
 import { allDebts, peopleView } from './src/selectors';
 import { AddDebt, createAddDebtDraft } from './src/screens/AddDebt';
 import { DebtDetail } from './src/screens/DebtDetail';
@@ -108,10 +110,16 @@ function Root() {
   const [foregroundRevision, setForegroundRevision] = useState(0);
 
   useEffect(() => {
-    const refresh = () => setToday(todayISO());
-    const timer = setInterval(refresh, 60_000);
+    let clock = readReminderClock();
+    const refresh = (foreground = false) => {
+      const next = readReminderClock();
+      setToday(next.day);
+      if (foreground || reminderClockChanged(clock, next)) setForegroundRevision(value => value + 1);
+      clock = next;
+    };
+    const timer = setInterval(() => refresh(), 60_000);
     const sub = AppState.addEventListener('change', status => {
-      if (status === 'active') { refresh(); setForegroundRevision(value => value + 1); }
+      if (status === 'active') refresh(true);
     });
     return () => { clearInterval(timer); sub.remove(); };
   }, []);
@@ -138,7 +146,7 @@ function Root() {
 
   const { backup, backupNow, restore, restoreFile, chooseFolder, selectTarget,
     versions, historyError, refreshVersions, restoreVersion, exportPortable,
-    passwordRequest, submitPassword, cancelPassword } = useBackup({
+    passwordRequest, submitPassword, cancelPassword, mountRestoreHost } = useBackup({
     state,
     ready: ready && !storageError,
     suspendAutomatic: !!recoveryNotice,
@@ -267,6 +275,7 @@ function Root() {
       <AppDialogLayer onOpenChange={setDialogOpen} dialogs={<>
         <ConfirmationDialog c={c} />
         <BackupPasswordDialog c={c} request={passwordRequest} onSubmit={submitPassword} onCancel={cancelPassword} />
+        <BackupRestoreHost onMount={mountRestoreHost} />
       </>}>
       <View style={{ flex: 1, direction: 'rtl', backgroundColor: c.bg }}>
         {recoveryNotice && !storageError && (
@@ -335,6 +344,7 @@ function Root() {
                       settings={state.reminderSettings}
                       onChangeSettings={reminderSettings => set({ reminderSettings })}
                       notificationStatus={notificationStatus}
+                      onOpenSettings={() => { void openReminderSettings().catch(() => showToast('تعذر فتح إعدادات الجهاز. افتحها من شاشة التطبيقات.')); }}
                       onEnable={async () => {
                         setNotificationStatus('checking');
                         const granted = await ensurePermission();
