@@ -36,3 +36,15 @@ Fresh installations create empty `دفتري` defaults only after all storage so
 The old debug package was `com.example.iou` and used the Expo template signing key. The production package installs separately, preserving the old app for backup/export. Import real records into the alpha and verify them before removing the old app. Future releases retain the production ID and signing key and increment the version code.
 
 Alpha release notes record remaining device verification, including biometrics, notification delivery, app-switcher privacy and folder-provider behavior. A successful production build establishes packaging and signing, not hardware behavior.
+
+## Verified alpha release
+
+On 2026-09-12, [v0.1.0-alpha.1](https://github.com/witcherxz/iou/releases/tag/v0.1.0-alpha.1) was published from commit `7762dfd041a35c34b4e21adacfe102be943139cb`. The [release workflow](https://github.com/witcherxz/iou/actions/runs/34681048490) passed TypeScript, 1,082 automated checks, native compilation, APK verification and publication. The main-branch workflow also passed.
+
+The published `iou-0.1.0-alpha.1.apk` is 72,361,378 bytes. An independent download check verified its signature with Android SDK 37 and the pinned release certificate above. Android `aapt2` confirmed package `io.github.witcherxz.iou`, version `0.1.0-alpha.1` / code `1`, Arabic launcher label `دفتر الديون`, debugging disabled and no `SYSTEM_ALERT_WINDOW` permission. The APK contains its offline bundle, no signing-key files and none of the demo fixture markers.
+
+The downloaded APK matches the published SHA-256:
+
+```text
+e5d8124871274f31d8484ab76d2bfcb0011aa9c3d8e9c939d22e2aa715f74d0b
+```

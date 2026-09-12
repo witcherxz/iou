@@ -1,15 +1,15 @@
 # STATUS — IoU
 Updated: 2026-09-12 | State: ACTIVE
 Goal: Provide a private Arabic debt ledger with clear balances and recoverable records.
-Phase: verify
+Phase: alpha
 
 ## Now
-Production 0.1.0-alpha.1 was committed and pushed with an empty initial ledger, production package identity and app branding. GitHub APK compilation passes, but certificate-label parsing stopped two publication attempts. Verification now checks every certificate digest independently of scheme labels and passes against the exact CI output; retry the unpublished release and verify its download.
+Production-signed [0.1.0-alpha.1](https://github.com/witcherxz/iou/releases/tag/v0.1.0-alpha.1) is published. Main and tag workflows passed; the downloaded APK independently passed checksum, signature, manifest and sample-data checks. Begin native device validation for the next alpha.
 
 Next:
-1. Push the verifier correction, retry the unpublished tag and verify signed APK publication and download.
-2. Validate biometrics, app-switcher privacy, TalkBack, keyboard and notifications on a device.
-3. Verify folder providers and recovery on a device; direct Google Drive stays disabled until native authorization is completed.
+1. Install the alpha on a device and validate biometrics, app-switcher privacy, TalkBack, keyboard and notifications.
+2. Verify folder providers, readable exports and recovery on a device; direct Google Drive stays disabled until native authorization is completed.
+3. Collect alpha feedback and preserve the production signing key for future updates.
 
 ## Health
 
@@ -18,7 +18,7 @@ Next:
 | Automated checks passing | 1082 count | 2026-09-12 | 1076 count | >= 1082 count | 1082 count | `cd app && npm run check`; `node scripts/release-workflow-checks.mjs`; `/tmp/iou-alpha/checks.log` |
 | TypeScript | PASS | 2026-09-12 | PASS | = PASS | PASS | `cd app && npm run typecheck` |
 | Clean launch and preservation scenarios | 8 count | 2026-09-12 | — | >= 8 count | 8 count | `/tmp/iou-release/clean-install-results.json`; `/tmp/iou-alpha/production-browser-results.json` |
-| GitHub production APK | FAIL | 2026-09-12 | FAIL | = PASS | PASS | [Second run](https://github.com/witcherxz/iou/actions/runs/34680459085): compilation and signature passed; V2 certificate-label parser correction awaiting retry |
+| GitHub production APK | PASS | 2026-09-12 | FAIL | = PASS | PASS | [Successful release workflow](https://github.com/witcherxz/iou/actions/runs/34681048490); [download verification record](app/docs/RELEASING.md#verified-alpha-release) |
 
 ## DoD — 0.1 Alpha production release
 
@@ -29,7 +29,7 @@ Next:
 - [x] Check APK version, package, certificate, non-debuggable manifest and sample-free bundle before upload.
 - [x] Pass automated guards, TypeScript, clean-install/upgrade browser checks, workflow lint and prebuild.
 - [x] Commit/push reviewed work and tag v0.1.0-alpha.1.
-- [ ] Verify GitHub's signed APK, checksum and published prerelease.
+- [x] Verify GitHub's signed APK, checksum and published prerelease.
 
 ## Blockers / Risks
 
@@ -52,6 +52,8 @@ Next:
 - 2026-09-12: Facing potential overwrite of external backups during startup or recovery, chose explicit first save and suspended automatic backup after local recovery, to protect older/newer copies, accepting a manual review step.
 
 ## Log
+
+- 2026-09-12 [release]: Published v0.1.0-alpha.1 from commit 7762dfd after correcting SDK 37 certificate parsing. Main and tag Actions runs passed all 1,082 checks and the signed production build. Downloaded the 72,361,378-byte APK and independently verified its SHA-256, pinned signature, production identity/version, Arabic label, non-debuggable manifest, absent overlay permission and fixture-free offline bundle. Fresh-install and preservation browser checks passed earlier; native hardware validation remains for the alpha.
 
 - 2026-09-12 [incident]: The first parser correction covered SDK 37 V3 labels but missed Gradle's V2-only signature. Replaced the scheme-label whitelist with verification of every non-source-stamp certificate digest against the pinned key. Passed 49 release checks, including the complete CI output; APK signature, package, version and non-debuggable manifest had already passed before this parser error.
 
