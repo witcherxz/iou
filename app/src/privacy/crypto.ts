@@ -2,8 +2,15 @@ import { pbkdf2Async } from '@noble/hashes/pbkdf2.js';
 import { sha256 } from '@noble/hashes/sha2.js';
 import { bytesToHex, hexToBytes } from '@noble/hashes/utils.js';
 
-/** WebCrypto where available, audited-library PBKDF2 on Hermes. Never a fast PIN hash. */
-export async function derivePin(pin: string, saltHex: string, iterations: number): Promise<string> {
+export type NativePinDeriver = (pin: string, saltHex: string, iterations: number) => Promise<string>;
+
+/** Native worker/WebCrypto first; the JS path is for older Android and Expo Go. */
+export async function derivePin(pin: string, saltHex: string, iterations: number, nativeDerive?: NativePinDeriver): Promise<string> {
+  if (nativeDerive) {
+    const verifier = await nativeDerive(pin, saltHex, iterations);
+    if (!/^[0-9a-f]{64}$/.test(verifier)) throw new Error('Invalid native PIN verifier');
+    return verifier;
+  }
   const password = Uint8Array.from(pin, digit => digit.charCodeAt(0));
   const salt = hexToBytes(saltHex);
   try {

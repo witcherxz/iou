@@ -1,6 +1,6 @@
 export type BackupTarget = 'none' | 'folder' | 'file' | 'drive';
 
-export type Dir = 'me' | 'owe' | 'settle';
+export type Dir = 'me' | 'owe' | 'settle' | 'forgive';
 
 export interface Person {
   id: string;
@@ -21,18 +21,18 @@ export interface Tx {
   personId: string;
   dir: Dir;
   amount: number;
-  /** Actual calendar date of the debt/payment. */
+  /** Actual calendar date of the debt, payment or forgiveness. */
   createdAt: string;
   /** When this entry was first saved; separate from the transaction date. */
   recordedAt?: string;
   /** Undone entries stay in the ledger for review but never affect balances. */
   voidedAt?: string;
   note?: string;
-  /** ISO date, or null for "no due date". Absent on settlements. */
+  /** ISO date, or null for "no due date". Absent on payments and forgiveness. */
   dueAt?: string | null;
   installments?: Installment[];
   freq?: 'month';
-  /** Set when dir === 'settle': the debt this payment pays down. */
+  /** Set on payments/forgiveness: the debt whose outstanding amount is reduced. */
   debtId?: string;
 }
 
@@ -51,7 +51,7 @@ export interface ReminderPrefs {
 }
 
 export interface PersistedState {
-  version: 2;
+  version: 3;
   onboarded: boolean;
   profileName: string;
   people: Person[];
@@ -69,3 +69,14 @@ export interface PersistedState {
   lastBackup: string | null;
 }
 import type { ReminderSettings } from './reminderSettings';
+
+export type Debt = Tx & { dir: 'me' | 'owe' };
+export type Reduction = Tx & { dir: 'settle' | 'forgive'; debtId: string };
+
+export function isDebt(tx: Tx): tx is Debt {
+  return tx.dir === 'me' || tx.dir === 'owe';
+}
+
+export function isReduction(tx: Tx): tx is Reduction {
+  return tx.dir === 'settle' || tx.dir === 'forgive';
+}

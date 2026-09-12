@@ -9,6 +9,7 @@ export interface PrivacyAdapter {
   derive(pin: string, salt: string, iterations: number): Promise<string>;
   hasBiometrics(): Promise<boolean>;
   authenticate(): Promise<boolean>;
+  cancelAuthentication?(): Promise<void>;
   now(): number;
 }
 
@@ -27,6 +28,7 @@ export interface PrivacySnapshot {
 
 export class PrivacyError extends Error {}
 export class PrivacyAuthorizationError extends PrivacyError {}
+export class PrivacyTimeoutError extends PrivacyError {}
 
 /** All verification is serialized; failures are persisted before another guess. */
 export class PrivacyController {
@@ -35,11 +37,12 @@ export class PrivacyController {
   private epoch = 0;
   private authorizedUntil = 0;
   private pendingFailure: LockRecord | null = null;
+  private pendingMutation: Promise<void> | null = null;
   private snapshot: PrivacySnapshot = { ready: false, available: false, enabled: false,
     unlocked: false, busy: false, biometricAvailable: false, biometricEnabled: false,
     biometricPrompt: false, blockedUntil: 0, fatalError: null };
 
-  constructor(private adapter: PrivacyAdapter) {}
+  constructor(private adapter: PrivacyAdapter, private timeoutMs = 30_000) {}
   getSnapshot = () => this.snapshot;
   subscribe = (listener: () => void) => { this.listeners.add(listener); return () => { this.listeners.delete(listener); }; };
   private publish(patch: Partial<PrivacySnapshot>) {
@@ -51,27 +54,54 @@ export class PrivacyController {
     this.publish({ busy: true });
     try { return await operation(); } finally { this.publish({ busy: false }); }
   }
+  /** A late native result cannot resume the caller after this promise times out. */
+  private async wait<T>(pending: Promise<T>): Promise<T> {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    try {
+      return await Promise.race([pending, new Promise<never>((_, reject) => {
+        timer = setTimeout(() => reject(new PrivacyTimeoutError('استغرقت العملية وقتاً طويلاً. أعد المحاولة.')), this.timeoutMs);
+      })]);
+    } finally { if (timer) clearTimeout(timer); }
+  }
+  private async mutate(operation: () => Promise<void>) {
+    // A timed-out SecureStore write may still finish natively. Do not race a new
+    // write or read against it; reconciliation must await that original write.
+    if (this.pendingMutation) await this.wait(this.pendingMutation);
+    const pending = operation();
+    this.pendingMutation = pending;
+    const settled = () => { if (this.pendingMutation === pending) this.pendingMutation = null; };
+    void pending.then(settled, settled);
+    try { await this.wait(pending); }
+    catch (error) {
+      if (error instanceof PrivacyTimeoutError) this.publish({ unlocked: false,
+        fatalError: 'تعذر تأكيد حفظ إعدادات القفل. أعد المحاولة؛ وإذا استمر الخطأ، أغلق التطبيق وافتحه مجدداً. لم يتم حذف بياناتك.' });
+      throw error;
+    }
+  }
   initialize = async () => this.run(async () => {
     const knownLockOrError = !!(this.record || this.pendingFailure || this.snapshot.enabled || this.snapshot.fatalError);
     this.publish({ fatalError: null, unlocked: false });
     try {
-      if (!await this.adapter.available()) {
+      if (this.pendingMutation) await this.wait(this.pendingMutation);
+      if (!await this.wait(this.adapter.available())) {
         if (knownLockOrError) throw new Error('Previously protected privacy storage is unavailable');
         this.publish({ ready: true, available: false, unlocked: true });
         return;
       }
       if (this.pendingFailure) {
-        await this.adapter.write(JSON.stringify(this.pendingFailure));
+        await this.mutate(() => this.adapter.write(JSON.stringify(this.pendingFailure)));
         this.pendingFailure = null;
       }
-      const raw = await this.adapter.read();
+      const raw = await this.wait(this.adapter.read());
       this.record = raw === null ? null : parseLockRecord(raw);
-      const biometricAvailable = await this.adapter.hasBiometrics().catch(() => false);
+      const biometricAvailable = await this.wait(this.adapter.hasBiometrics()).catch(() => false);
       this.publish({ ready: true, available: true, enabled: !!this.record, unlocked: !this.record,
         biometricAvailable, biometricEnabled: !!this.record?.biometric, blockedUntil: this.record?.blockedUntil ?? 0 });
     } catch {
       this.publish({ ready: true, unlocked: false,
-        fatalError: 'تعذر قراءة إعدادات القفل. أعد المحاولة بعد فتح قفل جهازك. لم يتم حذف بياناتك.' });
+        fatalError: this.pendingMutation ?
+          'لم يكتمل حفظ إعدادات القفل. أغلق التطبيق وافتحه مجدداً ثم أعد المحاولة. لم يتم حذف بياناتك.' :
+          'تعذر قراءة إعدادات القفل. أعد المحاولة بعد فتح قفل جهازك. لم يتم حذف بياناتك.' });
     }
   });
 
@@ -82,8 +112,8 @@ export class PrivacyController {
   };
 
   private async save(record: LockRecord) {
-    try { await this.adapter.write(JSON.stringify(record)); }
-    catch { throw new PrivacyError('تعذر حفظ إعدادات القفل. أعد المحاولة.'); }
+    try { await this.mutate(() => this.adapter.write(JSON.stringify(record))); }
+    catch (error) { if (error instanceof PrivacyTimeoutError) throw error; throw new PrivacyError('تعذر حفظ إعدادات القفل. أعد المحاولة.'); }
     this.record = record;
     this.publish({ enabled: true, biometricEnabled: record.biometric, blockedUntil: record.blockedUntil });
   }
@@ -94,9 +124,9 @@ export class PrivacyController {
   }
   private async makeRecord(pin: string, biometric: boolean): Promise<LockRecord> {
     if (!PIN_DIGITS.test(pin)) throw new PrivacyError('استخدم رمزاً من 4 إلى 6 أرقام.');
-    const salt = await this.adapter.randomSalt();
+    const salt = await this.wait(this.adapter.randomSalt());
     return { version: 1, algorithm: 'pbkdf2-sha256', iterations: PIN_ITERATIONS, salt,
-      verifier: await this.adapter.derive(pin, salt, PIN_ITERATIONS),
+      verifier: await this.wait(this.adapter.derive(pin, salt, PIN_ITERATIONS)),
       biometric: biometric && this.snapshot.biometricAvailable, failedAttempts: 0, blockedUntil: 0 };
   }
   enable = async (pin: string, biometric: boolean) => this.run(async () => {
@@ -116,7 +146,7 @@ export class PrivacyController {
     if (!record || !PIN_DIGITS.test(pin)) throw new PrivacyError('أدخل رمزك من 4 إلى 6 أرقام.');
     if (record.blockedUntil > this.adapter.now()) throw new PrivacyError('محاولات كثيرة. انتظر انتهاء المدة ثم حاول مجدداً.');
     const epoch = this.epoch;
-    const verifier = await this.adapter.derive(pin, record.salt, record.iterations);
+    const verifier = await this.wait(this.adapter.derive(pin, record.salt, record.iterations));
     if (!sameVerifier(verifier, record.verifier)) {
       // Keep the in-memory limit even when a storage write fails. Never permit
       // another guess after a failed persistence operation until a retry loads.
@@ -143,7 +173,10 @@ export class PrivacyController {
     const epoch = this.epoch;
     this.publish({ biometricPrompt: true });
     try {
-      const ok = await this.adapter.authenticate().catch(() => false);
+      const ok = await this.wait(this.adapter.authenticate()).catch(error => {
+        if (error instanceof PrivacyTimeoutError) void this.adapter.cancelAuthentication?.().catch(() => {});
+        return false;
+      });
       if (!ok || epoch !== this.epoch) return false;
       if (purpose === 'settings' && !this.snapshot.unlocked) return false;
       await this.save({ ...this.record, failedAttempts: 0, blockedUntil: 0 });
@@ -166,8 +199,8 @@ export class PrivacyController {
 
   disable = async () => this.run(async () => {
     this.requireAuthorization();
-    try { await this.adapter.remove(); }
-    catch { throw new PrivacyError('تعذر إيقاف القفل. أعد المحاولة.'); }
+    try { await this.mutate(() => this.adapter.remove()); }
+    catch (error) { if (error instanceof PrivacyTimeoutError) throw error; throw new PrivacyError('تعذر إيقاف القفل. أعد المحاولة.'); }
     this.record = null;
     this.authorizedUntil = 0;
     this.publish({ enabled: false, biometricEnabled: false, unlocked: true, blockedUntil: 0 });

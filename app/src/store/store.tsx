@@ -2,7 +2,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { STORAGE_KEY, STORAGE_RECOVERY_KEY } from '../config/app';
-import { AddDebtInput, createDebt, createSettlements, editEntry, EntryPatch, remainingCents, restoreEntry, undoEntryEdit, voidEntry } from '../ledger';
+import { AddDebtInput, createDebt, createForgiveness, createSettlements, editEntry, EntryPatch, isDebt, remainingCents, restoreEntry, undoEntryEdit, voidEntry } from '../ledger';
 import { fromCents, toCents } from '../money';
 import { emptyState } from '../initialState';
 import { PersistedState } from '../types';
@@ -25,6 +25,8 @@ interface Store {
   addDebt: (input: AddDebtInput) => boolean;
   /** Pays one debt, or oldest-first in an explicitly selected direction. */
   settle: (personId: string, amount: number, debtId?: string | null, dir?: 'me' | 'owe', transactionDate?: string, note?: string) => number;
+  /** Records debt forgiveness separately from money received or paid. */
+  forgive: (personId: string, amount: number, debtId?: string | null, dir?: 'me' | 'owe', transactionDate?: string, note?: string) => number;
   updateEntry: (txId: string, patch: EntryPatch) => boolean;
   cancelEntry: (txId: string) => boolean;
   reinstateEntry: (txId: string) => boolean;
@@ -177,6 +179,13 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       ? fromCents(payments.reduce((sum, payment) => sum + toCents(payment.amount), 0)) : 0;
   }, [commit, showToast]);
 
+  const forgive = useCallback((personId: string, amount: number, debtId?: string | null, dir?: 'me' | 'owe', transactionDate?: string, note?: string): number => {
+    const entries = createForgiveness(current.current.tx, personId, amount, newId, debtId, dir, transactionDate, note);
+    if (!entries.length) { showToast('تحقق من اتجاه الإعفاء والمبلغ المتبقي وتاريخ الإعفاء'); return 0; }
+    return commit({ ...current.current, tx: [...current.current.tx, ...entries] })
+      ? fromCents(entries.reduce((sum, entry) => sum + toCents(entry.amount), 0)) : 0;
+  }, [commit, showToast]);
+
   const updateEntry = useCallback((id: string, patch: EntryPatch) => commit(editEntry(current.current, id, patch, newId())), [commit]);
   const cancelEntry = useCallback((id: string) => commit(voidEntry(current.current, id, newId())), [commit]);
   const reinstateEntry = useCallback((id: string) => commit(restoreEntry(current.current, id, newId())), [commit]);
@@ -184,21 +193,21 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const listRecoverySnapshots = useCallback(() => availableLocalHistory(AsyncStorage), []);
 
   const markPaid = useCallback((debtId: string): boolean => {
-    const debt = current.current.tx.find(t => t.id === debtId && t.dir !== 'settle');
+    const debt = current.current.tx.find(t => t.id === debtId && isDebt(t));
     if (!debt) return false;
     const rem = fromCents(remainingCents(current.current.tx, debt));
     return rem > 0 && settle(debt.personId, rem, debtId) > 0;
   }, [settle]);
 
   const toggleReminder = useCallback((debtId: string, on: boolean) => {
-    if (!current.current.tx.some(t => t.id === debtId && t.dir !== 'settle')) return;
+    if (!current.current.tx.some(t => t.id === debtId && isDebt(t))) return;
     commit({ ...current.current, reminderPrefs: { ...current.current.reminderPrefs, [debtId]: on } });
   }, [commit]);
 
   const value = useMemo<Store>(() => ({
-    state, ready, storageError, recoveryNotice, retryLoad, toast, showToast, addPerson, addDebt, settle, markPaid, toggleReminder, set, replaceAll,
+    state, ready, storageError, recoveryNotice, retryLoad, toast, showToast, addPerson, addDebt, settle, forgive, markPaid, toggleReminder, set, replaceAll,
     updateEntry, cancelEntry, reinstateEntry, revertEntryEdit, listRecoverySnapshots,
-  }), [state, ready, storageError, recoveryNotice, retryLoad, toast, showToast, addPerson, addDebt, settle, markPaid, toggleReminder, set, replaceAll,
+  }), [state, ready, storageError, recoveryNotice, retryLoad, toast, showToast, addPerson, addDebt, settle, forgive, markPaid, toggleReminder, set, replaceAll,
     updateEntry, cancelEntry, reinstateEntry, revertEntryEdit, listRecoverySnapshots]);
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;

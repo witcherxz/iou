@@ -92,6 +92,9 @@ export function PrivacySettings({ c, onBack, onEnabled }: { c: Colors; onBack: (
               </View>}
             </>}
             {error ? <T accessibilityRole="alert" style={{ ...M3.type.bodyMedium, color: c.error }}>{error}</T> : null}
+            {privacy.busy && !privacy.biometricPrompt && <T accessibilityLiveRegion="polite" style={{ ...M3.type.bodyMedium, color: c.onSurfaceVariant }}>
+              {enrolling ? 'جارٍ تجهيز القفل وحفظه بأمان…' : 'جارٍ التحقق من الرمز…'}
+            </T>}
             <PrimaryButton c={c} label={verifying ? 'تأكيد الهوية' : step === 'enroll' ? 'حفظ وتفعيل القفل' : 'حفظ الرمز الجديد'}
               loading={privacy.busy} disabled={!PIN_DIGITS.test(pin) || (verifying ? seconds > 0 : !PIN_DIGITS.test(confirmation))}
               onPress={() => { void (verifying ? verify(false) : save()); }} />

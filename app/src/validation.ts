@@ -1,7 +1,7 @@
-import { isCalendarDate } from './format';
+import { calendarISO, isCalendarDate, localDate } from './format';
 import { fromCents, isMoneyAmount, toCents } from './money';
 import { emptyState } from './initialState';
-import { Installment, LedgerChange, PersistedState, Person, Tx } from './types';
+import { Installment, isDebt, isReduction, LedgerChange, PersistedState, Person, Tx } from './types';
 import { validateReminderSettings } from './reminderSettings';
 
 const invalid = (detail: string): never => { throw new Error(`بيانات الدفتر غير صالحة: ${detail}`); };
@@ -31,19 +31,19 @@ const bool = (value: unknown, fallback: boolean): boolean => {
   return typeof value === 'boolean' ? value : invalid('إعداد غير صالح');
 };
 
-function parseTx(value: unknown, personIds: Set<string>): Tx {
+function parseTx(value: unknown, personIds: Set<string>, version: number): Tx {
   const t = record(value);
   const txId = id(t.id);
   const personId = id(t.personId);
   if (!personIds.has(personId)) return invalid('عملية بدون شخص');
-  if (t.dir !== 'me' && t.dir !== 'owe' && t.dir !== 'settle') return invalid('اتجاه غير صالح');
+  if (t.dir !== 'me' && t.dir !== 'owe' && t.dir !== 'settle' && !(version === 3 && t.dir === 'forgive')) return invalid('اتجاه غير صالح');
   const result: Tx = { id: txId, personId, dir: t.dir, amount: amount(t.amount), createdAt: date(t.createdAt) };
   if (t.recordedAt !== undefined) result.recordedAt = date(t.recordedAt);
   if (t.voidedAt !== undefined) result.voidedAt = date(t.voidedAt);
   if (t.note !== undefined) result.note = text(t.note, 'ملاحظة غير صالحة');
-  if (t.dir === 'settle') {
+  if (isReduction(result)) {
     result.debtId = id(t.debtId);
-    if (t.installments !== undefined || t.freq !== undefined) return invalid('أقساط لعملية سداد');
+    if (t.installments !== undefined || t.freq !== undefined || (t.dir === 'forgive' && t.dueAt !== undefined)) return invalid('استحقاق أو أقساط لعملية سداد أو إعفاء');
   } else {
     if (t.debtId !== undefined) return invalid('مرجع سداد غير صالح');
     result.dueAt = t.dueAt === undefined || t.dueAt === null ? null : date(t.dueAt);
@@ -71,7 +71,8 @@ function parseTx(value: unknown, personIds: Set<string>): Tx {
 export function validateState(raw: unknown): PersistedState {
   const s = record(raw);
   const base = emptyState();
-  if (s.version !== 1 && s.version !== 2) return invalid('إصدار غير مدعوم');
+  if (s.version !== 1 && s.version !== 2 && s.version !== 3) return invalid('إصدار غير مدعوم');
+  const version = s.version;
   if (!Array.isArray(s.people) || !Array.isArray(s.tx)) return invalid('السجلات مفقودة');
   const personIds = new Set<string>();
   const people: Person[] = s.people.map(value => {
@@ -84,33 +85,34 @@ export function validateState(raw: unknown): PersistedState {
   });
   const txIds = new Set<string>();
   const tx = s.tx.map(value => {
-    const result = parseTx(value, personIds);
+    const result = parseTx(value, personIds, version);
     if (txIds.has(result.id)) return invalid('عملية مكررة');
     txIds.add(result.id);
     return result;
   });
   const byId = new Map(tx.map(t => [t.id, t]));
-  const paid = new Map<string, number>();
+  const reduced = new Map<string, number>();
   let exposure = 0;
   for (const t of tx) {
-    if (t.dir !== 'settle') {
+    if (isDebt(t)) {
       if (t.voidedAt) continue;
       exposure += toCents(t.amount);
       if (!Number.isSafeInteger(exposure)) return invalid('المجموع أكبر من الحد المدعوم');
       continue;
     }
     const debt = byId.get(t.debtId!);
-    if (!debt || debt.dir === 'settle') return invalid('سداد مرتبط بدين غير صالح');
-    // Voided payments retain their original person for history if the debt is
+    if (!debt || !isDebt(debt)) return invalid('سداد أو إعفاء مرتبط بدين غير صالح');
+    // Voided payments and forgiveness retain their original person for history if the debt is
     // subsequently corrected. Restoring one must pass the active graph checks.
     if (t.voidedAt) continue;
-    if (debt.personId !== t.personId) return invalid('سداد مرتبط بدين غير صالح');
-    if (debt.voidedAt) return invalid('سداد نشط لدين ملغى');
-    const total = (paid.get(debt.id) ?? 0) + toCents(t.amount);
-    if (total > toCents(debt.amount)) return invalid('سداد أكبر من الدين');
-    paid.set(debt.id, total);
+    if (debt.personId !== t.personId) return invalid('سداد أو إعفاء مرتبط بدين غير صالح');
+    if (debt.voidedAt) return invalid('سداد أو إعفاء نشط لدين ملغى');
+    if (t.dir === 'forgive' && calendarISO(localDate(t.createdAt)) < calendarISO(localDate(debt.createdAt))) return invalid('إعفاء قبل تاريخ الدين');
+    const total = (reduced.get(debt.id) ?? 0) + toCents(t.amount);
+    if (total > toCents(debt.amount)) return invalid('مجموع السداد والإعفاء أكبر من الدين');
+    reduced.set(debt.id, total);
   }
-  if (s.version === 2 && !Array.isArray(s.changes)) return invalid('سجل التعديلات مفقود');
+  if ((s.version === 2 || s.version === 3) && !Array.isArray(s.changes)) return invalid('سجل التعديلات مفقود');
   const changes: LedgerChange[] = [];
   const changeIds = new Set<string>();
   const lastChange = new Map<string, Tx>();
@@ -120,10 +122,10 @@ export function validateState(raw: unknown): PersistedState {
     const txId = id(change.txId);
     if (changeIds.has(changeId) || !byId.has(txId)) return invalid('تعديل مكرر أو بدون عملية');
     changeIds.add(changeId);
-    const before = parseTx(change.before, personIds);
-    const after = parseTx(change.after, personIds);
+    const before = parseTx(change.before, personIds, version);
+    const after = parseTx(change.after, personIds, version);
     const at = date(change.at);
-    if (before.id !== txId || after.id !== txId || (before.dir === 'settle') !== (after.dir === 'settle')) return invalid('مرجع تعديل غير صالح');
+    if (before.id !== txId || after.id !== txId || isDebt(before) !== isDebt(after) || (isReduction(before) && before.dir !== after.dir)) return invalid('مرجع تعديل غير صالح');
     if (before.recordedAt !== after.recordedAt) return invalid('تغيير وقت التسجيل الأصلي');
     if (change.kind !== 'edit' && change.kind !== 'void' && change.kind !== 'restore') return invalid('نوع تعديل غير صالح');
     if (change.kind === 'edit' && (before.voidedAt || after.voidedAt)) return invalid('تعديل عملية ملغاة');
@@ -142,9 +144,9 @@ export function validateState(raw: unknown): PersistedState {
   for (const [txId, after] of lastChange) {
     if (JSON.stringify(after) !== JSON.stringify(byId.get(txId))) return invalid('السجل لا يطابق آخر تعديل');
   }
-  const debtIds = new Set(tx.filter(t => t.dir !== 'settle').map(t => t.id));
-  const activeDebtIds = new Set(tx.filter(t => t.dir !== 'settle' && !t.voidedAt).map(t => t.id));
-  if (s.version === 2 && s.reminderSettings === undefined) return invalid('إعدادات التذكير مفقودة');
+  const debtIds = new Set(tx.filter(t => isDebt(t)).map(t => t.id));
+  const activeDebtIds = new Set(tx.filter(t => isDebt(t) && !t.voidedAt).map(t => t.id));
+  if ((s.version === 2 || s.version === 3) && s.reminderSettings === undefined) return invalid('إعدادات التذكير مفقودة');
   const reminderSettings = validateReminderSettings(s.reminderSettings, activeDebtIds);
   const reminderPrefs: Record<string, boolean> = {};
   if (s.reminderPrefs !== undefined) {
@@ -161,7 +163,7 @@ export function validateState(raw: unknown): PersistedState {
   const backupTarget = s.backupTarget ?? base.backupTarget;
   if (backupTarget !== 'none' && backupTarget !== 'file' && backupTarget !== 'folder' && backupTarget !== 'drive') return invalid('وجهة نسخ غير صالحة');
   return {
-    version: 2, people, tx, changes, reminderPrefs, reminderSettings,
+    version: 3, people, tx, changes, reminderPrefs, reminderSettings,
     onboarded: bool(s.onboarded, base.onboarded),
     profileName: s.profileName === undefined ? base.profileName : text(s.profileName, 'اسم دفتر غير صالح', true),
     weekly: bool(s.weekly, base.weekly), autoBackup: bool(s.autoBackup, base.autoBackup),

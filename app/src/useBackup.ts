@@ -73,7 +73,9 @@ export function useBackup({ state, ready, suspendAutomatic = false, onRestored, 
     state.version, state.profileName, state.people, state.tx, state.reminderPrefs,
     state.changes, state.reminderSettings, state.weekly, state.dark, state.accent,
   ]);
-  const supportsAuto = AUTOMATIC_TARGETS.includes(target) && (target !== 'folder' || folderSupported);
+  const manualDrive = target === 'drive' && !driveConfigured;
+  const supportsAuto = AUTOMATIC_TARGETS.includes(target) &&
+    (target !== 'folder' || folderSupported) && (target !== 'drive' || driveConfigured);
   const requiresFirstBackup = supportsAuto && !isBackupTimestamp(state.lastBackup);
 
   const askPassword = useCallback((error: string | null = null) => new Promise<string | null>(resolve => {
@@ -169,12 +171,14 @@ export function useBackup({ state, ready, suspendAutomatic = false, onRestored, 
   const runBackup = useCallback(async (automatic = false) => {
     const snapshot = latest.current;
     const source = snapshot.backupTarget;
+    const shareToDrive = source === 'drive' && !driveConfigured;
+    const manualFile = source === 'file' || shareToDrive;
     if (automatic && (automaticSuspended.current || !snapshot.autoBackup || !isBackupTimestamp(snapshot.lastBackup) ||
-      !AUTOMATIC_TARGETS.includes(source))) return;
+      !AUTOMATIC_TARGETS.includes(source) || manualFile)) return;
     if (!ready || source === 'none' || !begin('save')) return;
     const savedFingerprint = backupFingerprint(snapshot);
     try {
-      if (!automatic && AUTOMATIC_TARGETS.includes(source) &&
+      if (!automatic && !manualFile && AUTOMATIC_TARGETS.includes(source) &&
         (automaticSuspended.current || !isBackupTimestamp(snapshot.lastBackup))) {
         const existing = source === 'folder'
           ? snapshot.backupFolderUri && folderHasBackup(snapshot.backupFolderUri)
@@ -193,7 +197,7 @@ export function useBackup({ state, ready, suspendAutomatic = false, onRestored, 
         if (!snapshot.backupFolderUri) throw new FolderUnavailableError();
         await writeToFolder(snapshot.backupFolderUri, payload);
         setFolderOk(true);
-      } else if (source === 'file') {
+      } else if (manualFile) {
         await exportArtifact(readableFiles(payload)[0]);
       } else if (automatic) {
         await uploadBackup(payload);
@@ -205,8 +209,11 @@ export function useBackup({ state, ready, suspendAutomatic = false, onRestored, 
         destination: `${source}:${snapshot.backupFolderUri ?? ''}`,
         fingerprint: savedFingerprint,
       };
-      if (source !== 'file') onPatch({ lastBackup: new Date().toISOString() });
-      if (!automatic) onToast(source === 'file'
+      // A share sheet (including dismissal) cannot confirm that Drive saved it.
+      if (!manualFile) onPatch({ lastBackup: new Date().toISOString() });
+      if (!automatic) onToast(shareToDrive
+        ? Platform.OS === 'web' ? 'بدأ تنزيل النسخة. ارفع الملف إلى Google Drive' : 'تأكد من اكتمال حفظ النسخة داخل Google Drive'
+        : source === 'file'
         ? Platform.OS === 'web' ? 'بدأ تنزيل النسخة. تأكد من حفظ الملف' : 'اختر مكان حفظ النسخة من خيارات المشاركة'
         : 'تم حفظ النسخة الاحتياطية');
     } catch (error) {
@@ -214,10 +221,11 @@ export function useBackup({ state, ready, suspendAutomatic = false, onRestored, 
     } finally {
       finish();
     }
-  }, [ready, suspendAutomatic, begin, finish, withDrive, onPatch, onToast, reportError]);
+  }, [ready, suspendAutomatic, driveConfigured, begin, finish, withDrive, onPatch, onToast, reportError]);
 
   const restoreFrom = useCallback(async (source: BackupTarget, versionId?: string) => {
     if (source === 'none' || !begin('restore')) return;
+    const manualFile = source === 'file' || (source === 'drive' && !driveConfigured);
     try {
       let text: string | null | undefined;
       let recovered = false;
@@ -227,7 +235,7 @@ export function useBackup({ state, ready, suspendAutomatic = false, onRestored, 
         const result = versionId ? { text: await readFolderVersion(uri, versionId), recovered: false } : await readFolderBackup(uri);
         text = result?.text ?? null;
         recovered = result?.recovered ?? false;
-      } else if (source === 'file') {
+      } else if (manualFile) {
         text = (await importFromFile()) ?? undefined; // Cancellation is silent.
       } else {
         text = await withDrive(() => downloadBackup());
@@ -262,7 +270,7 @@ export function useBackup({ state, ready, suspendAutomatic = false, onRestored, 
         onToast('تغيّر الدفتر أثناء المعاينة. افتح الاستعادة مرة أخرى');
         return;
       }
-      const next = restoredState(latest.current, backup, source);
+      const next = restoredState(latest.current, backup, manualFile ? 'file' : source);
       const oldBaseline = baseline.current;
       baseline.current = { destination, fingerprint: backupFingerprint(next) };
       try {
@@ -277,7 +285,7 @@ export function useBackup({ state, ready, suspendAutomatic = false, onRestored, 
       setPasswordRequest(null);
       finish();
     }
-  }, [begin, finish, withDrive, onRestored, onToast, reportError, destination, askPassword]);
+  }, [begin, finish, driveConfigured, withDrive, onRestored, onToast, reportError, destination, askPassword]);
 
   const refreshVersions = useCallback(async () => {
     if (!begin('setup')) return;
@@ -335,7 +343,7 @@ export function useBackup({ state, ready, suspendAutomatic = false, onRestored, 
     if (next === 'folder') { await chooseFolder(); return; }
     if (!begin('setup')) return;
     try {
-      if (next === 'drive' && !(await withDrive(async () => true))) return;
+      if (next === 'drive' && driveConfigured && !(await withDrive(async () => true))) return;
       if (target === 'drive' && next !== 'drive') {
         await signOut();
         setDriveConnected(false);
@@ -346,7 +354,7 @@ export function useBackup({ state, ready, suspendAutomatic = false, onRestored, 
     } finally {
       finish();
     }
-  }, [target, chooseFolder, begin, finish, withDrive, onPatch, reportError]);
+  }, [target, chooseFolder, begin, finish, driveConfigured, withDrive, onPatch, reportError]);
 
   useEffect(() => {
     clearTimer();
@@ -376,6 +384,7 @@ export function useBackup({ state, ready, suspendAutomatic = false, onRestored, 
   else if (errorStatus) status = errorStatus;
   else if (target === 'none') status = 'اضغط للإعداد';
   else if (target === 'file') status = 'تصدير واستيراد يدوي';
+  else if (manualDrive) status = Platform.OS === 'web' ? 'نسخ يدوي · ارفع الملف إلى Drive' : 'نسخ يدوي · اختر Drive عند المشاركة';
   else if (target === 'folder' && (!folderOk || !backupFolderUri)) status = 'اختر المجلد مرة أخرى للمتابعة';
   else if (target === 'drive' && !driveConnected) status = 'غير متصل';
   else if (automaticPaused) status = 'التلقائي متوقف: راجع النسخة المحلية المسترجعة';
@@ -385,11 +394,11 @@ export function useBackup({ state, ready, suspendAutomatic = false, onRestored, 
   });
 
   const view: BackupView = {
-    target, title: TARGET_LABELS[target], status,
-    dot: operation ? 'busy' : errorStatus ? 'warn' : target === 'none' || target === 'file' ? 'off' : healthy ? 'ok' : 'warn',
+    target, title: manualDrive ? 'Google Drive (يدوي)' : TARGET_LABELS[target], status,
+    dot: operation ? 'busy' : errorStatus ? 'warn' : target === 'none' || target === 'file' || manualDrive ? 'off' : healthy ? 'ok' : 'warn',
     working: operation !== null, supportsAuto, requiresFirstBackup,
-    primaryLabel: target === 'file' ? 'تصدير' : 'نسخ الآن',
-    secondaryLabel: target === 'file' ? 'استيراد' : 'استعادة',
+    primaryLabel: manualDrive ? Platform.OS === 'web' ? 'تنزيل نسخة لـ Drive' : 'مشاركة إلى Drive' : target === 'file' ? 'تصدير' : 'نسخ الآن',
+    secondaryLabel: manualDrive ? 'استعادة ملف' : target === 'file' ? 'استيراد' : 'استعادة',
     driveConfigured, folderSupported, folderLabel: folderLabel(backupFolderUri),
   };
 

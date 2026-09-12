@@ -2,6 +2,7 @@ import { calendarISO, localDate } from './format';
 import { fromCents, toCents } from './money';
 import { defaultReminderSettings, ReminderSettings } from './reminderSettings';
 import type { DebtView } from './selectors';
+import { isDebt } from './types';
 
 export const MAX_DEBT_REMINDERS = 60;
 export interface PlannedReminder {
@@ -35,10 +36,10 @@ export function planReminders(
 ): PlannedReminder[] {
   const result: PlannedReminder[] = [];
   for (const debt of debts) {
-    if (debt.paid || debt.voidedAt || debt.dir === 'settle' || !(prefs[debt.id] ?? true)) continue;
+    if (debt.closed || debt.rem <= 0 || debt.voidedAt || !isDebt(debt) || !(prefs[debt.id] ?? true)) continue;
     const safeId = encodeURIComponent(debt.id);
     const entries = (debt.schedule
-      ? debt.schedule.filter(row => !row.paid).map(row => ({ id: `${safeId}:due:${row.index}`, dueAt: row.dueAt, amount: row.remainingAmount }))
+      ? debt.schedule.filter(row => !row.closed && row.remainingAmount > 0).map(row => ({ id: `${safeId}:due:${row.index}`, dueAt: row.dueAt, amount: row.remainingAmount }))
       : [{ id: `${safeId}:due`, dueAt: debt.nextDueAt, amount: debt.rem }])
       .filter(entry => entry.dueAt && entry.amount > 0)
       .map(entry => ({ ...entry, due: localDate(entry.dueAt!) }))

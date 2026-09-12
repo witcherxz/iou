@@ -61,7 +61,7 @@ export default function App() {
 }
 
 function Root() {
-  const { state, ready, storageError, recoveryNotice, retryLoad, toast, showToast, set, replaceAll, addPerson, addDebt, settle, markPaid, toggleReminder,
+  const { state, ready, storageError, recoveryNotice, retryLoad, toast, showToast, set, replaceAll, addPerson, addDebt, settle, forgive, markPaid, toggleReminder,
     updateEntry, cancelEntry, reinstateEntry, revertEntryEdit, listRecoverySnapshots } =
     useStore();
   const privacy = usePrivacy();
@@ -93,6 +93,7 @@ function Root() {
   const [addPersonId, setAddPersonId] = useState<string | null>(null);
   const [settleDebtId, setSettleDebtId] = useState<string | null>(null);
   const [settleMode, setSettleMode] = useState<'full' | 'partial'>('full');
+  const [settleKind, setSettleKind] = useState<'payment' | 'forgiveness'>('payment');
   const [settleSeed, setSettleSeed] = useState('');
   const [settleFrom, setSettleFrom] = useState<'person' | 'debt'>('person');
   const [today, setToday] = useState(todayISO);
@@ -212,10 +213,11 @@ function Root() {
     setScreen('entry');
   }, [state.tx]);
 
-  const openSettle = useCallback((forDebtId: string | null, mode: 'full' | 'partial', seed = '') => {
+  const openSettle = useCallback((forDebtId: string | null, mode: 'full' | 'partial', seed = '', kind: 'payment' | 'forgiveness' = 'payment') => {
     setSettleFrom(screen === 'debt' ? 'debt' : 'person');
     setSettleDebtId(forDebtId);
     setSettleMode(mode);
+    setSettleKind(kind);
     setSettleSeed(seed);
     setSettleKey(k => k + 1);
     setScreen('settle');
@@ -364,6 +366,7 @@ function Root() {
                 onOpenEntry={openEntry}
                 onBack={() => setScreen(cameFrom === 'person' ? 'person' : 'main')}
                 onPay={() => { setPersonId(debt.personId); openSettle(debt.id, 'partial'); }}
+                onForgive={() => { setPersonId(debt.personId); openSettle(debt.id, 'full', '', 'forgiveness'); }}
                 onMarkPaid={async () => {
                   if (await confirmAction('تسجيل السداد الكامل', `سيتم تسجيل دفعة بقيمة ${debt.remainingLabel} ر.س لتسديد هذا الدين.`, 'تسجيل السداد')) {
                     if (markPaid(debt.id)) showToast('تم تسجيل السداد الكامل');
@@ -405,6 +408,8 @@ function Root() {
                 onBack={() => setScreen('main')}
                 onSelect={selectTarget}
                 onChooseFolder={chooseFolder}
+                onBackupNow={backupNow}
+                onRestore={restore}
               />
             )}
 
@@ -445,9 +450,12 @@ function Root() {
                 debts={debts}
                 targetDebt={settleDebtId ? debts.find(d => d.id === settleDebtId) ?? null : null}
                 initialMode={settleMode}
+                initialKind={settleKind}
                 initialAmount={settleSeed}
                 onBack={() => setScreen(settleFrom)}
-                onConfirm={(amount, dir, date, note) => settle(person.id, amount, settleDebtId, dir, date, note)}
+                onConfirm={(amount, dir, date, note, kind) => kind === 'forgiveness'
+                  ? forgive(person.id, amount, settleDebtId, dir, date, note)
+                  : settle(person.id, amount, settleDebtId, dir, date, note)}
                 onHome={goHome}
               />
             )}

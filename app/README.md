@@ -42,7 +42,7 @@ versa.
 |---|---|---|---|
 | `folder` | `src/backup/folder.ts` | user picks a folder once | yes |
 | `file` | `src/backup/fileShare.ts` | none | no (manual export/import) |
-| `drive` | `src/backup/google.ts` | disabled pending native authorization integration | planned |
+| `drive` | `src/backup/fileShare.ts` (manual); `src/backup/google.ts` (disabled direct transport) | share to the installed Drive app, or upload the downloaded report | no in the current build |
 | `none` | — | — | — |
 
 `src/useBackup.ts` dispatches across them and owns the debounced auto-backup.
@@ -93,7 +93,13 @@ exports are readable; optional protected HTML encrypts the entire report.
 The device PIN and biometric settings never leave this device. See
 [`docs/BACKUPS.md`](docs/BACKUPS.md) for formats, retention and encryption.
 
-### Google Drive (unfinished integration)
+### Google Drive (manual export/import; direct synchronization unfinished)
+
+The selectable **Google Drive (يدوي)** destination opens a readable report in the
+share sheet on phones, or downloads it on web. Its restore action uses the file
+picker and the same validated preview as any file import. The user finishes the
+upload in Drive. Selecting, sharing, dismissing the share sheet, and importing a
+manual report do not establish a synchronized timestamp or enable auto-backup.
 
 The Drive transport targets `appDataFolder` with the `drive.appdata` scope, but
 **the current generic `iou://oauthredirect` sign-in flow is not a release-ready
@@ -108,8 +114,9 @@ configure the Google project/API, scope and consent, match the app identity and
 signing certificate, and verify sign-in, token refresh, backup, restore, and
 revoked access on a real development build. Credentials are not included here.
 
-For now, users can export a file to Google Drive through their installed app's
-share-sheet destination. The direct Drive option clearly reports unavailability.
+The manual Drive controls remain available while direct authorization is disabled;
+the UI describes each manual save and restoration step. See
+[`docs/BACKUPS.md`](docs/BACKUPS.md#google-drive) for the user flow and limitations.
 
 ## Architecture
 

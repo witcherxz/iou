@@ -2,7 +2,7 @@ import React from 'react';
 import { Platform, ScrollView, View } from 'react-native';
 
 import { MaterialIcon } from '../components/icons';
-import { OutlineButton, ScreenHeader, T, Touch } from '../components/ui';
+import { OutlineButton, PrimaryButton, ScreenHeader, T, Touch } from '../components/ui';
 import { BackupView } from '../useBackup';
 import { Colors, M3 } from '../theme';
 import { BackupTarget } from '../types';
@@ -13,6 +13,8 @@ interface Props {
   onBack: () => void;
   onSelect: (target: BackupTarget) => void;
   onChooseFolder: () => void;
+  onBackupNow: () => void;
+  onRestore: () => void;
 }
 
 interface Option {
@@ -23,7 +25,7 @@ interface Option {
   blocked?: string;
 }
 
-export function BackupSetup({ c, backup, onBack, onSelect, onChooseFolder }: Props) {
+export function BackupSetup({ c, backup, onBack, onSelect, onChooseFolder, onBackupNow, onRestore }: Props) {
   const options: Option[] = [
     {
       id: 'folder',
@@ -40,9 +42,11 @@ export function BackupSetup({ c, backup, onBack, onSelect, onChooseFolder }: Pro
     },
     {
       id: 'drive',
-      title: 'Google Drive',
-      body: 'حفظ تلقائي في مجلد خاص بالتطبيق داخل حسابك على Drive.',
-      blocked: backup.driveConfigured ? undefined : 'غير متاح في هذه النسخة. يمكنك حفظ ملف في Drive من قائمة المشاركة.',
+      title: backup.driveConfigured ? 'Google Drive' : 'Google Drive (يدوي)',
+      body: backup.driveConfigured ? 'حفظ تلقائي في مجلد خاص بالتطبيق داخل حسابك على Drive.'
+        : Platform.OS === 'web'
+          ? 'نزّل تقرير دفترك وارفعه إلى Drive. يحتوي على جداول ونسخة كاملة للاستعادة. الحفظ يدوي في كل مرة.'
+          : 'شارك تقرير دفترك واختر Drive لحفظه. يحتوي على جداول ونسخة كاملة للاستعادة. الحفظ يدوي في كل مرة.',
     },
     {
       id: 'none',
@@ -93,6 +97,26 @@ export function BackupSetup({ c, backup, onBack, onSelect, onChooseFolder }: Pro
                     </View>
                   </View>
                 )}
+                {o.id === 'drive' && selected && !backup.driveConfigured && (
+                  <View style={{ paddingHorizontal: 16, paddingBottom: 16, gap: 12 }}>
+                    <T style={{ ...M3.type.bodyMedium, color: c.onSecondaryContainer }}>
+                      {Platform.OS === 'web'
+                        ? 'بعد التنزيل، افتح Google Drive وارفع الملف. للاستعادة، نزّل النسخة من Drive ثم اخترها هنا.'
+                        : 'من قائمة المشاركة اختر Drive، ثم الحساب والمجلد واضغط حفظ. إن لم يظهر Drive، ثبّت تطبيقه وسجّل الدخول، أو احفظ الملف وارفعه من Drive.'}
+                    </T>
+                    <PrimaryButton label={backup.primaryLabel} c={c} onPress={onBackupNow}
+                      disabled={backup.working} loading={backup.working} />
+                    <T style={{ ...M3.type.bodyMedium, color: c.onSecondaryContainer }}>
+                      للاستعادة، اختر ملف النسخة من Drive في منتقي الملفات، أو نزّله على جهازك أولاً.
+                    </T>
+                    <View style={{ flexDirection: 'row' }}>
+                      <OutlineButton label="استعادة ملف من Drive" c={c} onPress={onRestore} disabled={backup.working} />
+                    </View>
+                    <T style={{ ...M3.type.bodyMedium, color: c.onSecondaryContainer }}>
+                      تأكد من ظهور الملف في Drive بعد الحفظ. فتح قائمة المشاركة وحده لا يعني اكتمال النسخ.
+                    </T>
+                  </View>
+                )}
               </View>
             );
           })}
@@ -106,7 +130,9 @@ export function BackupSetup({ c, backup, onBack, onSelect, onChooseFolder }: Pro
             المجلد المحلي وحده لا يحميك من فقدان الهاتف. احتفظ بنسخة على جهاز آخر أو خدمة سحابية.
           </T>
           <T style={{ ...M3.type.bodyMedium, color: c.onSurfaceVariant }}>
-            بعد اختيار الوجهة، استعد نسختك السابقة أو اضغط «نسخ الآن» لإنشاء أول نسخة وتفعيل الحفظ التلقائي.
+            {backup.supportsAuto
+              ? 'استعد نسختك السابقة أو اضغط «نسخ الآن» لإنشاء أول نسخة وتفعيل الحفظ التلقائي.'
+              : 'احتفظ بنسخة جديدة بعد التعديلات المهمة، وتأكد من اكتمال حفظ الملف في المكان الذي اخترته.'}
           </T>
         </View>
         <T style={{ ...M3.type.bodyMedium, color: c.onSurfaceVariant }}>

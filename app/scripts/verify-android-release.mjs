@@ -50,6 +50,65 @@ export function verifyBundle(bundle) {
   }
 }
 
+const NATIVE_PIN_CLASSES = [
+  'Lexpo/modules/iouprivacycrypto/IouPrivacyCryptoModule;',
+  'Lexpo/modules/iouprivacycrypto/PinKdf;',
+];
+
+/** Inspect actual class definitions, not unused descriptors or JavaScript strings.
+ * DEX layout: https://source.android.com/docs/core/runtime/dex-format
+ * Release builds currently retain class names (R8 minification is disabled).
+ */
+export function verifyNativePinWorker(dexFiles) {
+  assert.ok(Array.isArray(dexFiles) && dexFiles.length > 0 && dexFiles.length <= 64,
+    'Production APK must contain a bounded set of compiled DEX files');
+  const found = new Set();
+  for (const dex of dexFiles) {
+    assert.ok(Buffer.isBuffer(dex) && dex.length >= 112 && dex.length <= 64 * 1024 * 1024,
+      'Truncated or oversized DEX file');
+    assert.match(dex.subarray(0, 8).toString('ascii'), /^dex\n0(?:3[5-9]|40)\0$/, 'Unsupported DEX header');
+    assert.equal(dex.readUInt32LE(32), dex.length, 'Truncated DEX file size');
+    assert.equal(dex.readUInt32LE(36), 112, 'Unsupported DEX header size');
+    assert.equal(dex.readUInt32LE(40), 0x12345678, 'Unsupported DEX byte order');
+    const table = (sizeOffset, itemSize) => {
+      const size = dex.readUInt32LE(sizeOffset);
+      const offset = dex.readUInt32LE(sizeOffset + 4);
+      assert.ok(size === 0 || (offset >= 112 && offset + size * itemSize <= dex.length), 'Truncated DEX table');
+      return { size, offset };
+    };
+    const strings = table(56, 4);
+    const types = table(64, 4);
+    const classes = table(96, 32);
+    for (let i = 0; i < classes.size; i++) {
+      const typeIndex = dex.readUInt32LE(classes.offset + i * 32);
+      assert.ok(typeIndex < types.size, 'Invalid DEX class type index');
+      const stringIndex = dex.readUInt32LE(types.offset + typeIndex * 4);
+      assert.ok(stringIndex < strings.size, 'Invalid DEX class descriptor index');
+      let offset = dex.readUInt32LE(strings.offset + stringIndex * 4);
+      // string_data_item begins with at most five bytes of ULEB128 length.
+      let lengthBytes = 0;
+      do {
+        assert.ok(offset < dex.length && lengthBytes++ < 5, 'Truncated DEX class descriptor');
+      } while (dex[offset++] & 0x80);
+      const descriptorBytes = dex.subarray(offset, Math.min(dex.length, offset + 4096));
+      const end = descriptorBytes.indexOf(0);
+      assert.ok(end >= 0, 'Truncated or oversized DEX class descriptor');
+      const descriptor = descriptorBytes.subarray(0, end).toString('utf8');
+      if (NATIVE_PIN_CLASSES.includes(descriptor)) found.add(descriptor);
+    }
+  }
+  for (const name of NATIVE_PIN_CLASSES) assert.ok(found.has(name), `Production APK is missing native PIN worker class: ${name}`);
+}
+
+/** Also exported for independent verification of the downloaded release APK. */
+export function verifyNativePinWorkerInApk(apkPath) {
+  const apk = resolve(apkPath);
+  const entries = command('unzip', ['-Z1', apk]).split(/\r?\n/)
+    .filter(name => /^classes(?:[2-9]|[1-9][0-9]+)?\.dex$/.test(name));
+  assert.ok(entries.length > 0 && entries.length <= 64, 'Production APK must contain compiled DEX files');
+  verifyNativePinWorker(entries.map(name => command('unzip', ['-p', apk, name], null)));
+}
+
 function command(file, args, encoding = 'utf8') {
   return execFileSync(file, args, { encoding, maxBuffer: 64 * 1024 * 1024, stdio: ['ignore', 'pipe', 'pipe'] });
 }
@@ -98,6 +157,7 @@ function verifyApk(apkPath) {
   console.log(`Android APK signature verification:\n${inspected.signature.trim()}`);
   verifyInspection(inspected, expected);
   verifyBundle(command('unzip', ['-p', apk, 'assets/index.android.bundle'], null));
+  verifyNativePinWorkerInApk(apk);
 
   const destination = join(appRoot, 'release');
   mkdirSync(destination, { recursive: true });
@@ -105,7 +165,7 @@ function verifyApk(apkPath) {
   copyFileSync(apk, join(destination, name));
   const digest = createHash('sha256').update(readFileSync(apk)).digest('hex');
   writeFileSync(join(destination, `${name}.sha256`), `${digest}  ${name}\n`);
-  console.log(`Verified ${name}: non-debuggable, release certificate, correct identity/version, no demo content, SHA-256 ${digest}`);
+  console.log(`Verified ${name}: non-debuggable, release certificate, correct identity/version, native PIN worker, no demo content, SHA-256 ${digest}`);
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

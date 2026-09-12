@@ -5,7 +5,7 @@ import { defaultReminderSettings } from './reminderSettings';
 /** Defaults for a new installation. Saved ledgers are loaded before these are used. */
 export function emptyState(): PersistedState {
   return {
-    version: 2,
+    version: 3,
     onboarded: false,
     profileName: 'دفتري',
     people: [],

@@ -26,10 +26,10 @@ export function Home({
   const [showAllDue, setShowAllDue] = useState(false);
   const owedMe = people.reduce((total, person) => total + person.iouAmt, 0);
   const iOwe = people.reduce((total, person) => total + person.uomeAmt, 0);
-  const iouCount = debts.filter(d => d.dir === 'me' && !d.paid).length;
-  const uomeCount = debts.filter(d => d.dir === 'owe' && !d.paid).length;
+  const iouCount = debts.filter(d => d.dir === 'me' && !d.closed).length;
+  const uomeCount = debts.filter(d => d.dir === 'owe' && !d.closed).length;
 
-  const dueSoon = debts.filter(d => !d.paid && d.dueIn <= 7).sort((a, b) => a.dueIn - b.dueIn);
+  const dueSoon = debts.filter(d => !d.closed && d.dueIn <= 7).sort((a, b) => a.dueIn - b.dueIn);
 
   return (
     <ScrollView

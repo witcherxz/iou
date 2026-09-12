@@ -1,0 +1,5 @@
+{
+  "platforms": ["apple", "android"],
+  "apple": { "modules": ["IouPrivacyCryptoModule"] },
+  "android": { "modules": ["expo.modules.iouprivacycrypto.IouPrivacyCryptoModule"] }
+}

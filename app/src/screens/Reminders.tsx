@@ -53,7 +53,7 @@ export function Reminders({ c, debts, prefs, weekly, settings: providedSettings,
   const now = Date.now();
   const planned = planReminders(debts, prefs, now, settings).slice(0, MAX_DEBT_REMINDERS);
   const nextByDebt = new Map(planned.map(item => [item.debt.id, item] as const).reverse());
-  const items = debts.filter(d => !d.paid && !d.voidedAt && d.nextDueAt).sort((a, b) => a.dueIn - b.dueIn);
+  const items = debts.filter(d => !d.closed && !d.voidedAt && d.nextDueAt).sort((a, b) => a.dueIn - b.dueIn);
   const card = { padding: 16, gap: 12, borderRadius: 12, backgroundColor: c.surfaceContainerLow } as const;
 
   return (

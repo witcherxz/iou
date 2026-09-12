@@ -1,21 +1,31 @@
 # Backup and recovery
 
-IoU supports local recovery points, a user-selected device folder, and manual files. Direct Google Drive sign-in remains unavailable in this build. A file can be saved to a cloud service through the phone's share sheet; IoU cannot confirm that the receiving service kept it.
+IoU supports local recovery points, a user-selected device folder, manual files, and manual Google Drive export/import. A file can be saved to a cloud service through the phone's share sheet; IoU cannot confirm that the receiving service kept it.
 
 Screenshots: [backup tools](screenshots/features-backup-tools-dark.png), [protected import](screenshots/features-backup-password.png), [restore preview](screenshots/features-backup-restore.png), and [standalone report](screenshots/features-backup-report.png).
 
+## Google Drive
+
+Choose **Google Drive (يدوي)** in backup setup, then **مشاركة إلى Drive**. The phone opens its share sheet with the complete readable HTML report. Select Drive, choose the account and folder, and finish saving in Drive. If Drive is absent, install its app and sign in, or save the file first and upload it from Drive. In the browser, **تنزيل نسخة لـ Drive** downloads the same report for uploading to Drive.
+
+To recover it, choose **استعادة ملف من Drive**. Select the report through the system file picker where Drive is available, or download it from Drive first and select the local file. The usual validation and confirmation preview run before replacing the ledger. Import preserves the chosen manual Drive destination.
+
+Manual Drive export does not sign in from IoU, grant IoU access to other Drive files, run automatically, or claim a synchronized timestamp. Returning from or dismissing the share sheet is not proof that a cloud upload finished. The screen asks the user to confirm the file appears in Drive. Protected reports can also be sent through the share sheet from the backup tools screen.
+
+Direct automatic Drive synchronization remains disabled. It needs a configured Google Cloud project, platform OAuth clients registered to the production package and signing certificate, and supported native authorization. The existing generic custom-scheme flow must be replaced and tested before enabling it. [Expo's Google authentication guide](https://docs.expo.dev/guides/google-authentication/) recommends a native integration; [Google's installed-app OAuth documentation](https://developers.google.com/identity/protocols/oauth2/native-app) excludes custom URI schemes on Android. The manual flow uses [Expo SDK 57 file sharing](https://docs.expo.dev/versions/v57.0.0/sdk/sharing/).
+
 ## Read the ledger without IoU
 
-The default manual export, `iou-ledger.html`, opens offline in a browser. It contains Arabic tables with 0–9 digits, balances, debt and payment entries, installment balances, and correction history. It provides downloads for four UTF-8 CSV files (with a BOM for spreadsheet applications) and the canonical JSON. It uses no remote fonts, scripts, or services.
+The default manual export, `iou-ledger.html`, opens offline in a browser. It contains Arabic tables with 0–9 digits, balances, debts, payments, forgiveness entries, installment balances, and correction history. It provides downloads for four UTF-8 CSV files (with a BOM for spreadsheet applications) and the canonical JSON. It uses no remote fonts, scripts, or services.
 
 - `iou-balances.csv`: each person's receivable, payable, and net remaining balance in SAR.
-- `iou-transactions.csv`: every debt/payment, actual date, recording time, due date, note, linked debt, and cancellation status.
-- `iou-installments.csv`: schedule and unpaid amount per installment, allocating payments in order.
+- `iou-transactions.csv`: every debt/payment/forgiveness, actual date, recording time, due date, note, linked debt, and cancellation status. Separate columns show cash paid and forgiven amounts. Debt rows summarize their linked entries; do not add those summaries again to individual payment/forgiveness rows.
+- `iou-installments.csv`: schedule, remaining amount, cash paid and forgiven amount per installment, allocating reductions in actual-date order.
 - `iou-history.csv`: before/after corrections, with complete before/after records for fields not represented by dedicated columns.
 
 Voided entries remain visible but do not count toward balances. Date-only values use the Gregorian calendar; timestamps ending in `Z` use UTC. The report explains that positive net balances are owed to the book owner. CSV text starting with spreadsheet formula characters is prefixed with an apostrophe; numeric values remain numeric.
 
-CSV files are for reading and analysis, not direct import. Restore accepts the full HTML report or canonical JSON. Import extracts the data block without executing or rendering imported HTML, validates the entire ledger, and shows a preview before replacement. Version 1 JSON backups migrate to version 2; corrections, recording dates, and reminder settings round-trip in version 2. Destination permissions, device privacy-lock secrets, OAuth tokens, and local backup status are excluded from portable backups.
+CSV files are for reading and analysis, not direct import. Restore accepts the full HTML report or canonical JSON. Import extracts the data block without executing or rendering imported HTML, validates the entire ledger, and shows a preview before replacement. Version 1 and 2 JSON backups migrate to version 3; forgiveness, corrections, recording dates, and reminder settings round-trip in version 3. Older app versions cannot restore format 3; the standalone report remains readable. Destination permissions, device privacy-lock secrets, OAuth tokens, and local backup status are excluded from portable backups.
 
 ## Folder recovery
 

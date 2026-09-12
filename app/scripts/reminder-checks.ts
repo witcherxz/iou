@@ -17,7 +17,7 @@ function rejects(label: string, action: () => unknown) {
 }
 const debt = (patch: Partial<DebtView> = {}): DebtView => ({
   id: 'd1', personId: 'p1', personName: 'أحمد', dir: 'me', amount: 12.34, rem: 12.34,
-  createdAt: '2026-01-01', nextDueAt: '2027-01-10', note: 'تفاصيل خاصة', paid: false, schedule: null,
+  createdAt: '2026-01-01', nextDueAt: '2027-01-10', note: 'تفاصيل خاصة', paid: false, closed: false, paidAmount: 0, forgivenAmount: 0, schedule: null,
   ...patch,
 } as DebtView);
 const defaults = defaultReminderSettings();
@@ -73,7 +73,7 @@ for (const timezone of ['UTC', 'Asia/Riyadh', 'America/New_York', 'Pacific/Auckl
   const schedule = [
     { index: 0, dueAt: '2027-01-10', remainingAmount: 0.01, paid: false },
     { index: 1, dueAt: '2027-01-13', remainingAmount: 2, paid: false },
-    { index: 2, dueAt: '2027-02-10', remainingAmount: 1, paid: true },
+    { index: 2, dueAt: '2027-02-10', remainingAmount: 0, paid: true, closed: true },
   ] as ScheduleRow[];
   const installments = planReminders([debt({ rem: 2.01, schedule })], {}, new Date(2027, 0, 11).getTime(), follow);
   eq(`${timezone}: concurrent installment/overdue alerts consolidated`, installments.filter(item => calendarISO(item.when) === '2027-01-13').length, 1);

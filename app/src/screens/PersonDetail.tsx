@@ -3,6 +3,7 @@ import { ScrollView, useWindowDimensions, View } from 'react-native';
 
 import { Avatar, Badge, OutlineButton, PrimaryButton, ScreenHeader, T, Touch } from '../components/ui';
 import { arDate, fmt } from '../format';
+import { isDebt, isReduction } from '../ledger';
 import { DebtView, PersonView } from '../selectors';
 import { Colors } from '../theme';
 import { Tx } from '../types';
@@ -61,12 +62,12 @@ export function PersonDetail({ c, person, tx, debts, onBack, onSettle, onAdd, on
               </View>
             </View>
           )}
-          {person.hasIou && person.hasUome && <T style={{ fontSize: 12, color: heroColor, lineHeight: 20 }}>الصافي للمقارنة فقط؛ كل دين يبقى مفتوحاً حتى تسجيل سداده.</T>}
+          {person.hasIou && person.hasUome && <T style={{ fontSize: 12, color: heroColor, lineHeight: 20 }}>الصافي للمقارنة فقط؛ كل دين يبقى مفتوحاً حتى إغلاقه بالسداد أو الإعفاء.</T>}
         </View>
 
         <View style={{ flexDirection: compact ? 'column' : 'row', gap: 12 }}>
           <View style={{ flex: compact ? undefined : 1 }}>
-            <PrimaryButton label="تسجيل دفعة" height={48} c={c} onPress={onSettle} disabled={!person.hasIou && !person.hasUome} />
+            <PrimaryButton label="تسجيل دفعة أو إعفاء" height={48} c={c} onPress={onSettle} disabled={!person.hasIou && !person.hasUome} />
           </View>
           <OutlineButton label="+ إضافة" height={48} c={c} onPress={onAdd} />
         </View>
@@ -75,17 +76,17 @@ export function PersonDetail({ c, person, tx, debts, onBack, onSettle, onAdd, on
 
         <View style={{ backgroundColor: c.surfaceContainerLow, borderRadius: 12, paddingHorizontal: 16 }}>
           {history.map(t => {
-            const debt = debts.find(d => d.id === (t.dir === 'settle' ? t.debtId : t.id));
-            const status: [string, string, string] = t.voidedAt ? ['ملغاة', c.surfaceContainerHigh, c.onSurfaceVariant] : debt && t.dir !== 'settle'
+            const debt = debts.find(d => d.id === (isReduction(t) ? t.debtId : t.id));
+            const status: [string, string, string] = t.voidedAt ? ['ملغاة', c.surfaceContainerHigh, c.onSurfaceVariant] : debt && isDebt(t)
               ? [debt.badge, debt.badgeBg, debt.badgeFg]
-              : ['دفعة', c.primaryBg, c.primary];
+              : [t.dir === 'forgive' ? 'إعفاء' : 'دفعة', c.primaryBg, c.primary];
             const color = t.dir === 'me' ? c.green : t.dir === 'owe' ? c.red : c.muted;
             const sign = t.dir === 'me' ? '+' : t.dir === 'owe' ? '−' : '';
             return (
               <Touch
                 key={t.id}
-                accessibilityLabel={`${t.voidedAt ? 'عملية ملغاة' : t.dir === 'settle' ? 'تعديل دفعة' : 'تفاصيل الدين'}: ${t.note || ''}، ${fmt(t.amount)} ريال سعودي`}
-                onPress={() => t.dir === 'settle' || t.voidedAt ? onOpenEntry(t.id) : debt && onOpenDebt(debt.id)}
+                accessibilityLabel={`${t.voidedAt ? 'عملية ملغاة' : t.dir === 'forgive' ? 'تعديل إعفاء' : t.dir === 'settle' ? 'تعديل دفعة' : 'تفاصيل الدين'}: ${t.note || ''}، ${fmt(t.amount)} ريال سعودي`}
+                onPress={() => isReduction(t) || t.voidedAt ? onOpenEntry(t.id) : debt && onOpenDebt(debt.id)}
                 pressedBackground={c.surfaceContainerHigh}
                 style={{
                   flexDirection: 'row', alignItems: 'center', gap: 12,
@@ -96,7 +97,7 @@ export function PersonDetail({ c, person, tx, debts, onBack, onSettle, onAdd, on
                 <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: color, flexShrink: 0 }} />
                 <View style={{ flex: 1, minWidth: 0 }}>
                   <T style={{ fontSize: 14, lineHeight: 20, fontWeight: '500', color: c.onSurface }} numberOfLines={1}>
-                    {t.note || (t.dir === 'settle' ? debt?.dir === 'me' ? 'دفعة مستلمة' : 'دفعة مدفوعة' : 'دين')}
+                    {t.dir === 'forgive' ? `${debt?.dir === 'me' ? 'إعفاء للشخص' : 'إعفاء من الشخص'}${t.note ? ` · ${t.note}` : ''}` : t.note || (t.dir === 'settle' ? debt?.dir === 'me' ? 'دفعة مستلمة' : 'دفعة مدفوعة' : 'دين')}
                   </T>
                   <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginTop: 4 }}>
                     <T style={{ fontSize: 12, lineHeight: 16, color: c.onSurfaceVariant }}>{arDate(t.createdAt)}</T>

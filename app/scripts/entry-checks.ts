@@ -1,9 +1,10 @@
 import { addDays, calendarISO, todayISO } from '../src/format';
-import { createDebt, createSettlements, editEntry, remainingCents, restoreEntry, undoEntryEdit, voidEntry } from '../src/ledger';
+import { createDebt, createForgiveness, createSettlements, installmentAllocations, isDebt, isReduction, reductionAmounts, editEntry, remainingCents, restoreEntry, undoEntryEdit, voidEntry } from '../src/ledger';
 import { defaultReminderSettings } from '../src/reminderSettings';
 import { emptyState } from '../src/initialState';
-import { allDebts, balance, peopleView } from '../src/selectors';
+import { allDebts, balance, debtView, peopleView } from '../src/selectors';
 import { makeColors } from '../src/theme';
+import { planReminders } from '../src/reminderPlan';
 import { PersistedState, Tx } from '../src/types';
 import { validateState } from '../src/validation';
 import { STORAGE_KEY, STORAGE_RECOVERY_KEY } from '../src/config/app';
@@ -33,12 +34,12 @@ const snapshot = (s: PersistedState, n: number) => ({ id: `snapshot-${n}`, creat
 async function main() {
   const original = state();
   const legacy = { ...original, version: 1, changes: undefined, reminderSettings: undefined };
-  eq('v1 ledger migrates to v2', validateState(legacy).version, 2);
+  eq('v1 ledger migrates to v3', validateState(legacy).version, 3);
   eq('v1 migration adds empty correction log', validateState(legacy).changes, []);
   eq('v1 migration preserves reminder behavior', validateState(legacy).reminderSettings, defaultReminderSettings());
-  rejects('v2 correction history required', () => validateState({ ...original, changes: undefined }));
-  rejects('v2 reminder settings required', () => validateState({ ...original, reminderSettings: undefined }));
-  rejects('unknown future schema rejected', () => validateState({ ...original, version: 3 }));
+  rejects('v3 correction history required', () => validateState({ ...original, changes: undefined }));
+  rejects('v3 reminder settings required', () => validateState({ ...original, reminderSettings: undefined }));
+  rejects('unknown future schema rejected', () => validateState({ ...original, version: 4 }));
   const legacyQuirk = { ...legacy, tx: [debt(), payment({ createdAt: '2026-01-09' })] };
   eq('legacy historical chronology remains importable', validateState(legacyQuirk).tx.length, 2);
 
@@ -166,6 +167,118 @@ async function main() {
   eq('historical payment ignores debts not yet created', createSettlements(mixed, 'p1', 150, id, undefined, 'me', '2026-01-15').length, 0);
   eq('historical payment selects eligible oldest debt', createSettlements(mixed, 'p1', 100, id, undefined, 'me', '2026-01-15')[0].debtId, 'd1');
   eq('historical ambiguous payment requires direction', createSettlements(mixed, 'p1', 50, id, undefined, undefined, '2026-01-15').length, 0);
+
+  // Forgiveness is a separate financial event, with the same correction history
+  // and balance constraints as cash payments but distinct reporting semantics.
+  const forgiveness = (patch: Partial<Tx> = {}): Tx => ({ id: 'f1', personId: 'p1', dir: 'forgive', debtId: 'd1', amount: 25.25, createdAt: '2026-01-13', ...patch });
+  const view = (s: PersistedState) => debtView(getTx(s), s.tx, peopleView(s.people, s.tx, c, false), c);
+  const forgiven = state([debt(), forgiveness()]);
+  eq('forgiveness reduces the outstanding balance in exact cents', remainingCents(forgiven.tx, getTx(forgiven)), 7475);
+  eq('forgiveness stays separate from cash totals', reductionAmounts(forgiven.tx, getTx(forgiven)), { paidAmount: 0, forgivenAmount: 25.25, remainingAmount: 74.75 });
+  eq('partial forgiveness is explicit', [view(forgiven).badge, view(forgiven).paid, view(forgiven).closed], ['إعفاء جزئي', false, false]);
+  eq('forgiveness is never exposed as a debt', [isDebt(forgiveness()), isReduction(forgiveness()), allDebts(forgiven.tx, peopleView(forgiven.people, forgiven.tx, c, false), c).length], [false, true, 1]);
+  eq('reductions have no own remaining balance', remainingCents(forgiven.tx, forgiveness()), 0);
+  eq('unrelated forgiveness cannot reduce debt', remainingCents([debt(), forgiveness({ personId: 'p2' })], debt()), 10000);
+  eq('full forgiveness closes without marking paid', [view(state([debt(), forgiveness({ amount: 100 })])).closed, view(state([debt(), forgiveness({ amount: 100 })])).paid, view(state([debt(), forgiveness({ amount: 100 })])).badge], [true, false, 'معفى بالكامل']);
+  const mixedClosed = state([debt(), payment(), forgiveness({ amount: 60 })]);
+  eq('mixed closure records cash and forgiveness independently', [view(mixedClosed).closed, view(mixedClosed).paid, view(mixedClosed).paidAmount, view(mixedClosed).forgivenAmount, view(mixedClosed).badge], [true, false, 40, 60, 'مغلق بسداد وإعفاء']);
+  eq('fully cash-paid debts keep their existing paid status', [view(state([debt(), payment({ amount: 100 })])).paid, view(state([debt(), payment({ amount: 100 })])).forgivenAmount], [true, 0]);
+  const oweForgiven = state([debt({ dir: 'owe' }), forgiveness()]);
+  eq('forgiveness received reduces a payable without cash', [balance(oweForgiven.tx, 'p1'), view(oweForgiven).paidAmount], [-74.75, 0]);
+  const createdForgiveness = createForgiveness([debt()], 'p1', 25.25, id, 'd1', 'me', '2026-01-11', '  إعفاء من جزء من الدين  ');
+  eq('created forgiveness preserves kind actual date reason and link', [createdForgiveness[0].dir, createdForgiveness[0].createdAt, createdForgiveness[0].note, createdForgiveness[0].debtId], ['forgive', '2026-01-11', 'إعفاء من جزء من الدين', 'd1']);
+  eq('forgiveness preserves independent recording timestamp', typeof createdForgiveness[0].recordedAt, 'string');
+  eq('forgiveness cannot precede debt', createForgiveness([debt()], 'p1', 1, id, 'd1', 'me', '2026-01-09').length, 0);
+  eq('forgiveness cannot be future dated', createForgiveness([debt()], 'p1', 1, id, 'd1', 'me', addDays(todayISO(), 1)).length, 0);
+  eq('forgiveness cannot use invalid calendar date', createForgiveness([debt()], 'p1', 1, id, 'd1', 'me', '2026-02-30').length, 0);
+  for (const amount of [0, -1, 0.001, 100.01, Infinity]) eq(`invalid forgiveness amount ${amount} rejected wholly`, createForgiveness([debt()], 'p1', amount, id, 'd1').length, 0);
+  eq('mixed-direction forgiveness requires explicit direction', createForgiveness(mixed, 'p1', 50, id).length, 0);
+  eq('historical forgiveness ignores debts not yet created', createForgiveness(mixed, 'p1', 150, id, undefined, 'me', '2026-01-15').length, 0);
+  const allocatedForgiveness = createForgiveness(mixed, 'p1', 150, id, undefined, 'me', '2026-01-20');
+  eq('person forgiveness allocates oldest debts without affecting the opposite direction', allocatedForgiveness.map(t => [t.debtId, t.amount, t.dir]), [['d1', 100, 'forgive'], ['later', 50, 'forgive']]);
+  eq('forgiveness can explicitly record creditor waiving money I owe', createForgiveness(mixed, 'p1', 50, id, undefined, 'owe')[0].debtId, 'opposite');
+  eq('wrong person forgiveness target rejected', createForgiveness(mixed, 'p2', 1, id, 'd1').length, 0);
+  eq('wrong direction forgiveness target rejected', createForgiveness(mixed, 'p1', 1, id, 'd1', 'owe').length, 0);
+  eq('cash cannot be added to a debt closed by forgiveness', createSettlements(mixedClosed.tx, 'p1', 0.01, id, 'd1').length, 0);
+  eq('forgiveness cannot be added to a closed debt', createForgiveness(mixedClosed.tx, 'p1', 0.01, id, 'd1').length, 0);
+  eq('combined reduction creation never silently clips amount', createForgiveness(paid.tx, 'p1', 60.01, id, 'd1').length, 0);
+  for (const tx of [
+    [debt(), forgiveness({ debtId: 'missing' })],
+    [debt(), forgiveness({ personId: 'p2' })],
+    [debt({ voidedAt: at }), forgiveness()],
+    [debt(), payment(), forgiveness({ amount: 60.01 })],
+    [debt(), forgiveness({ createdAt: '2026-01-09' })],
+    [debt(), forgiveness({ debtId: 'f1' })],
+    [debt(), payment(), forgiveness({ debtId: 'pay1' })],
+    [debt(), forgiveness({ dueAt: '2026-02-01' })],
+    [debt(), forgiveness({ installments: [{ amount: 10, label: '1', dueAt: '2026-02-01' }, { amount: 15.25, label: '2', dueAt: '2026-03-01' }] })],
+  ]) rejects('invalid forgiveness graph rejected before storage or restore', () => state(tx));
+  const editedForgiveness = editEntry(forgiven, 'f1', { amount: 20, note: 'تصحيح الإعفاء' }, id(), at);
+  eq('forgiveness amount edit recalculates balance', remainingCents(editedForgiveness.tx, getTx(editedForgiveness)), 8000);
+  eq('undo forgiveness edit restores exact original record', getTx(undoEntryEdit(editedForgiveness, 'f1', id(), at), 'f1'), getTx(forgiven, 'f1'));
+  for (const dir of ['me', 'owe', 'settle'] as const) rejects('forgiveness editor cannot change financial event kind', () => editEntry(forgiven, 'f1', { dir }, id(), at));
+  rejects('payment editor cannot turn payment into forgiveness', () => editEntry(paid, 'pay1', { dir: 'forgive' }, id(), at));
+  rejects('debt editor cannot turn debt into forgiveness', () => editEntry(original, 'd1', { dir: 'forgive', debtId: 'd1' }, id(), at));
+  rejects('forgiveness edit cannot exceed remainder after cash', () => editEntry(mixedClosed, 'f1', { amount: 60.01 }, id(), at));
+  rejects('cash edit cannot exceed remainder after forgiveness', () => editEntry(mixedClosed, 'pay1', { amount: 40.01 }, id(), at));
+  rejects('debt cannot shrink below cash plus forgiveness', () => editEntry(mixedClosed, 'd1', { amount: 99.99 }, id(), at));
+  rejects('active forgiveness prevents debt person change', () => editEntry(forgiven, 'd1', { personId: 'p2' }, id(), at));
+  rejects('active forgiveness prevents debt direction change', () => editEntry(forgiven, 'd1', { dir: 'owe' }, id(), at));
+  rejects('debt date cannot pass active forgiveness date', () => editEntry(forgiven, 'd1', { createdAt: '2026-01-14' }, id(), at));
+  rejects('forgiveness date cannot precede linked debt', () => editEntry(forgiven, 'f1', { createdAt: '2026-01-09' }, id(), at));
+  rejects('debt with active forgiveness cannot be cancelled', () => voidEntry(forgiven, 'd1', id(), at));
+  const cancelledForgiveness = voidEntry(mixedClosed, 'f1', id(), at);
+  eq('cancelling forgiveness restores its amount and retains the payment', reductionAmounts(cancelledForgiveness.tx, getTx(cancelledForgiveness)), { paidAmount: 40, forgivenAmount: 0, remainingAmount: 60 });
+  eq('cancelled forgiveness stays visible in history', [cancelledForgiveness.tx.length, getTx(cancelledForgiveness, 'f1').voidedAt, cancelledForgiveness.changes.at(-1)?.kind], [3, at, 'void']);
+  eq('restoring forgiveness applies its amount exactly once', reductionAmounts(restoreEntry(cancelledForgiveness, 'f1', id(), at).tx, getTx(cancelledForgiveness)), { paidAmount: 40, forgivenAmount: 60, remainingAmount: 0 });
+  const cancelledCash = voidEntry(mixedClosed, 'pay1', id(), at);
+  eq('cancelling cash preserves active forgiveness separately', reductionAmounts(cancelledCash.tx, getTx(cancelledCash)), { paidAmount: 0, forgivenAmount: 60, remainingAmount: 40 });
+  const forgivenThenCancelled = voidEntry(forgiven, 'f1', id(), at);
+  const cancelledBoth = voidEntry(forgivenThenCancelled, 'd1', id(), at);
+  rejects('forgiveness cannot be restored while debt cancelled', () => restoreEntry(cancelledBoth, 'f1', id(), at));
+  rejects('forgiveness cannot restore after debt moved to another person', () => restoreEntry(editEntry(forgivenThenCancelled, 'd1', { personId: 'p2' }, id(), at), 'f1', id(), at));
+  rejects('forgiveness cannot restore before corrected debt date', () => restoreEntry(editEntry(forgivenThenCancelled, 'd1', { createdAt: '2026-01-14' }, id(), at), 'f1', id(), at));
+  rejects('forgiveness cannot restore above corrected debt amount', () => restoreEntry(editEntry(forgivenThenCancelled, 'd1', { amount: 20 }, id(), at), 'f1', id(), at));
+  const forgivenAfterIncrease = validateState({ ...increased, tx: [...increased.tx, forgiveness({ amount: 150 })] });
+  rejects('undo debt edit respects forgiveness recorded later', () => undoEntryEdit(forgivenAfterIncrease, 'd1', id(), at));
+  const originalSchema2 = { ...quiet, version: 2, tx: edited.tx, changes: edited.changes };
+  const migratedSchema2 = validateState(originalSchema2);
+  eq('v2 migration preserves debts and actual recording dates', migratedSchema2.tx, originalSchema2.tx);
+  eq('v2 migration preserves exact audit snapshots', migratedSchema2.changes, originalSchema2.changes);
+  eq('v2 migration preserves reminder preferences and snoozes', [migratedSchema2.reminderPrefs, migratedSchema2.reminderSettings], [originalSchema2.reminderPrefs, originalSchema2.reminderSettings]);
+  eq('v2 migration advances schema exactly once', validateState(migratedSchema2), migratedSchema2);
+  eq('legacy backdated cash stays readable after v3 migration and re-save', validateState(validateState(legacyQuirk)).tx.length, 2);
+  for (const version of [1, 2]) rejects('old schema cannot smuggle unknown forgiveness events', () => validateState({ ...forgiven, version }));
+  const tamperedForgivenessAudit = { ...editedForgiveness.changes[0], before: { ...editedForgiveness.changes[0].before, dir: 'settle' } };
+  rejects('audit snapshots cannot relabel cash as forgiveness', () => validateState({ ...editedForgiveness, changes: [tamperedForgivenessAudit] }));
+  const installmentDebt = createDebt(original, { ...input, amount: 100.01, dueInDays: null, dueAt: '2027-01-10', transactionDate: '2026-01-10', installmentCount: 3 }, 'd1', '2026-09-12')!;
+  const installmentState = state([installmentDebt, payment({ amount: 20, createdAt: '2026-01-11' }), forgiveness({ amount: 20, createdAt: '2026-01-12' }), payment({ id: 'pay2', amount: 10, createdAt: '2026-01-13' })]);
+  eq('installments allocate cash and forgiveness in actual event order', installmentAllocations(installmentState.tx, installmentDebt), [
+    { paidAmount: 20, forgivenAmount: 13.33, remainingAmount: 0 },
+    { paidAmount: 10, forgivenAmount: 6.67, remainingAmount: 16.66 },
+    { paidAmount: 0, forgivenAmount: 0, remainingAmount: 33.35 },
+  ]);
+  eq('mixed installment is closed but never labelled paid', [view(installmentState).schedule![0].paid, view(installmentState).schedule![0].closed, view(installmentState).schedule![0].dueLabel], [false, true, 'مغلق بسداد وإعفاء']);
+  eq('partly forgiven installment uses explicit label', view(installmentState).schedule![1].dueLabel, 'إعفاء جزئي');
+  eq('next due date skips closed mixed installment', view(installmentState).nextDueAt, '2027-02-10');
+  const earliestReminder = Date.parse('2027-01-01');
+  eq('reminders exclude forgiven amounts and closed installments', planReminders([view(installmentState)], {}, earliestReminder).map(item => item.amount), [16.66, 33.35]);
+  const allForgivenInstallments = state([installmentDebt, forgiveness({ amount: 100.01 })]);
+  eq('fully forgiven installments are closed not cash paid', view(allForgivenInstallments).schedule!.map(row => [row.closed, row.paid, row.dueLabel]), [[true, false, 'معفى بالكامل'], [true, false, 'معفى بالكامل'], [true, false, 'معفى بالكامل']]);
+  eq('fully forgiven debt has no reminders', planReminders([view(allForgivenInstallments)], {}, earliestReminder).length, 0);
+  eq('mixed closed debt has no reminders', planReminders([view(mixedClosed)], {}, earliestReminder).length, 0);
+  const backdatedInstallmentPayment = editEntry(installmentState, 'pay2', { createdAt: '2026-01-10' }, id(), at);
+  eq('backdating recalculates installment cash allocation from actual chronology', installmentAllocations(backdatedInstallmentPayment.tx, installmentDebt)[0], { paidAmount: 30, forgivenAmount: 3.33, remainingAmount: 0 });
+  const offsetOrder = state([installmentDebt,
+    forgiveness({ amount: 20, createdAt: '2026-01-11', recordedAt: '2026-01-11T10:00:00Z' }),
+    payment({ amount: 20, createdAt: '2026-01-11', recordedAt: '2026-01-11T12:00:00+03:00' }),
+  ]);
+  eq('same-day installment allocation compares recording instants across UTC offsets', installmentAllocations(offsetOrder.tx, installmentDebt)[0], { paidAmount: 20, forgivenAmount: 13.33, remainingAmount: 0 });
+  const unrecordedOrder = state([installmentDebt,
+    forgiveness({ amount: 20, createdAt: '2026-01-11' }), payment({ amount: 20, createdAt: '2026-01-11' }),
+  ]);
+  eq('legacy same-day entries without recording times keep saved order', installmentAllocations(unrecordedOrder.tx, installmentDebt)[0], { paidAmount: 13.33, forgivenAmount: 20, remainingAmount: 0 });
+
 
   const values = new Map<string, string>();
   const writes: string[] = [];

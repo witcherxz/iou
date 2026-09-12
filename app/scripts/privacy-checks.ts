@@ -17,7 +17,7 @@ async function rejects(action: () => Promise<unknown>, label: string) {
 const base: LockRecord = { version: 1, algorithm: 'pbkdf2-sha256', iterations: PIN_ITERATIONS,
   salt: 'abcd'.repeat(8), verifier: 'a'.repeat(64), biometric: true, failedAttempts: 0, blockedUntil: 0 };
 
-function harness() {
+function harness(timeoutMs?: number) {
   let raw: string | null = null;
   let now = 1_000_000;
   let failures = { read: false, write: false, remove: false };
@@ -36,7 +36,7 @@ function harness() {
     authenticate: async () => { if (deferred) await deferred; return bioResult; },
     now: () => now,
   };
-  return { adapter, controller: new PrivacyController(adapter), getRaw: () => raw,
+  return { adapter, controller: new PrivacyController(adapter, timeoutMs), getRaw: () => raw,
     setRaw: (value: string | null) => { raw = value; }, advance: (ms: number) => { now += ms; },
     failures, deriveCount: () => deriveCount, setBio: (value: boolean) => { bioResult = value; },
     defer: () => { let resolve!: () => void; deferred = new Promise<void>(r => { resolve = r; }); return () => { resolve(); deferred = null; }; } };
@@ -165,9 +165,89 @@ async function main() {
   bio.controller.lock(); releasePin();
   check(!await pinAttempt && !bio.controller.getSnapshot().unlocked, 'Background during PIN derivation invalidates late success');
 
+  const hangingRead = harness(10);
+  hangingRead.adapter.read = () => new Promise(() => {});
+  await hangingRead.controller.initialize();
+  check(hangingRead.controller.getSnapshot().ready && !hangingRead.controller.getSnapshot().busy &&
+    !!hangingRead.controller.getSnapshot().fatalError && !hangingRead.controller.getSnapshot().unlocked,
+  'Never-resolving native storage shows a retryable error and keeps the ledger closed');
+
+  const hangingBioProbe = harness(10);
+  hangingBioProbe.adapter.hasBiometrics = () => new Promise(() => {});
+  await hangingBioProbe.controller.initialize();
+  check(!hangingBioProbe.controller.getSnapshot().biometricAvailable && hangingBioProbe.controller.getSnapshot().unlocked,
+    'Unresponsive biometric capability probe leaves PIN setup available');
+
+  const slowSetup = harness(10);
+  await slowSetup.controller.initialize();
+  const finishSetup = slowSetup.defer();
+  await rejects(() => slowSetup.controller.enable('1234', false), 'PIN setup times out instead of spinning forever');
+  check(!slowSetup.controller.getSnapshot().busy && !slowSetup.controller.getSnapshot().enabled && slowSetup.getRaw() === null,
+    'Timed-out derivation releases controls without saving an incomplete lock');
+  finishSetup(); await Promise.resolve();
+  check(slowSetup.getRaw() === null, 'Late enrollment derivation cannot unexpectedly enable the lock');
+  await slowSetup.controller.enable('1234', true);
+  slowSetup.controller.lock();
+  const finishUnlock = slowSetup.defer();
+  await rejects(() => slowSetup.controller.authenticatePin('1234'), 'Unresponsive PIN verification times out');
+  finishUnlock(); await Promise.resolve();
+  check(!slowSetup.controller.getSnapshot().unlocked && !slowSetup.controller.getSnapshot().busy,
+    'A correct late PIN result cannot unlock after timeout');
+  check(await slowSetup.controller.authenticatePin('1234'), 'Retry works after the old derivation settles');
+  await slowSetup.controller.authenticatePin('1234', 'settings');
+  const previousRecord = slowSetup.getRaw();
+  const finishChange = slowSetup.defer();
+  await rejects(() => slowSetup.controller.changePin('5678', false), 'PIN changes have a bounded wait');
+  finishChange(); await Promise.resolve();
+  check(slowSetup.getRaw() === previousRecord, 'Late PIN change leaves the existing saved verifier intact');
+
+  const slowStorage = harness(10);
+  await slowStorage.controller.initialize();
+  let finishWrite!: () => void;
+  const originalWrite = slowStorage.adapter.write;
+  slowStorage.adapter.write = value => new Promise<void>(resolve => {
+    finishWrite = () => { void originalWrite(value).then(resolve); };
+  });
+  await rejects(() => slowStorage.controller.enable('1234', false), 'A hanging native write times out');
+  check(!slowStorage.controller.getSnapshot().unlocked && !!slowStorage.controller.getSnapshot().fatalError,
+    'Uncertain persistence closes the gate until storage is reconciled');
+  let readCount = 0;
+  const originalRead = slowStorage.adapter.read;
+  slowStorage.adapter.read = async () => { readCount++; return originalRead(); };
+  await slowStorage.controller.initialize();
+  check(readCount === 0 && !slowStorage.controller.getSnapshot().unlocked && !slowStorage.controller.getSnapshot().busy &&
+    slowStorage.controller.getSnapshot().fatalError?.includes('أغلق التطبيق'),
+    'Retry cannot race a pending write and explains how to restart an unresponsive native operation');
+  finishWrite(); await Promise.resolve(); await Promise.resolve();
+  slowStorage.adapter.write = originalWrite;
+  await slowStorage.controller.initialize();
+  check(slowStorage.controller.getSnapshot().enabled && !slowStorage.controller.getSnapshot().unlocked,
+    'A completed late write is loaded safely and requires the chosen PIN');
+  check(await slowStorage.controller.authenticatePin('1234'), 'The PIN saved by the late write remains valid');
+
+  slowSetup.controller.lock();
+  let cancellations = 0;
+  slowSetup.adapter.cancelAuthentication = async () => { cancellations++; };
+  const finishSlowBio = slowSetup.defer();
+  check(!await slowSetup.controller.authenticateBiometric(), 'Biometric OS calls have a bounded wait');
+  check(cancellations === 1 && !slowSetup.controller.getSnapshot().biometricPrompt && !slowSetup.controller.getSnapshot().busy,
+    'Timed-out biometric prompt is cancelled and PIN controls become usable');
+  finishSlowBio(); await Promise.resolve();
+  check(!slowSetup.controller.getSnapshot().unlocked, 'Late biometric success cannot open the gate');
+
   const salt = '0123456789abcdef0123456789abcdef';
   const saltBytes = Uint8Array.from(salt.match(/../g)!, byte => parseInt(byte, 16));
   const expected = pbkdf2Sync('123456', saltBytes, PIN_ITERATIONS, 32, 'sha256').toString('hex');
+  let nativeCalls = 0;
+  check(await derivePin('123456', salt, PIN_ITERATIONS, async (pin, actualSalt, iterations) => {
+    nativeCalls++;
+    check(pin === '123456' && actualSalt === salt && iterations === PIN_ITERATIONS,
+      'Native worker receives the unchanged PIN, salt, and existing iteration count');
+    return expected;
+  }) === expected && nativeCalls === 1, 'Native derivation takes precedence over the JavaScript fallback');
+  await rejects(() => derivePin('123456', salt, PIN_ITERATIONS, async () => 'bad'), 'Invalid native output is rejected');
+  await rejects(() => derivePin('123456', salt, PIN_ITERATIONS, async () => { throw new Error('Native failure'); }),
+    'Native failures are surfaced without silently changing the derivation engine');
   const originalCrypto = Object.getOwnPropertyDescriptor(globalThis, 'crypto');
   Object.defineProperty(globalThis, 'crypto', { configurable: true, value: webcrypto });
   check(await derivePin('123456', salt, PIN_ITERATIONS) === expected, 'WebCrypto verifier matches independent Node PBKDF2');

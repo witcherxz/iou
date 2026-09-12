@@ -1,40 +1,40 @@
 # STATUS — IoU
 Updated: 2026-09-12 | State: ACTIVE
 Goal: Provide a private Arabic debt ledger with clear balances and recoverable records.
-Phase: alpha
+Phase: verify
 
 ## Now
-Production-signed [0.1.0-alpha.1](https://github.com/witcherxz/iou/releases/tag/v0.1.0-alpha.1) is published. Main and tag workflows passed; the downloaded APK independently passed checksum, signature, manifest and sample-data checks. Begin native device validation for the next alpha.
+Alpha 2 is prepared with native PIN processing and bounded lock waits, manual Google Drive sharing/restoration, and separate full/partial debt forgiveness. Local checks and isolated browser workflows pass. Build and verify the production APK, then validate the reported lock behavior on the user's Samsung S24 Ultra when ADB connects.
 
 Next:
-1. Install the alpha on a device and validate biometrics, app-switcher privacy, TalkBack, keyboard and notifications.
-2. Verify folder providers, readable exports and recovery on a device; direct Google Drive stays disabled until native authorization is completed.
-3. Collect alpha feedback and preserve the production signing key for future updates.
+1. Commit/push Alpha 2 and verify its signed APK, checksum, embedded native PIN module and prerelease publication.
+2. Connect the Samsung S24 Ultra with USB debugging and test lock setup/unlock and Drive sharing on the device.
+3. Complete broader native accessibility/reminder/provider validation; direct automatic Drive sync still requires native authorization and Google Cloud setup.
 
 ## Health
 
 | metric | current | measured | previous | threshold | goal | source |
 |---|---:|---|---:|---:|---:|---|
-| Automated checks passing | 1082 count | 2026-09-12 | 1076 count | >= 1082 count | 1082 count | `cd app && npm run check`; `node scripts/release-workflow-checks.mjs`; `/tmp/iou-alpha/checks.log` |
+| Automated checks passing | 1206 count | 2026-09-12 | 1082 count | >= 1206 count | 1206 count | `cd app && npm run check`; `node scripts/release-workflow-checks.mjs`; `node scripts/native-pin-checks.mjs`; `/tmp/iou-device-debug/*-final.log` |
 | TypeScript | PASS | 2026-09-12 | PASS | = PASS | PASS | `cd app && npm run typecheck` |
-| Clean launch and preservation scenarios | 8 count | 2026-09-12 | — | >= 8 count | 8 count | `/tmp/iou-release/clean-install-results.json`; `/tmp/iou-alpha/production-browser-results.json` |
-| GitHub production APK | PASS | 2026-09-12 | FAIL | = PASS | PASS | [Successful release workflow](https://github.com/witcherxz/iou/actions/runs/34681048490); [download verification record](app/docs/RELEASING.md#verified-alpha-release) |
+| Isolated browser and Drive scenarios | 30 count | 2026-09-12 | — | >= 30 count | 30 count | `/tmp/iou-forgiveness-ui/results.json`; `/tmp/iou-drive/results.json`; `/tmp/iou-drive/ui-results.json` |
+| Alpha 2 production APK | UNMEASURED | — | PASS | = PASS | PASS | Awaiting Alpha 2 workflow; Alpha 1 remains published |
 
-## DoD — 0.1 Alpha production release
+## DoD — Alpha 2 lock, Drive and forgiveness
 
-- [x] Remove demo fixtures from the app dependency graph and preserve existing ledgers.
-- [x] Set version 0.1.0-alpha.1 / code 1 and production package `io.github.witcherxz.iou`.
-- [x] Replace template artwork and show the version in Settings.
-- [x] Configure dedicated signing credentials outside Git and fail release builds without them.
-- [x] Check APK version, package, certificate, non-debuggable manifest and sample-free bundle before upload.
-- [x] Pass automated guards, TypeScript, clean-install/upgrade browser checks, workflow lint and prebuild.
-- [x] Commit/push reviewed work and tag v0.1.0-alpha.1.
-- [x] Verify GitHub's signed APK, checksum and published prerelease.
+- [x] Move PIN derivation off the native JS thread, preserve existing PIN verifiers, and stop indefinite waits safely.
+- [x] Provide a usable manual Drive export/restore flow with accurate status and no automatic-sync claims.
+- [x] Record full/partial forgiveness with independent cash/forgiven totals, dates, audit history and recovery.
+- [x] Migrate v1/v2 data to v3 and preserve old records, corrections and reminder preferences.
+- [x] Verify installment allocations, closed-debt reminders and readable HTML/CSV exports.
+- [x] Pass automated checks, native Java PIN compatibility, TypeScript, prebuild/autolinking and isolated browser workflows.
+- [ ] Commit/push and publish v0.1.0-alpha.2 with the existing production identity and signing key.
+- [ ] Download and independently verify the APK, checksum and packaged native PIN module.
 
 ## Blockers / Risks
 
 - Native biometrics, app-switcher privacy, TalkBack/font scaling, folder grants, sharing and notification delivery are unmeasured without a device. Response: complete device validation before a stable release; browser and bundle checks do not establish native behavior.
-- Direct Google Drive authorization is unfinished. Response: keep `expo.extra.google.enabled` false until supported authorization and credentialed device tests pass.
+- Direct Google Drive authorization is unfinished. Response: keep direct sync disabled and offer the tested manual share/download and file-restore flow. Native Drive upload completion remains user-confirmed.
 - The app lock controls access; ordinary local/folder/CSV/report data remains readable. Protected manual exports use a separate password. Response: explain the distinction and keep off-device copies private.
 - Automatic backups run after foreground edits and are suspended after local recovery; reminders retain the nearest 60 alerts plus weekly and refresh on foreground. Response: explain these operating limits in the feature notes.
 
@@ -52,6 +52,8 @@ Next:
 - 2026-09-12: Facing potential overwrite of external backups during startup or recovery, chose explicit first save and suspended automatic backup after local recovery, to protect older/newer copies, accepting a manual review step.
 
 ## Log
+
+- 2026-09-12 [work]: Addressed Samsung S24 Ultra lock-setup report with native compatible PBKDF2 and bounded operations; implemented manual Drive export/restore and distinct full/partial forgiveness. Passed 1,206 automated checks including native Java compatibility, TypeScript, prebuild/autolinking and 30 isolated browser/Drive scenarios. ADB tools are ready but no phone is connected; preparing Alpha 2 with production package/signing continuity.
 
 - 2026-09-12 [release]: Published v0.1.0-alpha.1 from commit 7762dfd after correcting SDK 37 certificate parsing. Main and tag Actions runs passed all 1,082 checks and the signed production build. Downloaded the 72,361,378-byte APK and independently verified its SHA-256, pinned signature, production identity/version, Arabic label, non-debuggable manifest, absent overlay permission and fixture-free offline bundle. Fresh-install and preservation browser checks passed earlier; native hardware validation remains for the alpha.
 

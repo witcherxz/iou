@@ -74,7 +74,7 @@ eq('test-only ledger fixture validates', validateState(s).tx.length, 10);
 eq('empty ledger validates', validateState(emptyState()).tx.length, 0);
 eq('legacy backup display timestamp migrates', validateState({ ...s, lastBackup: 'اليوم، ٨:٣٠ م' }).lastBackup, null);
 eq('unknown payload fields discarded', 'unexpected' in validateState({ ...s, unexpected: true }), false);
-throws('unsupported state version rejected', () => validateState({ ...s, version: 3 }));
+throws('unsupported state version rejected', () => validateState({ ...s, version: 4 }));
 throws('missing transaction list rejected', () => validateState({ ...s, tx: undefined }));
 throws('empty person name rejected', () => validateState({ ...s, people: [{ ...s.people[0], name: ' ' }] }));
 throws('duplicate transaction ids rejected', () => validateState({ ...s, tx: [...s.tx, s.tx[0]] }));

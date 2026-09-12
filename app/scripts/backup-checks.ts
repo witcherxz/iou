@@ -5,6 +5,7 @@ import { folderHasBackup, PREVIOUS_BACKUP_FILENAME, readFolderBackup, writeToFol
 import { csvCell, embeddedJson, parseReadableBackup, readableFiles, REPORT_FILENAME } from '../src/backup/readable';
 import { BACKUP_FILENAME } from '../src/config/app';
 import { editEntry, voidEntry } from '../src/ledger';
+import { PersistedState } from '../src/types';
 import { failNextWrite, failNextWriteMatching, files, folders } from './backup-filesystem-stub';
 
 // Keep these checks dependency-free, like the existing ledger checks.
@@ -48,7 +49,7 @@ async function main() {
   check('legacy full-state exports remain readable with device fields ignored', () => {
     const restored = parseBackup(JSON.stringify({ ...source, version: 1, changes: undefined, reminderSettings: undefined, backedUpAt: payload.backedUpAt }));
     assert.equal(restored.tx.length, source.tx.length);
-    assert.equal(restored.version, 2);
+    assert.equal(restored.version, 3);
     assert.deepEqual(restored.changes, []);
     assert.equal(restored.reminderSettings.hour, 20);
     assert.ok(!('backupFolderUri' in restored));
@@ -79,7 +80,7 @@ async function main() {
     assert.throws(() => parseBackup(JSON.stringify(data)), InvalidBackupError);
   });
   check('malformed JSON rejected', () => assert.throws(() => parseBackup('{'), InvalidBackupError));
-  invalid('future schema rejected', d => { d.version = 3; });
+  invalid('future schema rejected', d => { d.version = 4; });
   invalid('unversioned arrays rejected', d => { delete d.version; });
   invalid('invalid backup timestamp rejected', d => { d.backedUpAt = 'yesterday'; });
   invalid('null people rejected', d => { d.people[0] = null; });
@@ -142,6 +143,52 @@ async function main() {
     assert.ok(rendered[4].text.includes('"2026-01-02"'));
     assert.ok(rendered[4].text.includes('"تعديل"'));
     assert.ok(rendered[4].text.includes('"إلغاء"'));
+  });
+
+  const forgiven: PersistedState = { ...emptyState(), people: [{ id: 'p1', name: 'شخص الاختبار', hue: 120 }], tx: [
+    { id: 'd1', personId: 'p1', dir: 'me', amount: 1000, createdAt: '2026-01-01', installments: [
+      { amount: 500, label: 'قسط 1', dueAt: '2026-02-01' }, { amount: 500, label: 'قسط 2', dueAt: '2026-03-01' },
+    ] },
+    { id: 'pmt', personId: 'p1', dir: 'settle', debtId: 'd1', amount: 700, createdAt: '2026-01-02' },
+    { id: 'waiver', personId: 'p1', dir: 'forgive', debtId: 'd1', amount: 300, createdAt: '2026-01-03', note: 'تنازل عن المتبقي' },
+  ] };
+  const forgivenessFiles = readableFiles(serialize(forgiven));
+  check('forgiveness survives standalone report restore as a separate transaction type', () => {
+    const restored = parseReadableBackup(forgivenessFiles[0].text);
+    assert.equal(restored.version, 3);
+    assert.equal(restored.tx.find(t => t.id === 'waiver')?.dir, 'forgive');
+    assert.equal(restored.tx.filter(t => t.dir === 'settle').reduce((sum, t) => sum + t.amount, 0), 700);
+    assert.ok(forgivenessFiles[0].text.includes('مغلق بسداد وإعفاء'));
+    assert.ok(forgivenessFiles[0].text.includes('المعفى منه (ر.س)'));
+  });
+  check('CSV separates 700 cash and 300 forgiven with zero outstanding', () => {
+    assert.ok(forgivenessFiles[1].text.includes('"p1","شخص الاختبار","0","0","0"'));
+    const debtRow = forgivenessFiles[2].text.split('\r\n').find(row => row.startsWith('"d1",'))!;
+    const waiverRow = forgivenessFiles[2].text.split('\r\n').find(row => row.startsWith('"waiver",'))!;
+    assert.ok(debtRow.endsWith('"0","700","300"'));
+    assert.ok(waiverRow.includes('"إعفاء للشخص","300"'));
+    assert.ok(waiverRow.endsWith('"0","0","300"'));
+    assert.ok(!waiverRow.includes('سداد مستلم'));
+  });
+  check('installment CSV allocates cash and forgiveness separately in date order', () => {
+    const rows = forgivenessFiles[3].text.split('\r\n');
+    assert.ok(rows.some(row => row.includes('"قسط 1","500"') && row.endsWith('"500","0"')));
+    assert.ok(rows.some(row => row.includes('"قسط 2","500"') && row.endsWith('"200","300"')));
+  });
+  check('cancelled forgiveness reopens report balances and retains its correction history', () => {
+    const cancelled = voidEntry(forgiven, 'waiver', 'undo-waiver', '2026-09-12T12:00:00Z');
+    const files = readableFiles(serialize(cancelled));
+    const restored = parseReadableBackup(files[0].text);
+    assert.ok(files[1].text.includes('"p1","شخص الاختبار","300","0","300"'));
+    assert.equal(restored.changes[0].before.dir, 'forgive');
+    assert.equal(restored.changes[0].kind, 'void');
+    const waiverRow = files[2].text.split('\r\n').find(row => row.startsWith('"waiver",'))!;
+    assert.ok(waiverRow.includes('"ملغاة"'));
+    assert.ok(waiverRow.endsWith('"0","0","0"'));
+  });
+  check('forgiveness cannot be mislabeled as a legacy-format backup', () => {
+    const data = JSON.parse(serialize(forgiven));
+    assert.throws(() => parseBackup(JSON.stringify({ ...data, version: 2 })), InvalidBackupError);
   });
 
   const uri = 'memory://backup';

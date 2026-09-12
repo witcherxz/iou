@@ -5,7 +5,7 @@ import { TransactionDateField } from '../components/TransactionDateField';
 import { Chip, OutlinedField, OutlineButton, PrimaryButton, ScreenHeader, Segment, T } from '../components/ui';
 import { confirmAction } from '../confirm';
 import { arDate, calendarISO, fmt, isCalendarDate, localDate, todayISO } from '../format';
-import { EntryPatch } from '../ledger';
+import { EntryPatch, isDebt, isReduction } from '../ledger';
 import { Colors, M3 } from '../theme';
 import { LedgerChange, Person, Tx } from '../types';
 
@@ -31,9 +31,11 @@ export function EntryEditor({ c, entry, people, transactions, changes, onBack, o
   const [busy, setBusy] = useState(false);
   const busyRef = useRef(false);
   const [error, setError] = useState('');
-  const payment = entry.dir === 'settle';
-  const linked = transactions.filter(t => !t.voidedAt && t.dir === 'settle' && t.debtId === entry.id);
-  const targets = transactions.filter(t => !t.voidedAt && t.dir !== 'settle' && t.personId === personId);
+  const payment = isReduction(entry);
+  const forgiveness = entry.dir === 'forgive';
+  const reductionLabel = forgiveness ? 'الإعفاء' : 'الدفعة';
+  const linked = transactions.filter(t => !t.voidedAt && isReduction(t) && t.debtId === entry.id);
+  const targets = transactions.filter(t => !t.voidedAt && isDebt(t) && t.personId === personId);
   const relevant = changes.filter(change => change.txId === entry.id).slice().reverse();
   const validAmount = isValidAmountInput(amount);
   const validSchedule = installments.length === 0 || installments.every((i, index) =>
@@ -61,19 +63,20 @@ export function EntryEditor({ c, entry, people, transactions, changes, onBack, o
   };
 
   return <View style={{ flex: 1 }}>
-    <ScreenHeader c={c} title={entry.voidedAt ? 'عملية ملغاة' : payment ? 'تعديل دفعة' : 'تعديل دين'} glyph="→" onBack={onBack} />
+    <ScreenHeader c={c} title={entry.voidedAt ? 'عملية ملغاة' : forgiveness ? 'تعديل إعفاء' : payment ? 'تعديل دفعة' : 'تعديل دين'} glyph="→" onBack={onBack} />
     <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 32, gap: 20 }} keyboardShouldPersistTaps="handled">
       <T style={{ ...M3.type.bodyMedium, color: c.onSurfaceVariant }}>
         {entry.voidedAt ? 'هذه العملية ملغاة ولا تدخل في الأرصدة. يمكنك إعادتها إذا كانت صحيحة.' : 'يُحفظ كل تعديل في السجل مع القيم السابقة.'}
       </T>
+      {forgiveness && <T style={{ ...M3.type.bodyMedium, color: c.onSurfaceVariant }}>هذه العملية إعفاء من الدين، وتظهر مستقلة عن الدفعات المالية في السجل والتقارير.</T>}
       {entry.voidedAt ? <View style={{ backgroundColor: c.surfaceContainerLow, padding: 16, gap: 8, borderRadius: 12 }}>
         <T style={{ ...M3.type.titleLarge, color: c.onSurface }}>{people.find(p => p.id === entry.personId)?.name} · {fmt(entry.amount)} ر.س</T>
         <T style={{ ...M3.type.bodyMedium, color: c.onSurfaceVariant }}>{entry.note} · {arDate(occurred)}</T>
         <PrimaryButton c={c} label="إعادة العملية" loading={busy} onPress={() => run(onRestore, 'إعادة العملية', 'ستعود هذه العملية إلى الأرصدة إذا كانت لا تتعارض مع العمليات الحالية.', 'إعادة')} />
       </View> : <>
-        <AmountInput c={c} label={payment ? 'مبلغ الدفعة' : 'المبلغ'} value={amount} onChange={setAmount}
+        <AmountInput c={c} label={payment ? `مبلغ ${reductionLabel}` : 'المبلغ'} value={amount} onChange={setAmount}
           error={!validAmount ? 'أدخل مبلغاً أكبر من صفر وبحد أقصى منزلتين عشريتين.' : undefined} />
-        <TransactionDateField c={c} label={payment ? 'تاريخ الدفعة' : 'تاريخ الدين'} value={occurred} onChange={setOccurred} />
+        <TransactionDateField c={c} label={payment ? `تاريخ ${reductionLabel}` : 'تاريخ الدين'} value={occurred} onChange={setOccurred} />
         {entry.recordedAt && <T style={{ ...M3.type.bodySmall, color: c.onSurfaceVariant }}>وقت التسجيل الأصلي: {stamp(entry.recordedAt)}</T>}
         <View style={{ gap: 8 }}>
           <T style={{ ...M3.type.titleSmall, color: c.onSurfaceVariant }}>الشخص</T>
@@ -82,12 +85,12 @@ export function EntryEditor({ c, entry, people, transactions, changes, onBack, o
               onPress={() => { setPersonId(p.id); if (payment) setDebtId(''); }} />)}</View>}
         </View>
         {payment ? <View style={{ gap: 8 }}>
-          <T style={{ ...M3.type.titleSmall, color: c.onSurfaceVariant }}>الدين المرتبط بالدفعة</T>
+          <T style={{ ...M3.type.titleSmall, color: c.onSurfaceVariant }}>الدين المرتبط ب{reductionLabel}</T>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>{targets.map(t => <Chip key={t.id} c={c}
             label={`${t.note || 'دين'} · ${fmt(t.amount)} · ${t.dir === 'me' ? 'يدين لي' : 'أدين له'} · ${arDate(t.createdAt)}`}
             selected={debtId === t.id} onPress={() => setDebtId(t.id)} />)}</View>
           {!targets.length && <T style={{ ...M3.type.bodyMedium, color: c.error }}>لا توجد ديون لهذا الشخص.</T>}
-        </View> : linked.length ? <T style={{ ...M3.type.bodyMedium, color: c.onSurfaceVariant }}>للدين دفعات مسجلة. ألغِ الدفعات أولاً لتغيير الشخص أو الاتجاه.</T> :
+        </View> : linked.length ? <T style={{ ...M3.type.bodyMedium, color: c.onSurfaceVariant }}>للدين دفعات أو إعفاءات مسجلة. ألغِ العمليات المرتبطة أولاً لتغيير الشخص أو الاتجاه.</T> :
           <Segment c={c} value={dir} onChange={setDir} options={[{ value: 'me', label: 'يدين لي' }, { value: 'owe', label: 'أدين له' }]} />}
         {!payment && !installments.length && <View style={{ gap: 8 }}>
           <OutlinedField c={c} label="تاريخ الاستحقاق (اختياري)" accessibilityLabel="تاريخ الاستحقاق" value={dueAt}
@@ -109,16 +112,16 @@ export function EntryEditor({ c, entry, people, transactions, changes, onBack, o
           <OutlineButton c={c} label="توزيع المبلغ بالتساوي" disabled={!validAmount || busy} onPress={splitEvenly} />
           {!validSchedule && <T accessibilityRole="alert" style={{ ...M3.type.bodyMedium, color: c.error }}>يجب أن يساوي مجموع الأقساط مبلغ الدين، وأن تكون مواعيدها صحيحة ومتتابعة.</T>}
         </View>}
-        <OutlinedField c={c} label="الملاحظة" value={note} onChangeText={setNote} maxLength={500} />
+        <OutlinedField c={c} label={forgiveness ? 'سبب الإعفاء' : 'الملاحظة'} value={note} onChangeText={setNote} maxLength={500} />
         <PrimaryButton c={c} label="حفظ التعديل" disabled={!canSave} loading={busy} onPress={() => run(() => onSave({
           amount: Number(amount), personId, createdAt: occurred, note: note.trim(),
           ...(payment ? { debtId } : { dir, dueAt: installments.length ? installments[0].dueAt : dueAt || null,
             ...(installments.length ? { installments: installments.map(i => ({ ...i, amount: Number(i.amount) })), freq: 'month' as const } : {}) }),
         }))} />
         {relevant[0]?.kind === 'edit' && <OutlineButton c={c} label="التراجع عن آخر تعديل" disabled={busy}
-          onPress={() => run(onUndoEdit, 'التراجع عن التعديل', 'ستعود القيم السابقة إذا كانت متوافقة مع الدفعات الحالية. يُسجل التراجع في السجل.', 'تراجع')} />}
+          onPress={() => run(onUndoEdit, 'التراجع عن التعديل', 'ستعود القيم السابقة إذا كانت متوافقة مع الدفعات والإعفاءات الحالية. يُسجل التراجع في السجل.', 'تراجع')} />}
         <OutlineButton c={c} label="إلغاء تسجيل العملية" disabled={busy}
-          onPress={() => run(onVoid, 'إلغاء تسجيل العملية', `سيتم إخراج هذه ${payment ? 'الدفعة' : 'العملية'} من الأرصدة. تبقى في السجل ويمكن إعادتها لاحقاً.`, 'إلغاء العملية')} />
+          onPress={() => run(onVoid, 'إلغاء تسجيل العملية', 'لن تُحتسب العملية في الأرصدة بعد إلغائها. تبقى في السجل ويمكن إعادتها لاحقاً.', 'إلغاء العملية')} />
       </>}
       {!!error && <T accessibilityRole="alert" style={{ ...M3.type.bodyMedium, color: c.error }}>{error}</T>}
       <View style={{ gap: 12 }}>
@@ -141,7 +144,7 @@ function describeChange(change: LedgerChange, people: Person[]): string {
   if (a.createdAt !== b.createdAt) lines.push(`تاريخ العملية: من ${arDate(a.createdAt)} إلى ${arDate(b.createdAt)}`);
   if (a.personId !== b.personId) lines.push(`الشخص: من ${people.find(p => p.id === a.personId)?.name} إلى ${people.find(p => p.id === b.personId)?.name}`);
   if (a.dir !== b.dir) lines.push(`الاتجاه: ${b.dir === 'me' ? 'يدين لي' : 'أدين له'}`);
-  if (a.debtId !== b.debtId) lines.push('تغيّر الدين المرتبط بالدفعة.');
+  if (a.debtId !== b.debtId) lines.push('تغيّر الدين المرتبط بالعملية.');
   if (a.note !== b.note) lines.push(`الملاحظة السابقة: ${a.note || 'بدون'}\nالملاحظة الجديدة: ${b.note || 'بدون'}`);
   if (a.dueAt !== b.dueAt) lines.push(`الموعد: من ${a.dueAt ? arDate(a.dueAt) : 'بدون'} إلى ${b.dueAt ? arDate(b.dueAt) : 'بدون'}`);
   if (JSON.stringify(a.installments) !== JSON.stringify(b.installments)) {

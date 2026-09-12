@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { releaseVersion } from './android-release-version.mjs';
-import { verifyBundle, verifyInspection } from './verify-android-release.mjs';
+import { verifyBundle, verifyInspection, verifyNativePinWorker } from './verify-android-release.mjs';
 import { RELEASE_FIXTURE_MARKERS } from './release-fixture-markers.mjs';
 
 let count = 0;
@@ -174,4 +174,54 @@ for (const marker of RELEASE_FIXTURE_MARKERS) {
     });
   }
 }
+
+// Minimal DEX table fixtures exercise compiled class definitions and split DEX.
+// They intentionally contain no executable code; Android verifies the real APK.
+function dexFixture(descriptors, definitions = descriptors.map((_, i) => i)) {
+  const stringOffset = 112;
+  const typeOffset = stringOffset + descriptors.length * 4;
+  const classOffset = typeOffset + descriptors.length * 4;
+  const dataOffset = classOffset + definitions.length * 32;
+  const encoded = descriptors.map(name => Buffer.concat([Buffer.from([name.length]), Buffer.from(name), Buffer.from([0])]));
+  const dex = Buffer.alloc(dataOffset + encoded.reduce((sum, value) => sum + value.length, 0));
+  dex.write('dex\n037\0', 0, 'ascii');
+  dex.writeUInt32LE(dex.length, 32); dex.writeUInt32LE(112, 36); dex.writeUInt32LE(0x12345678, 40);
+  dex.writeUInt32LE(descriptors.length, 56); dex.writeUInt32LE(stringOffset, 60);
+  dex.writeUInt32LE(descriptors.length, 64); dex.writeUInt32LE(typeOffset, 68);
+  dex.writeUInt32LE(definitions.length, 96); dex.writeUInt32LE(classOffset, 100);
+  let cursor = dataOffset;
+  encoded.forEach((value, i) => {
+    dex.writeUInt32LE(cursor, stringOffset + i * 4); dex.writeUInt32LE(i, typeOffset + i * 4);
+    value.copy(dex, cursor); cursor += value.length;
+  });
+  definitions.forEach((typeIndex, i) => dex.writeUInt32LE(typeIndex, classOffset + i * 32));
+  return dex;
+}
+const nativeClasses = ['Lexpo/modules/iouprivacycrypto/IouPrivacyCryptoModule;', 'Lexpo/modules/iouprivacycrypto/PinKdf;'];
+check('compiled native PIN classes in one DEX are accepted', () => {
+  assert.doesNotThrow(() => verifyNativePinWorker([dexFixture(nativeClasses)]));
+});
+check('native PIN classes split across DEX files are accepted', () => {
+  assert.doesNotThrow(() => verifyNativePinWorker(nativeClasses.map(name => dexFixture([name]))));
+});
+check('missing DEX files cannot release the JavaScript fallback', () => {
+  assert.throws(() => verifyNativePinWorker([]), /compiled DEX/);
+});
+for (const missing of nativeClasses) {
+  check(`missing compiled ${missing} is rejected`, () => {
+    assert.throws(() => verifyNativePinWorker([dexFixture(nativeClasses.filter(name => name !== missing))]), /missing native PIN worker class/);
+  });
+}
+check('descriptor strings without compiled class definitions cannot satisfy the native guard', () => {
+  assert.throws(() => verifyNativePinWorker([dexFixture(nativeClasses, [])]), /missing native PIN worker class/);
+});
+check('truncated DEX data is rejected before descriptor inspection', () => {
+  assert.throws(() => verifyNativePinWorker([dexFixture(nativeClasses).subarray(0, -8)]), /Truncated DEX/);
+  assert.throws(() => verifyNativePinWorker([Buffer.alloc(8)]), /Truncated/);
+});
+check('out-of-range DEX tables cannot masquerade as compiled native classes', () => {
+  const malformed = dexFixture(nativeClasses);
+  malformed.writeUInt32LE(malformed.length, 100);
+  assert.throws(() => verifyNativePinWorker([malformed]), /Truncated DEX table/);
+});
 console.log(`${count} Android release checks passed.`);

@@ -1,4 +1,5 @@
 import { Platform } from 'react-native';
+import { requireOptionalNativeModule } from 'expo';
 import * as SecureStore from 'expo-secure-store';
 import * as LocalAuthentication from 'expo-local-authentication';
 import * as Crypto from 'expo-crypto';
@@ -13,6 +14,11 @@ const options: SecureStore.SecureStoreOptions = {
   requireAuthentication: false,
 };
 
+const nativeCrypto = Platform.OS === 'web' ? null : requireOptionalNativeModule<{
+  supported: boolean;
+  derivePin(pin: string, salt: string, iterations: number): Promise<string>;
+}>('IouPrivacyCrypto');
+
 export const privacyAdapter: PrivacyAdapter = {
   available: async () => Platform.OS === 'web' ? true : SecureStore.isAvailableAsync(),
   read: async () => Platform.OS === 'web' ? window.localStorage.getItem(PRIVACY_KEY) : SecureStore.getItemAsync(PRIVACY_KEY, options),
@@ -25,7 +31,8 @@ export const privacyAdapter: PrivacyAdapter = {
     else await SecureStore.deleteItemAsync(PRIVACY_KEY, options);
   },
   randomSalt: async () => bytesToHex(await Crypto.getRandomBytesAsync(16)),
-  derive: derivePin,
+  derive: (pin, salt, iterations) => derivePin(pin, salt, iterations,
+    nativeCrypto?.supported ? (p, s, i) => nativeCrypto.derivePin(p, s, i) : undefined),
   hasBiometrics: async () => Platform.OS !== 'web' && await LocalAuthentication.hasHardwareAsync() &&
     await LocalAuthentication.isEnrolledAsync() &&
     await LocalAuthentication.getEnrolledLevelAsync() === LocalAuthentication.SecurityLevel.BIOMETRIC_STRONG,
@@ -35,6 +42,9 @@ export const privacyAdapter: PrivacyAdapter = {
       cancelLabel: 'استخدام الرمز', fallbackLabel: '', disableDeviceFallback: true,
       biometricsSecurityLevel: 'strong' });
     return result.success;
+  },
+  cancelAuthentication: async () => {
+    if (Platform.OS === 'android') await LocalAuthentication.cancelAuthenticate();
   },
   now: Date.now,
 };

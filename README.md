@@ -18,6 +18,7 @@ prototype, which is kept in [`design/`](design/) for reference. The app now foll
 - **Instalment plans** — split a debt into N monthly payments, tick them off individually
 - **Settlement** — record money received or paid against a specific debt, or across that direction's debts oldest-first
 - **Corrections** — edit debts and payments, undo the latest edit, cancel mistaken entries, and restore cancellations with a visible history.
+- **Forgiveness** — record full or partial debt forgiveness with a date and reason, separately from cash payments.
 - **Actual dates** — record when money changed hands, separately from when you entered it.
 - **Reminders** — choose the time, advance notice, overdue repetition, weekly day, and snoozes. Nothing is sent to the other party.
 - **Optional privacy lock** — biometrics where available, with a simple PIN fallback and private notification previews.
@@ -33,7 +34,7 @@ exports use the same portable ledger data and can be restored across devices.
 |---|---|---|
 | **مجلد على الجهاز** — pick any folder once | none | yes |
 | **ملف** — export via the share sheet, import via the file picker | none | no |
-| **Google Drive** — optional app-private cloud integration | disabled pending native authorization integration and verification | planned |
+| **Google Drive (يدوي)** — share the readable report to Drive; restore through the file picker | Drive app/account, or upload a downloaded file | no |
 
 After choosing a destination, restore an existing backup or use **نسخ الآن** to
 save the first copy. Automatic folder backups run after edits while the app is
@@ -50,24 +51,26 @@ report provides encryption; ordinary reports, CSVs and folder backups are readab
 Mobile export opens the share sheet; browser export downloads the file. See
 [backup formats and recovery](app/docs/BACKUPS.md).
 
-Google Drive ships **disabled**. OAuth client IDs alone are insufficient for the
-current native sign-in flow; see [`app/README.md`](app/README.md).
+Google Drive supports **manual sharing and restore**. Choose Drive in the share
+sheet, finish saving there, and check the file appears in your account. Direct
+automatic synchronization remains disabled pending supported native authorization;
+see [`app/README.md`](app/README.md).
 
 ## Getting the APK
 
-Download **iou-0.1.0-alpha.1.apk** from the [0.1 Alpha 1 release](https://github.com/witcherxz/iou/releases/tag/v0.1.0-alpha.1), or use the GitHub CLI:
+Download **iou-0.1.0-alpha.2.apk** from the [0.1 Alpha 2 release](https://github.com/witcherxz/iou/releases/tag/v0.1.0-alpha.2), or use the GitHub CLI:
 
 ```bash
-gh release download v0.1.0-alpha.1 --pattern 'iou-*.apk' --pattern '*.apk.sha256' -D .
-sha256sum -c iou-0.1.0-alpha.1.apk.sha256
-adb install iou-0.1.0-alpha.1.apk
+gh release download v0.1.0-alpha.2 --pattern 'iou-*.apk' --pattern '*.apk.sha256' -D .
+sha256sum -c iou-0.1.0-alpha.2.apk.sha256
+adb install iou-0.1.0-alpha.2.apk
 ```
 
 GitHub Actions builds a production release APK with a dedicated signing key and debugging disabled. The universal APK supports Android's four ABIs. Main-branch builds are available as Actions artifacts; version tags publish prereleases with an APK and checksum.
 
 Fresh installs start with an empty **دفتري** ledger. Demo fixtures and prototype names are excluded from the app's dependency graph. The production package `io.github.witcherxz.iou` installs alongside the old debug package `com.example.iou`; export any real records from the old app and import them into the alpha before removing it. Existing records are never silently cleared.
 
-See [release notes](app/docs/releases/0.1.0-alpha.1.md) and [release maintenance](app/docs/RELEASING.md) for signing, versions, checks and alpha limitations.
+See [release notes](app/docs/releases/0.1.0-alpha.2.md) and [release maintenance](app/docs/RELEASING.md) for signing, versions, checks and alpha limitations.
 
 ## Building locally
 

@@ -40,7 +40,7 @@ export function seedState(): PersistedState {
   ];
 
   return {
-    version: 2,
+    version: 3,
     onboarded: false,
     profileName: 'عبدالله',
     people: PEOPLE.map(person => ({ ...person })),
