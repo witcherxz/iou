@@ -1,0 +1,15 @@
+{
+  "passed": 9,
+  "checks": [
+    "Rename preserves mixed balances, cash, waiver, installment dates and audit IDs; all screens and reload use the new name",
+    "HTML and all four CSV exports use the renamed identity and preserve linked records, balances and audit data",
+    "Unchanged, whitespace-only and duplicate names cannot save or rotate recovery history; Cancel and Back discard drafts",
+    "Name field limits input to 100 characters and accepts a one-character identity without merging people",
+    "Real PIN background lock preserves the controlled name draft; unlock saves once and later locks cannot resubmit it",
+    "light/320: long Arabic and mixed names stay accessible and fit Home, editor and history",
+    "light/390: long Arabic and mixed names stay accessible and fit Home, editor and history",
+    "dark/320: long Arabic and mixed names stay accessible and fit Home, editor and history",
+    "dark/390: long Arabic and mixed names stay accessible and fit Home, editor and history"
+  ],
+  "browserErrors": []
+}

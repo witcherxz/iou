@@ -21,6 +21,8 @@ History shows a prominent type/direction heading, distinct icon and **مبلغ �
 
 Alpha 9 simplifies debt headings to **يدين لي** / **أدين له** and fixes native text alignment within RTL cards. Names, operation counts and descriptions share the right edge; explicitly centered controls retain their alignment.
 
+Alpha 10 adds person-name editing: open a person, tap the pencil at the top-left (**تعديل اسم الشخص**), change **اسم الشخص**, then choose **حفظ الاسم**. The name updates throughout the app and readable exports while IDs, debts, payments, exemptions and correction history stay unchanged. Empty or duplicate names cannot save; names are trimmed and limited to 100 characters. **إلغاء** or Back discards the draft, while a temporary privacy lock preserves it in the current app process. Search is deferred to a future release.
+
 ## Financial corrections
 
 Corrections preserve exact before/after snapshots. Cancellation adds a `voidedAt` timestamp; cancelled records remain visible in person/payment history and exported tables, and contribute nothing to balances or reminders. Restoring an entry validates its relationships and outstanding balance again. Undo of the latest edit is itself recorded as a correction; it does not erase history.

@@ -5,6 +5,7 @@ import { STORAGE_KEY, STORAGE_RECOVERY_KEY } from '../config/app';
 import { AddDebtInput, createDebt, createForgiveness, createSettlements, editEntry, EntryPatch, isDebt, remainingCents, restoreEntry, undoEntryEdit, voidEntry } from '../ledger';
 import { fromCents, toCents } from '../money';
 import { emptyState } from '../initialState';
+import { personNameError, renamePerson as renamePersonInState } from '../people';
 import { PersistedState } from '../types';
 import { validateState } from '../validation';
 import { createWriteQueue, readInitialLedger } from './persistence';
@@ -22,6 +23,7 @@ interface Store {
   toast: string | null;
   showToast: (msg: string) => void;
   addPerson: (name: string) => string;
+  renamePerson: (personId: string, name: string) => boolean;
   addDebt: (input: AddDebtInput) => boolean;
   /** Pays one debt, or oldest-first in an explicitly selected direction. */
   settle: (personId: string, amount: number, debtId?: string | null, dir?: 'me' | 'owe', transactionDate?: string, note?: string) => number;
@@ -166,6 +168,14 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     return commit({ ...current.current, people: [...current.current.people, { id, name: trimmed, hue: Math.floor(Math.random() * 360) }] }) ? id : '';
   }, [commit]);
 
+  const renamePerson = useCallback((personId: string, name: string): boolean => {
+    const before = current.current;
+    const error = personNameError(before.people, personId, name);
+    if (error) { showToast(error); return false; }
+    const next = renamePersonInState(before, personId, name);
+    return next !== null && (next === before || commit(next));
+  }, [commit, showToast]);
+
   const addDebt = useCallback((input: AddDebtInput): boolean => {
     const debt = createDebt(current.current, input, newId());
     if (!debt) { showToast('تحقق من الشخص والمبلغ وتواريخ الأقساط'); return false; }
@@ -205,9 +215,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, [commit]);
 
   const value = useMemo<Store>(() => ({
-    state, ready, storageError, recoveryNotice, retryLoad, toast, showToast, addPerson, addDebt, settle, forgive, markPaid, toggleReminder, set, replaceAll,
+    state, ready, storageError, recoveryNotice, retryLoad, toast, showToast, addPerson, renamePerson, addDebt, settle, forgive, markPaid, toggleReminder, set, replaceAll,
     updateEntry, cancelEntry, reinstateEntry, revertEntryEdit, listRecoverySnapshots,
-  }), [state, ready, storageError, recoveryNotice, retryLoad, toast, showToast, addPerson, addDebt, settle, forgive, markPaid, toggleReminder, set, replaceAll,
+  }), [state, ready, storageError, recoveryNotice, retryLoad, toast, showToast, addPerson, renamePerson, addDebt, settle, forgive, markPaid, toggleReminder, set, replaceAll,
     updateEntry, cancelEntry, reinstateEntry, revertEntryEdit, listRecoverySnapshots]);
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;

@@ -4,31 +4,32 @@ Goal: Provide a private Arabic debt ledger with clear balances and recoverable r
 Phase: verify
 
 ## Now
-Alpha 9 is published and verified on the isolated Android 16 emulator. Names, transaction counts and descriptions align right, and history omits the redundant «دين ·» prefix. TypeScript, 1,298 integrated checks, four browser RTL cases, 19 history/privacy workflows and all 11 native text comparisons pass. Amount/date behavior and centered controls are preserved. Separate compact-label clipping was confirmed to predate Alpha 9 and remains queued. The user decides when core features are complete and the app can move from alpha to beta.
+The user approved the person-name editor preview and authorized proceeding with Alpha 10. TypeScript, 1,354 integrated checks and nine full-app browser scenarios pass, including unchanged balances/history, readable exports, cancellation, duplicate validation and privacy-lock draft retention. Final review found no blocking issues; publication and native verification follow. Search is deferred at the user's request, and the user decides when core features are complete and the app can move from alpha to beta.
 
 Next:
-1. Correct existing native clipping in compact selector and status labels.
-2. Validate completed cloud-provider backup/recovery before a stable release.
-3. Continue native accessibility, privacy and reminder validation.
+1. Publish and independently verify the signed Alpha 10 APK.
+2. Verify native rename, privacy and backup preservation on the isolated emulator.
+3. Address existing compact-label clipping and remaining cloud-provider/accessibility/reminder validation before a stable release.
 
 ## Health
 
 | metric | current | measured | previous | threshold | goal | source |
 |---|---:|---|---:|---:|---:|---|
-| Automated checks passing | 1298 count | 2026-09-12 | 1298 count | >= 1298 count | 1298 count | `cd app && npm run check`; `node scripts/release-workflow-checks.mjs`; `JAVA_HOME=/tmp/iou-device-debug/jdk-17.0.20.1+1 node scripts/native-pin-checks.mjs` |
+| Automated checks passing | 1354 count | 2026-09-12 | 1298 count | >= 1354 count | 1354 count | `cd app && npm run check`; `node scripts/release-workflow-checks.mjs`; `JAVA_HOME=/tmp/iou-device-debug/jdk-17.0.20.1+1 node scripts/native-pin-checks.mjs` |
 | TypeScript | PASS | 2026-09-12 | PASS | = PASS | PASS | `cd app && npm run typecheck` |
 | Alpha 9 production APK | PASS | 2026-09-12 | PASS | = PASS | PASS | [Release workflow](https://github.com/witcherxz/iou/actions/runs/34713790800); [independent APK verification](app/docs/verification/alpha9-apk.json) |
 | Native card text alignment | PASS | 2026-09-12 | FAIL | = PASS | PASS | [Native baseline](app/docs/verification/alpha9-native-before.json); [11 native comparisons](app/docs/verification/alpha9-native.json) |
 
-## DoD — Alpha 9 Arabic card alignment
+## DoD — Alpha 10 person name editing
 
-- [x] Remove the redundant debt prefix while retaining direction labels.
-- [x] Correct native RTL text alignment without reversing correctly ordered rows.
-- [x] Preserve explicit centered controls and existing number/date inputs.
+- [x] Provide a pencil entry point and Arabic name editor with Save and Cancel.
+- [x] Validate names and preserve person identity, linked records, amounts and correction history.
+- [x] Preserve drafts across privacy locking and discard them on Cancel or Back.
 - [x] Pass TypeScript and integrated checks.
-- [x] Verify browser card alignment and existing history workflows.
-- [x] Publish and independently verify the signed Alpha 9 APK.
-- [x] Verify right-aligned native names, counts and transaction descriptions on the emulator.
+- [x] Verify browser navigation, persistence, exports, validation and narrow light/dark layouts.
+- [x] Obtain the user's requested preview feedback before pushing.
+- [ ] Publish and independently verify the signed Alpha 10 APK.
+- [ ] Verify native rename and exact ledger/backup preservation on the emulator.
 
 ## Blockers / Risks
 
@@ -40,6 +41,8 @@ Next:
 - Automatic backups run after foreground edits and are suspended after local recovery; reminders retain the nearest 60 alerts plus weekly and refresh on foreground. Response: explain these operating limits in the feature notes.
 
 ## Decisions
+
+- 2026-09-12: Facing the user's selected core scope, chose person-name editing with search deferred, to support correcting names without changing records, accepting search as future work. The user approved the editor and pencil entry point before publication; retain alpha status until the user confirms core completion.
 
 - 2026-09-12: Facing an undefined alpha exit milestone, chose explicit user confirmation that core features are complete before beta, to match the product's intended scope, accepting further alpha builds until that confirmation.
 
@@ -55,6 +58,10 @@ Next:
 - 2026-09-12: Facing potential overwrite of external backups during startup or recovery, chose explicit first save and suspended automatic backup after local recovery, to protect older/newer copies, accepting a manual review step.
 
 ## Log
+
+- 2026-09-12 [work]: User approved actual screenshots of the name editor and pencil entry point and authorized proceeding. Final read-only feature review found no blocking issues; preparing the Alpha 10 commit and signed release.
+
+- 2026-09-12 [work]: Implemented person-name editing with stable identity, trimmed/duplicate validation and privacy-safe drafts. TypeScript, 1,354 integrated checks and nine full-app browser scenarios pass. Preparing actual UI screenshots for the user's requested preview; Alpha 10 remains uncommitted and unpublished, with native verification pending.
 
 - 2026-09-12 [release]: Published Alpha 9 from 9bd6af4 after both Actions runs passed. Independently verified the 72,416,386-byte APK and installed it over Alpha 8. All 11 native text comparisons passed, along with centered amount/action and ISO date checks. A separate temporary emulator confirmed compact selector clipping already existed in Alpha 8; it was stopped cleanly. No ledger saves occurred during the Alpha 9 comparison. [Native evidence](app/docs/verification/alpha9-native.json).
 

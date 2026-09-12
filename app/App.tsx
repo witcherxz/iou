@@ -35,6 +35,7 @@ import { DebtList, StatusFilter } from './src/screens/DebtList';
 import { Home } from './src/screens/Home';
 import { Onboarding } from './src/screens/Onboarding';
 import { PersonDetail } from './src/screens/PersonDetail';
+import { PersonNameEditor } from './src/screens/PersonNameEditor';
 import { Reminders } from './src/screens/Reminders';
 import { Settings } from './src/screens/Settings';
 import { BackupSetup } from './src/screens/BackupSetup';
@@ -48,7 +49,7 @@ import { useBackup } from './src/useBackup';
 // app restart to take effect) the root view declares its own direction.
 I18nManager.allowRTL(false);
 
-type Screen = 'main' | 'person' | 'debt' | 'add' | 'settle' | 'backup' | 'entry' | 'privacy' | 'backupTools' | 'localRecovery';
+type Screen = 'main' | 'person' | 'personName' | 'debt' | 'add' | 'settle' | 'backup' | 'entry' | 'privacy' | 'backupTools' | 'localRecovery';
 
 export default function App() {
   return (
@@ -64,7 +65,7 @@ export default function App() {
 
 function Root() {
   const { state, ready, storageError, recoveryNotice, retryLoad, toast, showToast, set, replaceAll, addPerson, addDebt, settle, forgive, markPaid, toggleReminder,
-    updateEntry, cancelEntry, reinstateEntry, revertEntryEdit, listRecoverySnapshots } =
+    updateEntry, cancelEntry, reinstateEntry, revertEntryEdit, listRecoverySnapshots, renamePerson } =
     useStore();
   const privacy = usePrivacy();
 
@@ -88,6 +89,7 @@ function Root() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [tab, setTab] = useState<Tab>('home');
   const [personId, setPersonId] = useState<string | null>(null);
+  const [personNameDraft, setPersonNameDraft] = useState('');
   const [debtId, setDebtId] = useState<string | null>(null);
   const [entryId, setEntryId] = useState<string | null>(null);
   const [cameFrom, setCameFrom] = useState<Screen>('main');
@@ -126,6 +128,7 @@ function Root() {
     setScreen('main');
     setTab('home');
     setPersonId(null);
+    setPersonNameDraft('');
     setDebtId(null);
     setEntryId(null);
     setAddDraft(createAddDebtDraft());
@@ -157,6 +160,7 @@ function Root() {
     setScreen('main');
     setTab('home');
     setAddDraft(createAddDebtDraft());
+    setPersonNameDraft('');
     clearSettle();
   }, [clearSettle]);
 
@@ -165,10 +169,16 @@ function Root() {
     setScreen(personId && addPersonId ? 'person' : 'main');
   }, [personId, addPersonId]);
 
+  const closePersonName = useCallback(() => {
+    setPersonNameDraft('');
+    setScreen('person');
+  }, []);
+
   const back = useCallback((): boolean => {
     // Let the dialog consume Back even if this listener was registered later.
     if (dialogOpen) return false;
     if (!privacy.unlocked) return false;
+    if (screen === 'personName') { closePersonName(); return true; }
     if (screen === 'entry') { setScreen('person'); return true; }
     if (screen === 'localRecovery') { setScreen('backupTools'); return true; }
     if (screen === 'debt') {
@@ -194,7 +204,7 @@ function Root() {
       return true;
     }
     return false; // let Android close the app
-  }, [screen, tab, cameFrom, closeAdd, clearSettle, settleFrom, privacy.unlocked, dialogOpen]);
+  }, [screen, tab, cameFrom, closeAdd, closePersonName, clearSettle, settleFrom, privacy.unlocked, dialogOpen]);
 
   useEffect(() => {
     const sub = BackHandler.addEventListener('hardwareBackPress', back);
@@ -367,12 +377,22 @@ function Root() {
                 tx={state.tx}
                 debts={debts}
                 onBack={goHome}
+                onEditName={() => { setPersonNameDraft(person.name); setScreen('personName'); }}
                 onSettle={() => openSettle(null, 'full')}
                 onAdd={() => openAdd(person.id, 'me')}
                 onOpenDebt={openDebt}
                 onOpenEntry={openEntry}
               />
             )}
+
+            {screen === 'personName' && person && <PersonNameEditor c={c} people={state.people}
+              personId={person.id} name={personNameDraft} onChangeName={setPersonNameDraft} onBack={closePersonName}
+              onSave={() => {
+                if (!renamePerson(person.id, personNameDraft)) return false;
+                closePersonName();
+                showToast('تم تحديث اسم الشخص');
+                return true;
+              }} />}
 
             {screen === 'debt' && debt && (
               <DebtDetail

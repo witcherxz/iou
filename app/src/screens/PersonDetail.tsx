@@ -1,7 +1,7 @@
 import React from 'react';
 import { ScrollView, useWindowDimensions, View } from 'react-native';
 
-import { Avatar, Badge, OutlineButton, PrimaryButton, ScreenHeader, T, Touch } from '../components/ui';
+import { Avatar, Badge, MaterialPressable, OutlineButton, PrimaryButton, ScreenHeader, T, Touch } from '../components/ui';
 import { ReductionHistoryRow } from '../components/ReductionHistoryRow';
 import { MaterialIcon } from '../components/icons';
 import { arDate, fmt } from '../format';
@@ -16,13 +16,14 @@ interface Props {
   tx: Tx[];
   debts: DebtView[];
   onBack: () => void;
+  onEditName: () => void;
   onSettle: () => void;
   onAdd: () => void;
   onOpenDebt: (id: string) => void;
   onOpenEntry: (id: string) => void;
 }
 
-export function PersonDetail({ c, person, tx, debts, onBack, onSettle, onAdd, onOpenDebt, onOpenEntry }: Props) {
+export function PersonDetail({ c, person, tx, debts, onBack, onEditName, onSettle, onAdd, onOpenDebt, onOpenEntry }: Props) {
   const { width } = useWindowDimensions();
   const compact = width < 360;
   const heroColor = person.bal > 0 ? c.onGreenContainer : person.bal < 0 ? c.onErrorContainer : c.onSurface;
@@ -35,7 +36,14 @@ export function PersonDetail({ c, person, tx, debts, onBack, onSettle, onAdd, on
 
   return (
     <View style={{ flex: 1 }}>
-      <ScreenHeader title={person.name} glyph="→" onBack={onBack} c={c} />
+      <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: c.surface }}>
+        <View style={{ flex: 1, minWidth: 0 }}><ScreenHeader title={person.name} glyph="→" onBack={onBack} c={c} /></View>
+        <MaterialPressable c={c} onPress={onEditName} accessibilityRole="button" accessibilityLabel="تعديل اسم الشخص"
+          style={({ pressed }) => ({ width: 48, height: 48, borderRadius: 24, marginEnd: 4,
+            alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? c.surfaceContainerHigh : 'transparent' })}>
+          <MaterialIcon name="edit" color={c.primary} />
+        </MaterialPressable>
+      </View>
 
       <ScrollView
         contentContainerStyle={{ paddingTop: 8, paddingHorizontal: 16, paddingBottom: 32, gap: 20 }}
