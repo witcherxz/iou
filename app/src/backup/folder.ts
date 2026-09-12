@@ -1,4 +1,4 @@
-import { Directory, File } from 'expo-file-system';
+import { Directory, File, FileMode } from 'expo-file-system';
 import { Platform } from 'react-native';
 
 import { BACKUP_FILENAME } from '../config/app';
@@ -23,6 +23,31 @@ export class FolderUnavailableError extends Error {
     this.name = 'FolderUnavailableError';
   }
 }
+
+export type FolderBackupWriteStage = 'read' | 'history' | 'previous' | 'snapshot' | 'latest' | 'report' | 'cleanup';
+
+/** Safe diagnostics: no provider URI, ledger contents, or raw native message. */
+export class FolderBackupWriteError extends Error {
+  readonly code: string;
+  constructor(
+    readonly stage: FolderBackupWriteStage,
+    readonly snapshotSaved: boolean,
+    verificationFailed = false,
+  ) {
+    const message = snapshotSaved
+      ? stage === 'report'
+        ? 'حُفظت نسخة للاستعادة، لكن تعذّر تحديث التقرير أو الجداول. أعد المحاولة.'
+        : 'حُفظت نسخة للاستعادة، لكن لم يكتمل تحديث ملفات النسخ. أعد المحاولة.'
+      : verificationFailed
+        ? 'تعذّر التحقق من الملف المحفوظ. أعد المحاولة أو صدّر ملفاً احتياطياً.'
+        : 'تعذّر إكمال الحفظ في المجلد. أعد المحاولة أو صدّر ملفاً احتياطياً.';
+    super(message);
+    this.name = 'FolderBackupWriteError';
+    this.code = `FOLDER_${stage.toUpperCase()}_${verificationFailed ? 'VERIFY' : 'IO'}`;
+  }
+}
+
+class FolderVerificationError extends Error {}
 
 export async function pickFolder(): Promise<string | null> {
   if (!folderSupported) throw new FolderUnavailableError();
@@ -54,9 +79,18 @@ async function readValid(file: File): Promise<string> {
 }
 
 async function writeVerified(dir: Directory, name: string, text: string, mime = 'application/json'): Promise<void> {
-  const file = fileIn(dir, name) ?? dir.createFile(name, mime);
-  file.write(text);
-  if (await file.text() !== text) throw new Error('Backup file verification failed');
+  const existing = fileIn(dir, name);
+  const file = existing ?? dir.createFile(name, mime);
+  if (existing && Platform.OS === 'android' && file.uri.startsWith('content://')) {
+    // Expo File.write uses SAF mode "w", which providers may implement without
+    // truncation. A shorter rewrite can otherwise leave old bytes at the end.
+    // SDK 57 exposes an explicit "wt" handle without requiring a new folder grant.
+    const handle = file.open(FileMode.Truncate);
+    try { handle.writeBytes(new TextEncoder().encode(text)); } finally { handle.close(); }
+  } else {
+    file.write(text);
+  }
+  if (await file.text() !== text) throw new FolderVerificationError();
 }
 
 export function folderHasBackup(folderUri: string): boolean {
@@ -75,7 +109,7 @@ async function archiveVerified(dir: Directory, text: string): Promise<void> {
   do { name = `iou-snapshot-${stamp}-${suffix++}.json`; } while (fileIn(dir, name));
   const file = dir.createFile(name, 'application/json');
   file.write(text);
-  if (await file.text() !== text) throw new Error('Backup snapshot verification failed');
+  if (await file.text() !== text) throw new FolderVerificationError();
 }
 
 async function validCopies(dir: Directory): Promise<{ file: File; text: string }[]> {
@@ -127,27 +161,40 @@ async function pruneSnapshots(dir: Directory): Promise<void> {
 export async function writeToFolder(folderUri: string, text: string): Promise<void> {
   parseBackup(text);
   const dir = openFolder(folderUri);
-  const copies = await validCopies(dir);
-  const current = fileIn(dir, BACKUP_FILENAME);
-  if (current) {
-    let previous: string | undefined;
-    try {
-      previous = await readValid(current);
-    } catch (error) {
-      if (!(error instanceof InvalidBackupError)) throw error;
-      // An interrupted primary write must never replace the valid recovery copy.
+  let stage: FolderBackupWriteStage = 'read';
+  let snapshotSaved = false;
+  try {
+    const copies = await validCopies(dir);
+    const current = fileIn(dir, BACKUP_FILENAME);
+    if (current) {
+      let previous: string | undefined;
+      try {
+        previous = await readValid(current);
+      } catch (error) {
+        if (!(error instanceof InvalidBackupError)) throw error;
+        // An interrupted primary write must never replace the valid recovery copy.
+      }
+      if (previous !== undefined) {
+        stage = 'history';
+        if (!copies.some(copy => snapshotPattern.test(copy.file.name) && copy.text === previous)) await archiveVerified(dir, previous);
+        stage = 'previous';
+        await writeVerified(dir, PREVIOUS_BACKUP_FILENAME, previous);
+      }
     }
-    if (previous !== undefined) {
-      if (!copies.some(copy => snapshotPattern.test(copy.file.name) && copy.text === previous)) await archiveVerified(dir, previous);
-      await writeVerified(dir, PREVIOUS_BACKUP_FILENAME, previous);
-    }
+    // SAF providers do not promise atomic rename. Keep verified archives intact
+    // while updating the compatibility mirrors and readable companion reports.
+    stage = 'snapshot';
+    if (!copies.some(copy => snapshotPattern.test(copy.file.name) && copy.text === text)) await archiveVerified(dir, text);
+    snapshotSaved = true;
+    stage = 'latest';
+    await writeVerified(dir, BACKUP_FILENAME, text);
+    stage = 'report';
+    for (const report of readableFiles(text)) await writeVerified(dir, report.name, report.text, report.mime);
+    stage = 'cleanup';
+    await pruneSnapshots(dir);
+  } catch (error) {
+    throw new FolderBackupWriteError(stage, snapshotSaved, error instanceof FolderVerificationError);
   }
-  // SAF providers do not promise atomic rename. Keep the verified prior copy intact
-  // while replacing the current file, and read back before reporting success.
-  if (!copies.some(copy => snapshotPattern.test(copy.file.name) && copy.text === text)) await archiveVerified(dir, text);
-  await writeVerified(dir, BACKUP_FILENAME, text);
-  for (const report of readableFiles(text)) await writeVerified(dir, report.name, report.text, report.mime);
-  await pruneSnapshots(dir);
 }
 
 export async function readFolderBackup(folderUri: string): Promise<{ text: string; recovered: boolean } | null> {

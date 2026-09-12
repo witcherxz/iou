@@ -1,20 +1,20 @@
 # Android alpha releases
 
-The application version is `0.1.0-alpha.3`, Android version code `3`, and production application ID `io.github.witcherxz.iou`. The same version is recorded in `app.json`, `package.json`, and the package-lock root. iOS uses the numeric marketing version `0.1.0` and build number `3` if built separately.
+The application version is `0.1.0-alpha.4`, Android version code `4`, and production application ID `io.github.witcherxz.iou`. The same version is recorded in `app.json`, `package.json`, and the package-lock root. iOS uses the numeric marketing version `0.1.0` and build number `4` if built separately.
 
 ## Build and publish
 
 1. Update the version in all three files, increase Android `versionCode`, and add `docs/releases/<version>.md`.
 2. Run `npm run typecheck` and `npm run check`. The release check traverses the production source graph and rejects test fixtures, mocks, sample ledger markers and seeding switches.
 3. Commit/push the reviewed changes. Main-branch Actions runs produce a signed APK artifact.
-4. Push a matching version tag, such as `v0.1.0-alpha.3`. Actions builds and verifies the APK, then publishes it and its `.apk.sha256` checksum to a GitHub prerelease. Tag/version mismatches fail.
+4. Push a matching version tag, such as `v0.1.0-alpha.4`. Actions builds and verifies the APK, then publishes it and its `.apk.sha256` checksum to a GitHub prerelease. Tag/version mismatches fail.
 
 The workflow runs checks for pull requests without exposing signing credentials. Release builds use Node 22, JDK 17, Expo prebuild, and Gradle `:app:assembleRelease`. A Gradle init script assigns the dedicated release signing configuration and disables debugging; it does not silently fall back to the template debug key.
 
 Before upload, the APK verifier checks package ID, version name/code, non-debuggable manifest, signature certificate, embedded Hermes/JavaScript and absence of demo fixture content. Downloaded APK checksums can be verified using:
 
 ```bash
-sha256sum -c iou-0.1.0-alpha.3.apk.sha256
+sha256sum -c iou-0.1.0-alpha.4.apk.sha256
 ```
 
 ## Signing key
@@ -38,6 +38,18 @@ The old debug package was `com.example.iou` and used the Expo template signing k
 Alpha release notes record remaining device verification, including biometrics, notification delivery, app-switcher privacy and folder-provider behavior. A successful production build establishes packaging and signing, not hardware behavior.
 
 ## Verified alpha release
+
+### Alpha 3
+
+On 2026-09-12, [v0.1.0-alpha.3](https://github.com/witcherxz/iou/releases/tag/v0.1.0-alpha.3) was published from commit `e8bf4a3e649bd44bc577b86c75a1968f18bded2c`. The [release workflow](https://github.com/witcherxz/iou/actions/runs/34701892262) and main workflow passed, including 1,228 automated checks, TypeScript, native compilation and publication. Sixteen independent React biometric lifecycle scenarios also passed locally.
+
+The independently downloaded APK is 72,377,614 bytes, version `0.1.0-alpha.3` / code `3`, and retains the same production package and pinned signing key. Its manifest, offline bundle, absent demo fixtures and compiled native PIN worker were verified again.
+
+```text
+866c5f6c79bbacc30991149ad963235e3a83396d23dec6a8e620b5f0e8157029
+```
+
+The update installed successfully over Alpha 2 on the connected S24 Ultra. ADB observed automatic biometric dialogs on initial launch, return from background, and return from Drive's upload screen. Successful biometric entry, cancellation leaving the lock closed without a prompt loop, and subsequent PIN unlock passed on the phone. Diagnostics retained only generic focus transitions and app-specific error counters; no PIN or ledger contents were logged.
 
 ### Alpha 2
 

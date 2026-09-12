@@ -1,12 +1,12 @@
 import { emptyState } from '../src/initialState';
 import { seedState } from './fixtures/ledger';
 import { backupFingerprint, InvalidBackupError, isBackupTimestamp, parseBackup, restoredState, serialize } from '../src/backup/types';
-import { folderHasBackup, PREVIOUS_BACKUP_FILENAME, readFolderBackup, writeToFolder, listFolderVersions, readFolderVersion, SNAPSHOT_LIMIT } from '../src/backup/folder';
+import { folderHasBackup, FolderBackupWriteError, PREVIOUS_BACKUP_FILENAME, readFolderBackup, writeToFolder, listFolderVersions, readFolderVersion, SNAPSHOT_LIMIT } from '../src/backup/folder';
 import { csvCell, embeddedJson, parseReadableBackup, readableFiles, REPORT_FILENAME } from '../src/backup/readable';
 import { BACKUP_FILENAME } from '../src/config/app';
 import { editEntry, voidEntry } from '../src/ledger';
 import { PersistedState } from '../src/types';
-import { failNextWrite, failNextWriteMatching, files, folders } from './backup-filesystem-stub';
+import { failNextWrite, failNextWriteMatching, files, folders, nonTruncatingFolders, openHandles } from './backup-filesystem-stub';
 
 // Keep these checks dependency-free, like the existing ledger checks.
 const assert = {
@@ -260,9 +260,45 @@ async function main() {
   files.delete(`${uri}/${PREVIOUS_BACKUP_FILENAME}`);
   check('folder with snapshots alone is still recognized as containing backups', () => assert.equal(folderHasBackup(uri), true));
   failNextWrite(REPORT_FILENAME);
-  await assert.rejects(writeToFolder(uri, text));
+  let reportFailure: unknown;
+  try { await writeToFolder(uri, text); } catch (error) { reportFailure = error; }
   const snapshotAfterReportFailure = await readFolderBackup(uri);
   check('companion report failure never damages canonical recovery data', () => assert.equal(snapshotAfterReportFailure?.text, text));
+  check('companion failure reports verified recovery separately from full success', () => {
+    assert.ok(reportFailure instanceof FolderBackupWriteError);
+    const failure = reportFailure as FolderBackupWriteError;
+    assert.equal(failure.snapshotSaved, true);
+    assert.equal(failure.stage, 'report');
+    assert.equal(failure.code, 'FOLDER_REPORT_IO');
+    assert.ok(failure.message.includes('حُفظت نسخة للاستعادة'));
+    assert.ok(!failure.message.includes(uri));
+  });
+
+  // SAF permits mode "w" providers that overwrite bytes without truncating. The
+  // long-to-short transition also shrinks HTML/CSV reports containing Arabic/BOMs.
+  const safUri = 'content://provider/tree/nontruncating';
+  folders.add(safUri);
+  nonTruncatingFolders.add(safUri);
+  const longer = serialize({ ...source, profileName: 'دفتر الاختبار الطويل '.repeat(20) });
+  const shorter = serialize({ ...source, profileName: 'قصير' });
+  await writeToFolder(safUri, longer);
+  await writeToFolder(safUri, shorter);
+  check('SAF short rewrites explicitly truncate JSON and all companion files', () => {
+    assert.equal(files.get(`${safUri}/${BACKUP_FILENAME}`), shorter);
+    for (const report of readableFiles(shorter)) assert.equal(files.get(`${safUri}/${report.name}`), report.text);
+    assert.equal(files.get(`${safUri}/${PREVIOUS_BACKUP_FILENAME}`), longer);
+    assert.equal(openHandles, 0);
+  });
+  failNextWrite(REPORT_FILENAME);
+  let handleFailure: unknown;
+  try { await writeToFolder(safUri, text); } catch (error) { handleFailure = error; }
+  check('SAF write failures close the handle and preserve verified snapshot diagnostics', () => {
+    assert.equal(openHandles, 0);
+    assert.ok(handleFailure instanceof FolderBackupWriteError);
+    assert.equal((handleFailure as FolderBackupWriteError).snapshotSaved, true);
+    assert.equal((handleFailure as FolderBackupWriteError).stage, 'report');
+    assert.equal(files.get(`${safUri}/${BACKUP_FILENAME}`), text);
+  });
   const corruptUri = 'memory://corrupt-only';
   folders.add(corruptUri);
   files.set(`${corruptUri}/iou-snapshot-2026-09-12T12-00-00-000Z-0.json`, '{bad');

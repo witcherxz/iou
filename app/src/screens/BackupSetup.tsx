@@ -102,6 +102,8 @@ export function BackupSetup({ c, backup, onBack, onSelect, onChooseFolder, onBac
                     <T style={{ ...M3.type.bodyMedium, color: c.onSecondaryContainer }}>
                       {Platform.OS === 'web'
                         ? 'بعد التنزيل، افتح Google Drive وارفع الملف. للاستعادة، نزّل النسخة من Drive ثم اخترها هنا.'
+                        : Platform.OS === 'android'
+                          ? 'اختر Drive من قائمة المشاركة. إن لم يظهر، اضغط «المزيد» واسحب قائمة التطبيقات للأعلى. راجع الحساب والمجلد ثم اضغط «تحميل» أو «حفظ».'
                         : 'من قائمة المشاركة اختر Drive، ثم الحساب والمجلد واضغط حفظ. إن لم يظهر Drive، ثبّت تطبيقه وسجّل الدخول، أو احفظ الملف وارفعه من Drive.'}
                     </T>
                     <PrimaryButton label={backup.primaryLabel} c={c} onPress={onBackupNow}

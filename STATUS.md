@@ -4,33 +4,33 @@ Goal: Provide a private Arabic debt ledger with clear balances and recoverable r
 Phase: verify
 
 ## Now
-[Alpha 2](https://github.com/witcherxz/iou/releases/tag/v0.1.0-alpha.2) is published and installed on the user's Samsung S24 Ultra (Android 16), and the user confirmed the PIN performance fix. Alpha 3 automatic biometric entry passed the full app checks, TypeScript, 57 release guards and 16 independent React lifecycle scenarios. Publishing the signed update for phone validation.
+[Alpha 3](https://github.com/witcherxz/iou/releases/tag/v0.1.0-alpha.3) is installed on the S24 Ultra, with automatic biometrics, cancellation and PIN fallback verified on the phone. ADB reached Drive's upload screen through More and a scrolled apps list. Alpha 4 passed app checks (55 backup checks), TypeScript, 57 release guards and five partial-backup hook scenarios. Publishing clearer Drive instructions, explicit Android document truncation, and accurate partial-backup errors; the earlier generic folder failure's exact cause remains unconfirmed.
 
 Next:
-1. Publish/install Alpha 3 over the existing app and confirm its automatic prompt on the S24 Ultra.
-2. Confirm manual Drive sharing and file restoration through the phone's providers.
+1. Verify, publish and install Alpha 4, then test the selected folder's backup flow on the phone.
+2. Complete native restoration/provider validation and confirm Drive save completion when used.
 3. Complete broader native accessibility/reminder/provider validation; direct automatic Drive sync still requires native authorization and Google Cloud setup.
 
 ## Health
 
 | metric | current | measured | previous | threshold | goal | source |
 |---|---:|---|---:|---:|---:|---|
-| Automated checks passing | 1206 count | 2026-09-12 | 1082 count | >= 1206 count | 1206 count | `cd app && npm run check`; `node scripts/release-workflow-checks.mjs`; `node scripts/native-pin-checks.mjs`; `/tmp/iou-device-debug/*-final.log` |
+| Automated checks passing | 1228 count | 2026-09-12 | 1206 count | >= 1228 count | 1228 count | `cd app && npm run check`; `node scripts/release-workflow-checks.mjs`; `node scripts/native-pin-checks.mjs`; [Alpha 3 checks](https://github.com/witcherxz/iou/actions/runs/34701892262) |
 | TypeScript | PASS | 2026-09-12 | PASS | = PASS | PASS | `cd app && npm run typecheck` |
-| Isolated browser and Drive scenarios | 30 count | 2026-09-12 | — | >= 30 count | 30 count | `/tmp/iou-forgiveness-ui/results.json`; `/tmp/iou-drive/results.json`; `/tmp/iou-drive/ui-results.json` |
-| Alpha 2 production APK | PASS | 2026-09-12 | PASS | = PASS | PASS | [Release workflow](https://github.com/witcherxz/iou/actions/runs/34700682863); [verification and device installation](app/docs/RELEASING.md#alpha-2) |
+| Biometric React lifecycle scenarios | 16 count | 2026-09-12 | — | >= 16 count | 16 count | `/tmp/iou-biometric-lifecycle/results.json` |
+| Alpha 3 production APK | PASS | 2026-09-12 | PASS | = PASS | PASS | [Release workflow](https://github.com/witcherxz/iou/actions/runs/34701892262); [verification and device installation](app/docs/RELEASING.md#alpha-3) |
 
-## DoD — Alpha 3 automatic biometric entry
+## DoD — Alpha 4 native backup follow-up
 
-- [x] Confirm Alpha 2 PIN unlock on the connected Samsung S24 Ultra.
-- [x] Prompt automatically on entry when the lock and available biometrics are enabled.
-- [x] Preserve PIN fallback, explicit biometric opt-out and cancellation without prompt loops.
-- [x] Verify startup, foreground/background, native-prompt focus changes and authentication races.
-- [ ] Pass checks and publish/install Alpha 3 with production signing and existing data preserved.
+- [x] Reproduce native export and reach Drive's upload screen without changing the backup folder.
+- [x] Explain the observed More/scroll/Drive/upload route in the app.
+- [x] Prevent stale bytes in shorter Android document rewrites and distinguish verified recovery from incomplete reports.
+- [ ] Pass checks and publish/install Alpha 4 with production signing and existing data preserved.
+- [ ] Test the existing folder-save flow and record any remaining provider limitation accurately.
 
 ## Blockers / Risks
 
-- PIN performance is confirmed on the connected S24 Ultra; biometric lifecycle, app-switcher privacy, TalkBack/font scaling, folder grants, sharing and notification delivery still need native validation. Response: test the automatic prompt on the connected phone and complete broader validation before a stable release.
+- PIN performance, automatic biometric prompting, cancellation/PIN fallback and native share/Drive upload-screen navigation are confirmed on the connected S24 Ultra. Folder completion/recovery, full app-switcher privacy, TalkBack/font scaling and notifications still need native validation. Response: test the updated folder flow and complete broader validation before a stable release.
 - Direct Google Drive authorization is unfinished. Response: keep direct sync disabled and offer the tested manual share/download and file-restore flow. Native Drive upload completion remains user-confirmed.
 - The app lock controls access; ordinary local/folder/CSV/report data remains readable. Protected manual exports use a separate password. Response: explain the distinction and keep off-device copies private.
 - Automatic backups run after foreground edits and are suspended after local recovery; reminders retain the nearest 60 alerts plus weekly and refresh on foreground. Response: explain these operating limits in the feature notes.
@@ -49,6 +49,10 @@ Next:
 - 2026-09-12: Facing potential overwrite of external backups during startup or recovery, chose explicit first save and suspended automatic backup after local recovery, to protect older/newer copies, accepting a manual review step.
 
 ## Log
+
+- 2026-09-12 [work]: Prepared Alpha 4 after direct ADB reproduction reached Drive's upload screen through More and scrolling. Added matching guidance, explicit truncation for Android document rewrites, and sanitized partial-backup errors. Full app checks (55 backup assertions), TypeScript, 57 release guards and five real-hook bookkeeping scenarios passed. Provider truncation is a verified compatibility issue; the phone's earlier generic folder failure remains unconfirmed pending the updated native test.
+
+- 2026-09-12 [release]: Published and installed Alpha 3 from e8bf4a3 after both Actions runs and 1,228 automated checks passed. Independently verified APK checksum/signature/manifest/native module. Phone tests confirmed automatic biometrics, cancellation without loops, PIN fallback and re-entry from Drive. Drive's upload screen was reached via More and scrolling; no upload or backup-folder change occurred. Investigating the separate generic folder error and preparing truncation/partial-save improvements.
 
 - 2026-09-12 [work]: User confirmed Alpha 2 PIN unlock works promptly. App-specific diagnostics showed about 0.50 seconds of native-worker CPU time with no sustained JavaScript load or errors. Implemented automatic biometric entry with cancellation/PIN fallback, preserved opt-out and background race protection. Passed full app checks (118 privacy checks), TypeScript, 57 release guards and 16 independent React lifecycle scenarios. Preparing the signed Alpha 3 update; PIN and ledger contents remain private.
 

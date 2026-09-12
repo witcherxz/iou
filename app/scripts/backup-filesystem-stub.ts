@@ -1,6 +1,9 @@
 /** In-memory provider with injected partial writes for recovery regression checks. */
 export const files = new Map<string, string>();
 export const folders = new Set<string>();
+export enum FileMode { Truncate = 'wt' }
+export let openHandles = 0;
+export const nonTruncatingFolders = new Set<string>();
 let failingName: string | null = null;
 let failingPattern: RegExp | null = null;
 export const failNextWrite = (name: string) => { failingName = name; };
@@ -30,6 +33,16 @@ export class File {
     if (text === undefined) throw new Error('Missing file');
     return text;
   }
+  open(mode: FileMode) {
+    if (mode !== FileMode.Truncate) throw new Error('Unexpected mode');
+    files.set(this.uri, '');
+    openHandles++;
+    let closed = false;
+    return {
+      writeBytes: (bytes: Uint8Array) => this.write(new TextDecoder('utf-8', { ignoreBOM: true }).decode(bytes)),
+      close: () => { if (!closed) { closed = true; openHandles--; } },
+    };
+  }
   write(text: string) {
     if (this.name === failingName || failingPattern?.test(this.name)) {
       failingName = null;
@@ -37,6 +50,8 @@ export class File {
       files.set(this.uri, text.slice(0, 20));
       throw new Error('Provider failed after truncating file');
     }
-    files.set(this.uri, text);
+    const old = files.get(this.uri) ?? '';
+    const retainsTail = [...nonTruncatingFolders].some(uri => this.uri.startsWith(uri + '/'));
+    files.set(this.uri, text + (retainsTail ? old.slice(text.length) : ''));
   }
 }

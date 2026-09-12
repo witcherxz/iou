@@ -6,7 +6,7 @@ Screenshots: [backup tools](screenshots/features-backup-tools-dark.png), [protec
 
 ## Google Drive
 
-Choose **Google Drive (يدوي)** in backup setup, then **مشاركة إلى Drive**. The phone opens its share sheet with the complete readable HTML report. Select Drive, choose the account and folder, and finish saving in Drive. If Drive is absent, install its app and sign in, or save the file first and upload it from Drive. In the browser, **تنزيل نسخة لـ Drive** downloads the same report for uploading to Drive.
+Choose **Google Drive (يدوي)** in backup setup, then **مشاركة إلى Drive**. The phone opens its share sheet with the complete readable HTML report. On Android, Drive may be below the first visible app row: tap **المزيد** (More), scroll upward through the app list, and choose **Drive**. Review the account and folder, then tap **تحميل** (Upload) or **حفظ** (Save) in Drive. If Drive is absent from the full list, install its app and sign in, or save the file first and upload it from Drive. In the browser, **تنزيل نسخة لـ Drive** downloads the same report for uploading to Drive.
 
 To recover it, choose **استعادة ملف من Drive**. Select the report through the system file picker where Drive is available, or download it from Drive first and select the local file. The usual validation and confirmation preview run before replacing the ledger. Import preserves the chosen manual Drive destination.
 
@@ -32,6 +32,8 @@ CSV files are for reading and analysis, not direct import. Restore accepts the f
 Each successful folder backup creates an immutable, dated `iou-snapshot-*.json` file and verifies it by reading it back. Before replacing a legacy primary backup, IoU archives the existing valid primary. `iou-backup.json` and `iou-backup.previous.json` remain compatibility mirrors. A partial new write cannot truncate the existing dated files. Corrupt candidates do not replace known-good recovery copies.
 
 Only after the latest JSON and readable companions have been verified does IoU prune dated snapshots to the ten newest archive writes. Cleanup is best effort; a provider that refuses deletion can retain more versions. Unrelated user files are never pruned. The latest HTML and four CSV companions reflect the latest successful write; if companion generation fails, the operation reports failure but the canonical JSON history remains recoverable.
+
+A partial-write warning states when a verified recovery snapshot exists but updating the current files or readable report failed. The app log records only a fixed diagnostic code for the failed stage, without a folder URI or ledger contents. Partial writes do not advance the successful-backup timestamp. Retry the folder backup explicitly to verify that every file was saved.
 
 The history screen lists valid versions, hides duplicate mirrors, and allows restoring an older selection after re-reading and validating it. If the primary is unreadable, automatic selection finds the newest valid backup by its actual timestamp, including dated history. Files that exist but are all invalid are reported as invalid rather than an empty folder.
 

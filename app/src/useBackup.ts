@@ -5,7 +5,7 @@ import { exportArtifact, exportToFile, importFromFile, SharingUnavailableError }
 import { BackupPasswordError, decryptBackup, encryptBackup, encryptedEnvelope } from './backup/encrypted';
 import { parseReadableBackup, readableFiles } from './backup/readable';
 import {
-  folderHasBackup, folderIsReachable, folderLabel, folderSupported, FolderUnavailableError,
+  folderHasBackup, folderIsReachable, folderLabel, folderSupported, FolderUnavailableError, FolderBackupWriteError,
   pickFolder, readFolderBackup, writeToFolder, listFolderVersions, readFolderVersion, FolderBackupVersion,
 } from './backup/folder';
 import {
@@ -132,6 +132,10 @@ export function useBackup({ state, ready, suspendAutomatic = false, onRestored, 
     let message = restoring ? 'تعذّرت الاستعادة. حاول مرة أخرى' : 'تعذّر حفظ النسخة. حاول مرة أخرى';
     if (error instanceof InvalidBackupError) message = 'النسخة غير صالحة أو إصدارها غير مدعوم';
     else if (error instanceof BackupPasswordError) message = error.message;
+    else if (error instanceof FolderBackupWriteError) {
+      message = error.message;
+      console.warn('[IoU backup]', error.code);
+    }
     else if (error instanceof SharingUnavailableError) message = 'المشاركة غير متاحة على هذا الجهاز';
     else if (error instanceof NotConfiguredError) message = 'Google Drive غير متاح حالياً. اختر ملفاً أو مجلداً';
     else if (error instanceof NotSignedInError) {
