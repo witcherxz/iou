@@ -86,7 +86,8 @@ function UnlockForm({ c }: { c: Colors }) {
           )}
           <OutlinedField c={c} label="رمز القفل" secureTextEntry keyboardType="number-pad" inputMode="numeric"
             textContentType="none" autoComplete="off" autoCorrect={false} maxLength={6} value={pin}
-            editable={!privacy.busy && seconds === 0} onChangeText={v => { setPin(normalizePin(v)); setError(''); }}
+            editable={!privacy.busy && seconds === 0} onFocus={privacy.controller.preferPin}
+            onChangeText={v => { privacy.controller.preferPin(); setPin(normalizePin(v)); setError(''); }}
             onSubmitEditing={() => { if (PIN_DIGITS.test(pin) && !privacy.busy && !seconds) void authenticate(false); }}
             style={{ writingDirection: 'ltr', textAlign: 'center', fontSize: 24 }}
             helperText={seconds ? `حاول مرة أخرى بعد ${seconds} ثانية.` : error || 'أدخل رمزك من 4 إلى 6 أرقام.'} error={!!error || seconds > 0} />

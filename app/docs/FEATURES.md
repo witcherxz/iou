@@ -10,7 +10,7 @@ Implemented locally on 2026-09-12. The Arabic Material 3 interface continues to 
 | Debt forgiveness | Recording an entry → **إعفاء من الدين**, or open the debt's forgiveness action | Waive all or part of a debt with an actual date and optional reason. Cash paid and forgiven amounts remain separate in history, installments, and readable exports. |
 | Recovery and spreadsheets | Settings → **النسخ السابقة والتصدير للجداول** | Open local/folder history; export a readable report or individual CSV tables; optionally protect an export with a separate password. |
 | Actual transaction dates | Debt/payment forms → **تاريخ الدين / تاريخ الدفعة** | Choose the date money changed hands; today/yesterday shortcuts are available. The original recording timestamp is retained separately. |
-| Optional privacy lock | Settings → **قفل التطبيق** | Confirm a 4–6 digit PIN; enable supported strong biometrics with PIN fallback. Lock on leaving the app, or use **قفل الآن**. |
+| Optional privacy lock | Settings → **قفل التطبيق** | Confirm a 4–6 digit PIN; supported strong biometrics default on and prompt automatically on entry. Cancellation leaves PIN fallback available. Lock on leaving the app, or use **قفل الآن**. |
 | Flexible reminders | **التذكيرات** tab | Set a local time, advance notice, overdue cadence, weekly day, notification privacy and individual snoozes. |
 
 ## Financial corrections
@@ -59,3 +59,5 @@ Before a stable release, test native biometric success/cancellation, background/
 
 
 Alpha 2 adds native PIN derivation and bounded errors, manual Google Drive sharing/restoration, and distinct forgiveness. See [Alpha 2 release notes](releases/0.1.0-alpha.2.md) for changes and device-validation limits.
+
+Alpha 3 adds automatic biometric prompting on entry while preserving PIN fallback and existing biometric preferences. See [Alpha 3 release notes](releases/0.1.0-alpha.3.md).

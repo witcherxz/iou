@@ -38,6 +38,8 @@ export class PrivacyController {
   private authorizedUntil = 0;
   private pendingFailure: LockRecord | null = null;
   private pendingMutation: Promise<void> | null = null;
+  private foreground = false;
+  private automaticBiometricAttempted = false;
   private snapshot: PrivacySnapshot = { ready: false, available: false, enabled: false,
     unlocked: false, busy: false, biometricAvailable: false, biometricEnabled: false,
     biometricPrompt: false, blockedUntil: 0, fatalError: null };
@@ -111,6 +113,26 @@ export class PrivacyController {
     if (this.snapshot.enabled) this.publish({ unlocked: false });
   };
 
+  setForeground = (foreground: boolean) => { this.foreground = foreground; };
+  background = () => {
+    this.foreground = false;
+    this.automaticBiometricAttempted = false;
+    this.lock();
+    if (this.snapshot.biometricPrompt) void this.adapter.cancelAuthentication?.().catch(() => {});
+  };
+  preferPin = () => { this.automaticBiometricAttempted = true; };
+  lockManually = () => { this.preferPin(); this.lock(); };
+
+  /** Once per real app visit. Native-prompt blur/focus never re-arms this latch. */
+  autoUnlockWithBiometrics = async (): Promise<boolean> => {
+    const state = this.snapshot;
+    if (!this.foreground || this.automaticBiometricAttempted || !state.ready || !state.available ||
+      !state.enabled || state.unlocked || state.busy || state.fatalError || state.biometricPrompt ||
+      !state.biometricEnabled || !state.biometricAvailable) return false;
+    this.automaticBiometricAttempted = true;
+    try { return await this.authenticateBiometric(); } catch { return false; }
+  };
+
   private async save(record: LockRecord) {
     try { await this.mutate(() => this.adapter.write(JSON.stringify(record))); }
     catch (error) { if (error instanceof PrivacyTimeoutError) throw error; throw new PrivacyError('تعذر حفظ إعدادات القفل. أعد المحاولة.'); }
@@ -141,6 +163,7 @@ export class PrivacyController {
   });
 
   authenticatePin = async (pin: string, purpose: 'unlock' | 'settings' = 'unlock'): Promise<boolean> => this.run(async () => {
+    this.preferPin();
     if (!this.snapshot.ready || this.snapshot.fatalError) throw new PrivacyError('أعد محاولة قراءة إعدادات القفل أولاً.');
     const record = this.record;
     if (!record || !PIN_DIGITS.test(pin)) throw new PrivacyError('أدخل رمزك من 4 إلى 6 أرقام.');
@@ -168,6 +191,7 @@ export class PrivacyController {
   });
 
   authenticateBiometric = async (purpose: 'unlock' | 'settings' = 'unlock'): Promise<boolean> => this.run(async () => {
+    this.automaticBiometricAttempted = true;
     if (!this.snapshot.ready || this.snapshot.fatalError) return false;
     if (!this.record?.biometric || !this.snapshot.biometricAvailable) return false;
     const epoch = this.epoch;

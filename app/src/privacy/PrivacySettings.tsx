@@ -61,7 +61,7 @@ export function PrivacySettings({ c, onBack, onEnabled }: { c: Colors; onBack: (
             <T style={{ ...M3.type.bodyLarge, color: c.onSurfaceVariant }}>
               {verifying ? 'أدخل رمزك الحالي أو استخدم البصمة قبل تغيير إعدادات القفل.' : enrolling ?
                 `اختر رمزاً من 4 إلى 6 أرقام وتذكره.${privacy.biometricAvailable ? ' ستستخدمه إذا تعذرت البصمة أو الوجه.' : ''}` :
-                privacy.enabled ? `${privacy.biometricEnabled ? 'البصمة أو الوجه، مع رمز احتياطي.' : 'فتح الدفتر برمزك.'} يُقفل الدفتر عند مغادرة التطبيق.` :
+                privacy.enabled ? `${privacy.biometricEnabled ? 'تظهر البصمة أو الوجه تلقائياً عند فتح التطبيق، مع رمز احتياطي.' : 'فتح الدفتر برمزك.'} يُقفل الدفتر عند مغادرة التطبيق.` :
                   'يمكنك طلب رمز أو بصمة عند فتح الدفتر. التفعيل اختياري.'}
             </T>
           </View>
@@ -87,7 +87,7 @@ export function PrivacySettings({ c, onBack, onEnabled }: { c: Colors; onBack: (
                 maxLength={6} editable={!privacy.busy} style={{ writingDirection: 'ltr', textAlign: 'center', fontSize: 24 }} />
               {privacy.biometricAvailable && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, minHeight: 64 }}>
                 <View style={{ flex: 1, gap: 4 }}><T style={{ ...M3.type.bodyLarge, color: c.onSurface }}>البصمة أو الوجه</T>
-                  <T style={{ ...M3.type.bodyMedium, color: c.onSurfaceVariant }}>مع الاحتفاظ بالرمز كطريقة بديلة.</T></View>
+                  <T style={{ ...M3.type.bodyMedium, color: c.onSurfaceVariant }}>تظهر تلقائياً عند فتح التطبيق، ويبقى الرمز طريقة بديلة.</T></View>
                 <Toggle c={c} on={biometric} onToggle={() => setBiometric(v => !v)} disabled={privacy.busy} label="البصمة أو الوجه" />
               </View>}
             </>}

@@ -1,20 +1,20 @@
 # Android alpha releases
 
-The application version is `0.1.0-alpha.2`, Android version code `2`, and production application ID `io.github.witcherxz.iou`. The same version is recorded in `app.json`, `package.json`, and the package-lock root. iOS uses the numeric marketing version `0.1.0` and build number `2` if built separately.
+The application version is `0.1.0-alpha.3`, Android version code `3`, and production application ID `io.github.witcherxz.iou`. The same version is recorded in `app.json`, `package.json`, and the package-lock root. iOS uses the numeric marketing version `0.1.0` and build number `3` if built separately.
 
 ## Build and publish
 
 1. Update the version in all three files, increase Android `versionCode`, and add `docs/releases/<version>.md`.
 2. Run `npm run typecheck` and `npm run check`. The release check traverses the production source graph and rejects test fixtures, mocks, sample ledger markers and seeding switches.
 3. Commit/push the reviewed changes. Main-branch Actions runs produce a signed APK artifact.
-4. Push a matching version tag, such as `v0.1.0-alpha.2`. Actions builds and verifies the APK, then publishes it and its `.apk.sha256` checksum to a GitHub prerelease. Tag/version mismatches fail.
+4. Push a matching version tag, such as `v0.1.0-alpha.3`. Actions builds and verifies the APK, then publishes it and its `.apk.sha256` checksum to a GitHub prerelease. Tag/version mismatches fail.
 
 The workflow runs checks for pull requests without exposing signing credentials. Release builds use Node 22, JDK 17, Expo prebuild, and Gradle `:app:assembleRelease`. A Gradle init script assigns the dedicated release signing configuration and disables debugging; it does not silently fall back to the template debug key.
 
 Before upload, the APK verifier checks package ID, version name/code, non-debuggable manifest, signature certificate, embedded Hermes/JavaScript and absence of demo fixture content. Downloaded APK checksums can be verified using:
 
 ```bash
-sha256sum -c iou-0.1.0-alpha.2.apk.sha256
+sha256sum -c iou-0.1.0-alpha.3.apk.sha256
 ```
 
 ## Signing key
@@ -38,6 +38,20 @@ The old debug package was `com.example.iou` and used the Expo template signing k
 Alpha release notes record remaining device verification, including biometrics, notification delivery, app-switcher privacy and folder-provider behavior. A successful production build establishes packaging and signing, not hardware behavior.
 
 ## Verified alpha release
+
+### Alpha 2
+
+On 2026-09-12, [v0.1.0-alpha.2](https://github.com/witcherxz/iou/releases/tag/v0.1.0-alpha.2) was published from commit `18e786ec512f28ad7e83c0cf6318de2a891cc409`. The [release workflow](https://github.com/witcherxz/iou/actions/runs/34700682863) and main workflow passed, including 1,206 automated checks, TypeScript, native compilation and publication. Thirty isolated browser/Drive scenarios also passed locally.
+
+The independently downloaded APK is 72,375,806 bytes, uses production package `io.github.witcherxz.iou`, version `0.1.0-alpha.2` / code `2`, and the same pinned release key. Verification confirmed debugging disabled, no overlay permission or demo fixtures, the offline bundle, and both compiled native PIN worker classes in DEX.
+
+```text
+537aa3a528136384ec9a590bbd9fe16db7d32c66c7ecaf1b55b40fab66ecfa06
+```
+
+ADB confirmed a successful update over Alpha 1 on a Samsung S24 Ultra (`SM-S928B`, Android 16/API 36). Before updating, app-specific diagnostics captured roughly two minutes of original PIN setup work, with about 70 seconds of JavaScript CPU time and no JavaScript error, native crash or storage error. The user confirmed that Alpha 2 PIN unlock works promptly. The observed attempt used about 0.50 seconds of native-worker CPU time with no sustained JavaScript spike or errors; CPU time is not a wall-clock latency measurement. Drive share-provider confirmation is pending. No PIN or ledger content was collected for diagnostics.
+
+### Alpha 1
 
 On 2026-09-12, [v0.1.0-alpha.1](https://github.com/witcherxz/iou/releases/tag/v0.1.0-alpha.1) was published from commit `7762dfd041a35c34b4e21adacfe102be943139cb`. The [release workflow](https://github.com/witcherxz/iou/actions/runs/34681048490) passed TypeScript, 1,082 automated checks, native compilation, APK verification and publication. The main-branch workflow also passed.
 

@@ -24,6 +24,7 @@ function harness(timeoutMs?: number) {
   let deriveCount = 0;
   let saltIndex = 0;
   let bioResult = true;
+  let biometricCount = 0;
   let deferred: Promise<void> | null = null;
   const adapter: PrivacyAdapter = {
     available: async () => true,
@@ -33,12 +34,12 @@ function harness(timeoutMs?: number) {
     randomSalt: async () => (++saltIndex).toString(16).padStart(32, '0'),
     derive: async (pin, salt) => { deriveCount++; if (deferred) await deferred; return (pin + salt).padEnd(64, '0').slice(0, 64); },
     hasBiometrics: async () => true,
-    authenticate: async () => { if (deferred) await deferred; return bioResult; },
+    authenticate: async () => { biometricCount++; if (deferred) await deferred; return bioResult; },
     now: () => now,
   };
   return { adapter, controller: new PrivacyController(adapter, timeoutMs), getRaw: () => raw,
     setRaw: (value: string | null) => { raw = value; }, advance: (ms: number) => { now += ms; },
-    failures, deriveCount: () => deriveCount, setBio: (value: boolean) => { bioResult = value; },
+    failures, deriveCount: () => deriveCount, biometricCount: () => biometricCount, setBio: (value: boolean) => { bioResult = value; },
     defer: () => { let resolve!: () => void; deferred = new Promise<void>(r => { resolve = r; }); return () => { resolve(); deferred = null; }; } };
 }
 
@@ -234,6 +235,89 @@ async function main() {
     'Timed-out biometric prompt is cancelled and PIN controls become usable');
   finishSlowBio(); await Promise.resolve();
   check(!slowSetup.controller.getSnapshot().unlocked, 'Late biometric success cannot open the gate');
+
+  const automatic = harness();
+  await automatic.controller.initialize(); await automatic.controller.enable('1234', true);
+  const auto = new PrivacyController(automatic.adapter);
+  auto.setForeground(true);
+  check(!await auto.autoUnlockWithBiometrics() && automatic.biometricCount() === 0,
+    'Automatic biometrics wait for the persisted lock to load');
+  await auto.initialize();
+  automatic.setBio(false);
+  check(!await auto.autoUnlockWithBiometrics() && automatic.biometricCount() === 1 && !auto.getSnapshot().unlocked,
+    'First active app entry automatically prompts, while cancellation keeps the ledger locked');
+  auto.setForeground(false); auto.setForeground(true);
+  for (let i = 0; i < 3; i++) await auto.autoUnlockWithBiometrics();
+  check(automatic.biometricCount() === 1,
+    'Native prompt focus changes and repeated render effects cannot trigger a cancellation loop');
+  auto.background();
+  check(!await auto.autoUnlockWithBiometrics() && automatic.biometricCount() === 1,
+    'A real background transition never starts authentication in the background');
+  automatic.setBio(true); auto.setForeground(true);
+  check(await auto.autoUnlockWithBiometrics() && automatic.biometricCount() === 2 && auto.getSnapshot().unlocked,
+    'Returning from a real background transition gets one new automatic attempt');
+  await auto.autoUnlockWithBiometrics();
+  check(automatic.biometricCount() === 2, 'An unlocked ledger never auto-prompts');
+  auto.lockManually();
+  check(!await auto.autoUnlockWithBiometrics() && !auto.getSnapshot().unlocked,
+    'Manual lock stays locked instead of immediately reopening with biometrics');
+
+  const entering = new PrivacyController(automatic.adapter);
+  await entering.initialize();
+  check(!await entering.autoUnlockWithBiometrics() && automatic.biometricCount() === 2,
+    'A cold start that is not yet active does not prompt');
+  entering.setForeground(true);
+  const finishAutomatic = automatic.defer();
+  const firstAutomatic = entering.autoUnlockWithBiometrics();
+  check(entering.getSnapshot().biometricPrompt && automatic.biometricCount() === 3,
+    'Eligible automatic authentication starts the native prompt immediately');
+  check(!await entering.autoUnlockWithBiometrics() && automatic.biometricCount() === 3,
+    'Overlapping effect calls cannot start a second native prompt');
+  entering.setForeground(false);
+  check(!await entering.autoUnlockWithBiometrics(), 'Native-prompt obscuring cannot start a background retry');
+  let backgroundCancellations = 0;
+  automatic.adapter.cancelAuthentication = async () => { backgroundCancellations++; };
+  entering.background(); finishAutomatic();
+  check(!await firstAutomatic && !entering.getSnapshot().unlocked && backgroundCancellations === 1,
+    'Genuine background during the prompt cancels it and rejects late success');
+  entering.setForeground(true);
+  check(await entering.autoUnlockWithBiometrics() && automatic.biometricCount() === 4,
+    'The next real visit can authenticate after the previous prompt was invalidated');
+
+  const pinRace = new PrivacyController(automatic.adapter);
+  await pinRace.initialize(); pinRace.setForeground(true);
+  const finishManualPin = automatic.defer();
+  const manualPin = pinRace.authenticatePin('9999');
+  check(!await pinRace.autoUnlockWithBiometrics() && automatic.biometricCount() === 4,
+    'Automatic biometrics cannot interrupt an in-progress PIN attempt');
+  finishManualPin(); await manualPin;
+  check(!await pinRace.autoUnlockWithBiometrics() && automatic.biometricCount() === 4,
+    'A failed PIN attempt remains on the PIN fallback without an automatic biometric retry');
+  pinRace.background(); pinRace.setForeground(true); pinRace.preferPin();
+  check(!await pinRace.autoUnlockWithBiometrics() && automatic.biometricCount() === 4,
+    'Focusing the PIN field suppresses an automatic prompt before typing starts');
+  check(await pinRace.authenticatePin('1234'), 'The original PIN remains usable after suppressing automatic biometrics');
+
+  const optedOut = harness();
+  await optedOut.controller.initialize(); await optedOut.controller.enable('1234', false);
+  const optedOutReload = new PrivacyController(optedOut.adapter);
+  await optedOutReload.initialize(); optedOutReload.setForeground(true);
+  check(!await optedOutReload.autoUnlockWithBiometrics() && optedOut.biometricCount() === 0,
+    'An explicit persisted biometric opt-out survives restart and is respected');
+  const unavailableBio = new PrivacyController(automatic.adapter);
+  automatic.adapter.hasBiometrics = async () => false;
+  await unavailableBio.initialize(); unavailableBio.setForeground(true);
+  check(!await unavailableBio.autoUnlockWithBiometrics() && automatic.biometricCount() === 4,
+    'Unavailable or unenrolled biometrics leave automatic authentication disabled');
+  check(await unavailableBio.authenticatePin('1234'), 'PIN fallback works when biometric enrollment is unavailable');
+  const failedStorage = harness();
+  failedStorage.setRaw('{invalid'); await failedStorage.controller.initialize(); failedStorage.controller.setForeground(true);
+  check(!await failedStorage.controller.autoUnlockWithBiometrics() && failedStorage.biometricCount() === 0,
+    'Fatal privacy storage errors cannot launch an automatic prompt');
+  const noLock = harness();
+  await noLock.controller.initialize(); noLock.controller.setForeground(true);
+  check(!await noLock.controller.autoUnlockWithBiometrics() && noLock.biometricCount() === 0,
+    'The optional lock stays optional and never prompts while disabled');
 
   const salt = '0123456789abcdef0123456789abcdef';
   const saltBytes = Uint8Array.from(salt.match(/../g)!, byte => parseInt(byte, 16));
