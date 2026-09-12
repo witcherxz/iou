@@ -8,6 +8,7 @@ expo-env.d.ts
 # Generated native projects — recreated by `expo prebuild`
 /app/android/
 /app/ios/
+/app/release/
 
 # Signing material must never be committed
 *.jks

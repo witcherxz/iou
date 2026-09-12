@@ -1,16 +1,19 @@
 {
   "name": "app",
-  "version": "1.0.0",
+  "version": "0.1.0-alpha.1",
   "main": "index.ts",
   "dependencies": {
     "@expo-google-fonts/ibm-plex-sans-arabic": "^0.4.2",
     "@expo/metro-runtime": "~57.0.15",
+    "@material/material-color-utilities": "^0.4.0",
+    "@noble/hashes": "2.4.0",
     "@react-native-async-storage/async-storage": "2.2.0",
     "expo": "~57.0.22",
     "expo-auth-session": "~57.0.12",
     "expo-crypto": "~57.0.3",
     "expo-file-system": "~57.0.7",
     "expo-font": "~57.0.4",
+    "expo-local-authentication": "~57.0.3",
     "expo-notifications": "~57.0.18",
     "expo-secure-store": "~57.0.4",
     "expo-sharing": "~57.0.19",
@@ -33,8 +36,15 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
-    "check": "esbuild scripts/checks.ts --bundle --platform=node --format=cjs --outfile=node_modules/.cache/checks.js --log-level=error --alias:react-native=./scripts/rn-stub.js && node node_modules/.cache/checks.js",
-    "typecheck": "tsc --noEmit"
+    "check": "esbuild scripts/checks.ts --bundle --platform=node --format=cjs --outfile=node_modules/.cache/checks.js --log-level=error --alias:react-native=./scripts/rn-stub.js && node node_modules/.cache/checks.js && npm run check:backup && npm run check:ui && npm run check:encrypted && npm run check:privacy && npm run check:reminders && npm run check:entries && npm run check:release",
+    "typecheck": "tsc --noEmit",
+    "check:backup": "esbuild scripts/backup-checks.ts --bundle --platform=node --format=cjs --outfile=node_modules/.cache/backup-checks.js --log-level=error --alias:react-native=./scripts/backup-native-stub.ts --alias:expo-file-system=./scripts/backup-filesystem-stub.ts && node node_modules/.cache/backup-checks.js",
+    "check:ui": "esbuild scripts/material-checks.ts --bundle --platform=node --format=cjs --outfile=node_modules/.cache/material-checks.js --log-level=error && node node_modules/.cache/material-checks.js",
+    "check:privacy": "esbuild scripts/privacy-checks.ts --bundle --platform=node --format=cjs --outfile=node_modules/.cache/privacy-checks.js --log-level=error && node node_modules/.cache/privacy-checks.js",
+    "check:encrypted": "esbuild scripts/encrypted-backup-checks.ts --bundle --platform=node --format=cjs --outfile=node_modules/.cache/encrypted-backup-checks.js --log-level=error --alias:react-native=./scripts/backup-native-stub.ts --alias:expo-crypto=./scripts/backup-crypto-stub.ts && node node_modules/.cache/encrypted-backup-checks.js",
+    "check:reminders": "esbuild scripts/reminder-checks.ts --bundle --platform=node --format=cjs --outfile=node_modules/.cache/reminder-checks.js --log-level=error && node node_modules/.cache/reminder-checks.js && esbuild scripts/reminder-adapter-checks.ts --bundle --platform=node --format=cjs --outfile=node_modules/.cache/reminder-adapter-checks.js --log-level=error --alias:react-native=./scripts/reminder-notifications-stub.ts --alias:expo-notifications=./scripts/reminder-notifications-stub.ts && node node_modules/.cache/reminder-adapter-checks.js",
+    "check:entries": "esbuild scripts/entry-checks.ts --bundle --platform=node --format=cjs --outfile=node_modules/.cache/entry-checks.js --log-level=error --alias:react-native=./scripts/rn-stub.js && node node_modules/.cache/entry-checks.js",
+    "check:release": "node scripts/release-checks.mjs"
   },
   "private": true
 }

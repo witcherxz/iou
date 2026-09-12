@@ -4,7 +4,7 @@ import * as WebBrowser from 'expo-web-browser';
 
 import { BACKUP_FILENAME } from '../config/app';
 import { clientIdForPlatform, GOOGLE_SCOPES } from '../config/google';
-import { PersistedState } from '../types';
+import { InvalidBackupError, MAX_BACKUP_BYTES, parseBackup } from './types';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -54,10 +54,10 @@ async function readRefreshToken(): Promise<string | null> {
 }
 
 export async function hasConnectedAccount(): Promise<boolean> {
-  return !!(await readRefreshToken());
+  return !!(accessToken && Date.now() < accessTokenExpiry - 60_000) || !!(await readRefreshToken());
 }
 
-/** Full interactive consent. Returns true once a refresh token is stored. */
+/** Full interactive consent. A secure-store failure leaves a session-only connection. */
 export async function signIn(): Promise<boolean> {
   const clientId = clientIdForPlatform();
   if (!clientId) throw new NotConfiguredError();
@@ -109,7 +109,16 @@ async function getAccessToken(): Promise<string> {
   const refreshToken = await readRefreshToken();
   if (!refreshToken) throw new NotSignedInError();
 
-  const token = await AuthSession.refreshAsync({ clientId, refreshToken }, discovery);
+  let token: AuthSession.TokenResponse;
+  try {
+    token = await AuthSession.refreshAsync({ clientId, refreshToken }, discovery);
+  } catch (error) {
+    if (error && typeof error === 'object' && 'code' in error && error.code === 'invalid_grant') {
+      await signOut();
+      throw new NotSignedInError();
+    }
+    throw error;
+  }
   accessToken = token.accessToken;
   accessTokenExpiry = Date.now() + (token.expiresIn ?? 3600) * 1000;
   // Google only re-issues a refresh token occasionally; keep the newer one.
@@ -119,10 +128,23 @@ async function getAccessToken(): Promise<string> {
 
 async function driveFetch(url: string, init: RequestInit = {}) {
   const token = await getAccessToken();
-  const res = await fetch(url, {
-    ...init,
-    headers: { ...(init.headers ?? {}), Authorization: `Bearer ${token}` },
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30_000);
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      ...init,
+      signal: controller.signal,
+      headers: { ...(init.headers ?? {}), Authorization: `Bearer ${token}` },
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
+  if (res.status === 401) {
+    accessToken = null;
+    accessTokenExpiry = 0;
+    throw new NotSignedInError();
+  }
   if (!res.ok) {
     const body = await res.text().catch(() => '');
     throw new Error(`Drive ${res.status}: ${body.slice(0, 200)}`);
@@ -140,8 +162,8 @@ async function findBackupFileId(): Promise<string | null> {
 }
 
 /** Upload the ledger to the Drive appDataFolder (private to this app). */
-export async function uploadBackup(state: PersistedState): Promise<void> {
-  const body = JSON.stringify({ ...state, backedUpAt: new Date().toISOString() });
+export async function uploadBackup(payload: string): Promise<void> {
+  const body = JSON.stringify(parseBackup(payload));
   const existing = await findBackupFileId();
 
   if (existing) {
@@ -167,9 +189,12 @@ export async function uploadBackup(state: PersistedState): Promise<void> {
 }
 
 /** Returns the stored ledger, or null when no backup exists yet. */
-export async function downloadBackup(): Promise<PersistedState | null> {
+export async function downloadBackup(): Promise<string | null> {
   const id = await findBackupFileId();
   if (!id) return null;
   const res = await driveFetch(`https://www.googleapis.com/drive/v3/files/${id}?alt=media`);
-  return (await res.json()) as PersistedState;
+  if (Number(res.headers.get('Content-Length')) > MAX_BACKUP_BYTES) throw new InvalidBackupError();
+  const text = await res.text();
+  if (text.length > MAX_BACKUP_BYTES) throw new InvalidBackupError();
+  return text;
 }

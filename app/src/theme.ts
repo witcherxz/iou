@@ -1,50 +1,111 @@
-// Palette lifted verbatim from the Claude Design prototype (IoU App.dc.html).
+import { argbFromHex, Hct, hexFromArgb, SchemeTonalSpot } from '@material/material-color-utilities';
+import type { TextStyle } from 'react-native';
 
 export const DEFAULT_ACCENT = '#2f5fb0';
 export const ACCENT_OPTIONS = ['#2f5fb0', '#1e7a4c', '#6b4fbb', '#0e7c86'];
 
+// Material 3 roles, generated from the existing brand seed. Text always uses
+// the corresponding on-role; dark mode has its own tonal palette.
 export interface Colors {
-  bg: string;
-  card: string;
-  cardHover: string;
-  nav: string;
-  text: string;
-  muted: string;
-  border: string;
-  divider: string;
+  surface: string;
+  surfaceContainerLowest: string;
+  surfaceContainerLow: string;
+  surfaceContainer: string;
+  surfaceContainerHigh: string;
+  surfaceContainerHighest: string;
+  onSurface: string;
+  onSurfaceVariant: string;
+  outline: string;
+  outlineVariant: string;
   primary: string;
-  primaryBg: string;
-  green: string;
-  greenBg: string;
-  red: string;
-  redBg: string;
-  toastBg: string;
-  toastFg: string;
-  track: string;
-  /** Amber pair used by the "مسدد جزئياً" badge. */
-  warnBg: string;
-  warnFg: string;
+  onPrimary: string;
+  primaryContainer: string;
+  onPrimaryContainer: string;
+  secondaryContainer: string;
+  onSecondaryContainer: string;
+  inverseSurface: string;
+  inverseOnSurface: string;
+  inversePrimary: string;
+  error: string;
+  onError: string;
+  errorContainer: string;
+  onErrorContainer: string;
+  disabledContainer: string;
+  disabledContent: string;
+  stateLayer: string;
+  scrim: string;
+  // Compatibility names for ledger semantic colors and existing derived views.
+  bg: string; card: string; cardHover: string; nav: string;
+  text: string; muted: string; border: string; divider: string;
+  primaryBg: string; green: string; greenBg: string; onGreenContainer: string; red: string; redBg: string;
+  toastBg: string; toastFg: string; track: string; warnBg: string; warnFg: string;
 }
 
 export function makeColors(dark: boolean, accent: string = DEFAULT_ACCENT): Colors {
-  return dark
-    ? {
-        bg: '#141318', card: '#1f1e25', cardHover: '#28272f', nav: '#1a191f',
-        text: '#f2f0f7', muted: '#9a97a6', border: '#3a3945', divider: '#2c2b34',
-        primary: accent, primaryBg: accent + '33',
-        green: '#6fd39a', greenBg: '#173324', red: '#ff8a8a', redBg: '#3a1d1d',
-        toastBg: '#f2f0f7', toastFg: '#141318', track: '#3a3945',
-        warnBg: '#3d2f0f', warnFg: '#f2c66d',
-      }
-    : {
-        bg: '#f6f5fa', card: '#ffffff', cardHover: '#f0eef5', nav: '#ffffff',
-        text: '#1b1a22', muted: '#6f6d7a', border: '#dcdae4', divider: '#eeedf3',
-        primary: accent, primaryBg: accent + '1f',
-        green: '#1e7a4c', greenBg: '#deefe4', red: '#b3261e', redBg: '#f9dedc',
-        toastBg: '#1b1a22', toastFg: '#ffffff', track: '#cfcdd8',
-        warnBg: '#fff3d6', warnFg: '#8a5a00',
-      };
+  const seed = /^#[0-9a-f]{6}$/i.test(accent) ? accent : DEFAULT_ACCENT;
+  const scheme = new SchemeTonalSpot(Hct.fromInt(argbFromHex(seed)), dark, 0);
+  const positive = new SchemeTonalSpot(Hct.fromInt(argbFromHex('#1e7a4c')), dark, 0);
+  const warning = new SchemeTonalSpot(Hct.fromInt(argbFromHex('#805900')), dark, 0);
+  const roles = {
+    surface: hexFromArgb(scheme.surface),
+    surfaceContainerLowest: hexFromArgb(scheme.surfaceContainerLowest),
+    surfaceContainerLow: hexFromArgb(scheme.surfaceContainerLow),
+    surfaceContainer: hexFromArgb(scheme.surfaceContainer),
+    surfaceContainerHigh: hexFromArgb(scheme.surfaceContainerHigh),
+    surfaceContainerHighest: hexFromArgb(scheme.surfaceContainerHighest),
+    onSurface: hexFromArgb(scheme.onSurface),
+    onSurfaceVariant: hexFromArgb(scheme.onSurfaceVariant),
+    outline: hexFromArgb(scheme.outline),
+    outlineVariant: hexFromArgb(scheme.outlineVariant),
+    primary: hexFromArgb(scheme.primary),
+    onPrimary: hexFromArgb(scheme.onPrimary),
+    primaryContainer: hexFromArgb(scheme.primaryContainer),
+    onPrimaryContainer: hexFromArgb(scheme.onPrimaryContainer),
+    secondaryContainer: hexFromArgb(scheme.secondaryContainer),
+    onSecondaryContainer: hexFromArgb(scheme.onSecondaryContainer),
+    inverseSurface: hexFromArgb(scheme.inverseSurface),
+    inverseOnSurface: hexFromArgb(scheme.inverseOnSurface),
+    inversePrimary: hexFromArgb(scheme.inversePrimary),
+    error: hexFromArgb(scheme.error),
+    onError: hexFromArgb(scheme.onError),
+    errorContainer: hexFromArgb(scheme.errorContainer),
+    onErrorContainer: hexFromArgb(scheme.onErrorContainer),
+    scrim: '#00000052',
+  };
+  return {
+    ...roles,
+    disabledContainer: roles.onSurface + '1f',
+    disabledContent: roles.onSurface + '61',
+    stateLayer: roles.onSurface + '14',
+    bg: roles.surface, card: roles.surfaceContainerLow, cardHover: roles.surfaceContainerHigh,
+    nav: roles.surfaceContainer, text: roles.onSurface, muted: roles.onSurfaceVariant,
+    border: roles.outline, divider: roles.outlineVariant,
+    primaryBg: roles.primaryContainer,
+    green: hexFromArgb(positive.primary), greenBg: hexFromArgb(positive.primaryContainer),
+    onGreenContainer: hexFromArgb(positive.onPrimaryContainer),
+    red: roles.error, redBg: roles.errorContainer,
+    toastBg: roles.inverseSurface, toastFg: roles.inverseOnSurface,
+    track: roles.surfaceContainerHighest,
+    warnBg: hexFromArgb(warning.primaryContainer), warnFg: hexFromArgb(warning.onPrimaryContainer),
+  };
 }
+
+const textRole = (fontSize: number, lineHeight: number, fontWeight: TextStyle['fontWeight'] = '400'): TextStyle =>
+  ({ fontSize, lineHeight, fontWeight, letterSpacing: 0 });
+
+/** M3 scale; Arabic body leading is slightly increased to preserve diacritics. */
+export const M3 = {
+  space: { xs: 4, sm: 8, md: 16, lg: 24, xl: 32 },
+  shape: { extraSmall: 4, small: 8, medium: 12, large: 16, extraLarge: 28, full: 999 },
+  type: {
+    displaySmall: textRole(36, 44),
+    headlineLarge: textRole(32, 40), headlineMedium: textRole(28, 36), headlineSmall: textRole(24, 32),
+    titleLarge: textRole(22, 28), titleMedium: textRole(16, 24, '500'), titleSmall: textRole(14, 20, '500'),
+    bodyLarge: textRole(16, 24), bodyMedium: textRole(14, 22), bodySmall: textRole(12, 18),
+    labelLarge: textRole(14, 20, '500'), labelMedium: textRole(12, 16, '500'), labelSmall: textRole(11, 16, '500'),
+  },
+  layout: { railBreakpoint: 600, expandedBreakpoint: 840, maxContentWidth: 880, touchTarget: 48 },
+} as const;
 
 // ── oklch → sRGB ──────────────────────────────────────────────
 // The prototype tints avatars with oklch(). React Native has no oklch parser,

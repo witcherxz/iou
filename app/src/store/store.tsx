@@ -1,213 +1,205 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { SEED_ON_FIRST_LAUNCH, STORAGE_KEY } from '../config/app';
-import { addDays, todayISO } from '../format';
-import { emptyState, seedState } from '../seed';
-import { round2 } from '../selectors';
-import { Installment, PersistedState, Tx } from '../types';
+import { STORAGE_KEY, STORAGE_RECOVERY_KEY } from '../config/app';
+import { AddDebtInput, createDebt, createSettlements, editEntry, EntryPatch, remainingCents, restoreEntry, undoEntryEdit, voidEntry } from '../ledger';
+import { fromCents, toCents } from '../money';
+import { emptyState } from '../initialState';
+import { PersistedState } from '../types';
+import { validateState } from '../validation';
+import { createWriteQueue, readInitialLedger } from './persistence';
+import { availableLocalHistory, keepLocalSnapshot, LocalSnapshot } from './history';
 
-const newId = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
-
-interface AddDebtInput {
-  personId: string;
-  dir: 'me' | 'owe';
-  amount: number;
-  note: string;
-  /** Days from today, or null for "no due date". Ignored for instalment plans. */
-  dueInDays: number | null;
-  installmentCount?: number;
-}
+let idSequence = 0;
+const newId = () => `${Date.now().toString(36)}-${(++idSequence).toString(36)}-${Math.random().toString(36).slice(2, 9)}`;
 
 interface Store {
   state: PersistedState;
   ready: boolean;
+  storageError: string | null;
+  recoveryNotice: string | null;
+  retryLoad: () => Promise<void>;
   toast: string | null;
   showToast: (msg: string) => void;
   addPerson: (name: string) => string;
-  addDebt: (input: AddDebtInput) => void;
-  /** Pays `amount` against one debt, or oldest-first across a person's debts. */
-  settle: (personId: string, amount: number, debtId?: string | null) => void;
-  markPaid: (debtId: string) => void;
+  addDebt: (input: AddDebtInput) => boolean;
+  /** Pays one debt, or oldest-first in an explicitly selected direction. */
+  settle: (personId: string, amount: number, debtId?: string | null, dir?: 'me' | 'owe', transactionDate?: string, note?: string) => number;
+  updateEntry: (txId: string, patch: EntryPatch) => boolean;
+  cancelEntry: (txId: string) => boolean;
+  reinstateEntry: (txId: string) => boolean;
+  revertEntryEdit: (txId: string) => boolean;
+  listRecoverySnapshots: () => Promise<LocalSnapshot[]>;
+  markPaid: (debtId: string) => boolean;
   toggleReminder: (debtId: string, on: boolean) => void;
   set: (patch: Partial<PersistedState>) => void;
-  replaceAll: (next: PersistedState) => void;
+  replaceAll: (next: PersistedState) => Promise<void>;
 }
 
 const StoreContext = createContext<Store | null>(null);
 
-/** Tolerate partial/older payloads (e.g. a restored backup) without crashing. */
-function hydrate(raw: unknown): PersistedState {
-  const base = emptyState();
-  if (!raw || typeof raw !== 'object') return base;
-  const s = raw as Partial<PersistedState>;
-  return {
-    ...base,
-    ...s,
-    version: 1,
-    people: Array.isArray(s.people) ? s.people : [],
-    tx: Array.isArray(s.tx) ? s.tx : [],
-    reminderPrefs: s.reminderPrefs && typeof s.reminderPrefs === 'object' ? s.reminderPrefs : {},
-  };
-}
-
 export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<PersistedState>(emptyState);
+  const current = useRef(state);
   const [ready, setReady] = useState(false);
+  const [storageError, setStorageError] = useState<string | null>(null);
+  const [recoveryNotice, setRecoveryNotice] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const raw = await AsyncStorage.getItem(STORAGE_KEY);
-        if (raw) setState(hydrate(JSON.parse(raw)));
-        else setState(SEED_ON_FIRST_LAUNCH ? seedState() : emptyState());
-      } catch {
-        setState(SEED_ON_FIRST_LAUNCH ? seedState() : emptyState());
-      } finally {
-        setReady(true);
-      }
-    })();
-  }, []);
-
-  // Persist every change once the initial read has landed, so a failed read
-  // can never overwrite good data with the empty default.
-  useEffect(() => {
-    if (!ready) return;
-    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(state)).catch(() => {});
-  }, [state, ready]);
-
-  useEffect(() => () => {
-    if (toastTimer.current) clearTimeout(toastTimer.current);
-  }, []);
+  const loaded = useRef(false);
+  const mounted = useRef(true);
+  const loadingGeneration = useRef(0);
+  const savedJSON = useRef<string | null>(null);
+  const restoring = useRef(false);
+  const writeFailed = useRef(false);
+  const enqueue = useRef(createWriteQueue());
 
   const showToast = useCallback((msg: string) => {
     setToast(msg);
     if (toastTimer.current) clearTimeout(toastTimer.current);
-    toastTimer.current = setTimeout(() => setToast(null), 2200);
+    toastTimer.current = setTimeout(() => setToast(null), 3500);
   }, []);
+
+  const publish = useCallback((next: PersistedState) => {
+    current.current = next;
+    if (mounted.current) setState(next);
+  }, []);
+
+  const persist = useCallback((next: PersistedState): Promise<void> => {
+    const json = JSON.stringify(next);
+    return enqueue.current(async () => {
+      if (savedJSON.current !== json) {
+        // Keep the preceding valid ledger for recovery. Never rotate unread or malformed data.
+        if (savedJSON.current) {
+          await keepLocalSnapshot(AsyncStorage, savedJSON.current, json);
+          await AsyncStorage.setItem(STORAGE_RECOVERY_KEY, savedJSON.current);
+        }
+        await AsyncStorage.setItem(STORAGE_KEY, json);
+        savedJSON.current = json;
+      }
+      writeFailed.current = false;
+      if (mounted.current) setStorageError(null);
+    }).catch(error => {
+      writeFailed.current = true;
+      if (mounted.current) setStorageError('تعذّر حفظ التغييرات على الجهاز. أبقِ التطبيق مفتوحاً وأعد المحاولة أو صدّر نسخة احتياطية.');
+      throw error;
+    });
+  }, []);
+
+  const retryLoad = useCallback(async () => {
+    if (loaded.current) {
+      // A failed write must retry the live ledger, never reload older disk data.
+      try { await persist(current.current); } catch { /* status stays visible */ }
+      return;
+    }
+    const generation = ++loadingGeneration.current;
+    setReady(false);
+    setStorageError(null);
+    try {
+      const result = await readInitialLedger(AsyncStorage);
+      if (!mounted.current || generation !== loadingGeneration.current) return;
+      const next = result.state;
+      // Recovery does not imply the primary has this content. Force the next save,
+      // even if an imported snapshot is identical, while keeping recovery untouched.
+      savedJSON.current = !result.isNew && !result.recovered ? JSON.stringify(result.state) : null;
+      setRecoveryNotice(result.recovered ? 'تم استرجاع نسخة محلية سابقة لتعذّر قراءة النسخة الأحدث. قد تكون أحدث العمليات مفقودة؛ راجع الدفتر أو استعد نسخة احتياطية أحدث.' : null);
+      loaded.current = true;
+      publish(next);
+    } catch {
+      if (mounted.current && generation === loadingGeneration.current) {
+        setStorageError('تعذّرت قراءة الدفتر المحفوظ. بياناتك الأصلية لم تُستبدل. أعد المحاولة أو استعد نسخة احتياطية.');
+      }
+    } finally {
+      if (mounted.current && generation === loadingGeneration.current) setReady(true);
+    }
+  }, [persist, publish]);
+
+  useEffect(() => {
+    mounted.current = true;
+    void retryLoad();
+    return () => {
+      mounted.current = false;
+      loadingGeneration.current++;
+      if (toastTimer.current) clearTimeout(toastTimer.current);
+    };
+  }, [retryLoad]);
+
+  const commit = useCallback((next: PersistedState): boolean => {
+    if (!loaded.current || restoring.current || writeFailed.current) return false;
+    try {
+      const valid = validateState(next);
+      publish(valid);
+      void persist(valid).catch(() => {});
+      return true;
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'تعذّر تسجيل العملية');
+      return false;
+    }
+  }, [persist, publish, showToast]);
 
   const set = useCallback((patch: Partial<PersistedState>) => {
-    setState(s => ({ ...s, ...patch }));
-  }, []);
+    commit({ ...current.current, ...patch });
+  }, [commit]);
 
-  const replaceAll = useCallback((next: PersistedState) => setState(hydrate(next)), []);
+  const replaceAll = useCallback(async (next: PersistedState) => {
+    const valid = validateState(next);
+    if (restoring.current) throw new Error('جارٍ استعادة الدفتر');
+    restoring.current = true;
+    loadingGeneration.current++;
+    try {
+      await persist(valid);
+      loaded.current = true;
+      publish(valid);
+      setRecoveryNotice(null);
+      setReady(true);
+    } finally {
+      restoring.current = false;
+    }
+  }, [persist, publish]);
 
-  const addPerson = useCallback((name: string) => {
+  const addPerson = useCallback((name: string): string => {
+    const trimmed = name.trim();
+    if (!trimmed) return '';
     const id = newId();
-    setState(s => ({
-      ...s,
-      people: [...s.people, { id, name: name.trim(), hue: Math.floor(Math.random() * 360) }],
-    }));
-    return id;
-  }, []);
+    return commit({ ...current.current, people: [...current.current.people, { id, name: trimmed, hue: Math.floor(Math.random() * 360) }] }) ? id : '';
+  }, [commit]);
 
-  const addDebt = useCallback((input: AddDebtInput) => {
-    const { personId, dir, amount, note, dueInDays, installmentCount } = input;
-    const today = todayISO();
-    setState(s => {
-      let installments: Installment[] | undefined;
-      let dueAt: string | null;
+  const addDebt = useCallback((input: AddDebtInput): boolean => {
+    const debt = createDebt(current.current, input, newId());
+    if (!debt) { showToast('تحقق من الشخص والمبلغ وتواريخ الأقساط'); return false; }
+    return commit({ ...current.current, tx: [...current.current.tx, debt] });
+  }, [commit, showToast]);
 
-      if (installmentCount && installmentCount > 1) {
-        const n = installmentCount;
-        // Split evenly, then push the rounding remainder onto the last payment
-        // so the instalments always sum back to the exact debt amount.
-        const base = Math.floor((amount / n) * 100) / 100;
-        const rest = round2(amount - base * n);
-        installments = Array.from({ length: n }, (_, i) => ({
-          amount: i === n - 1 ? round2(base + rest) : base,
-          label: `دفعة ${i + 1}`,
-          dueAt: addDays(today, 30 * (i + 1)),
-        }));
-        dueAt = installments[0].dueAt;
-      } else {
-        dueAt = dueInDays === null ? null : addDays(today, dueInDays);
-      }
+  const settle = useCallback((personId: string, amount: number, debtId?: string | null, dir?: 'me' | 'owe', transactionDate?: string, note?: string): number => {
+    const payments = createSettlements(current.current.tx, personId, amount, newId, debtId, dir, transactionDate, note);
+    if (!payments.length) { showToast('تحقق من اتجاه السداد والمبلغ المتبقي'); return 0; }
+    return commit({ ...current.current, tx: [...current.current.tx, ...payments] })
+      ? fromCents(payments.reduce((sum, payment) => sum + toCents(payment.amount), 0)) : 0;
+  }, [commit, showToast]);
 
-      const tx: Tx = {
-        id: newId(),
-        personId,
-        dir,
-        amount,
-        note: note.trim() || (dir === 'me' ? 'دين' : 'سلفة'),
-        createdAt: today,
-        dueAt,
-        ...(installments ? { installments, freq: 'month' as const } : {}),
-      };
-      return { ...s, tx: [...s.tx, tx] };
-    });
-  }, []);
+  const updateEntry = useCallback((id: string, patch: EntryPatch) => commit(editEntry(current.current, id, patch, newId())), [commit]);
+  const cancelEntry = useCallback((id: string) => commit(voidEntry(current.current, id, newId())), [commit]);
+  const reinstateEntry = useCallback((id: string) => commit(restoreEntry(current.current, id, newId())), [commit]);
+  const revertEntryEdit = useCallback((id: string) => commit(undoEntryEdit(current.current, id, newId())), [commit]);
+  const listRecoverySnapshots = useCallback(() => availableLocalHistory(AsyncStorage), []);
 
-  const settle = useCallback((personId: string, amount: number, debtId?: string | null) => {
-    setState(s => {
-      const today = todayISO();
-      const open = s.tx.filter(t => t.dir !== 'settle');
-      const remOf = (d: Tx) =>
-        Math.max(0, round2(d.amount - s.tx.filter(t => t.debtId === d.id).reduce((x, t) => x + t.amount, 0)));
-
-      let targets: Tx[];
-      if (debtId) {
-        const one = open.find(d => d.id === debtId);
-        targets = one ? [one] : [];
-      } else {
-        const bal = open
-          .filter(d => d.personId === personId)
-          .reduce((x, d) => x + (d.dir === 'me' ? 1 : -1) * remOf(d), 0);
-        const dir = bal >= 0 ? 'me' : 'owe';
-        targets = open
-          .filter(d => d.personId === personId && d.dir === dir && remOf(d) > 0)
-          .sort((a, b) => +new Date(a.createdAt) - +new Date(b.createdAt));
-      }
-
-      let left = amount;
-      const payments: Tx[] = [];
-      for (const d of targets) {
-        if (left <= 0) break;
-        const pay = Math.min(left, remOf(d));
-        if (pay <= 0) continue;
-        left = round2(left - pay);
-        payments.push({
-          id: newId(),
-          personId,
-          dir: 'settle',
-          amount: pay,
-          debtId: d.id,
-          createdAt: today,
-        });
-      }
-      return payments.length ? { ...s, tx: [...s.tx, ...payments] } : s;
-    });
-  }, []);
-
-  const markPaid = useCallback((debtId: string) => {
-    setState(s => {
-      const debt = s.tx.find(t => t.id === debtId);
-      if (!debt) return s;
-      const rem = Math.max(
-        0,
-        round2(debt.amount - s.tx.filter(t => t.debtId === debtId).reduce((x, t) => x + t.amount, 0)),
-      );
-      if (rem <= 0) return s;
-      return {
-        ...s,
-        tx: [
-          ...s.tx,
-          { id: newId(), personId: debt.personId, dir: 'settle', amount: rem, debtId, createdAt: todayISO() },
-        ],
-      };
-    });
-  }, []);
+  const markPaid = useCallback((debtId: string): boolean => {
+    const debt = current.current.tx.find(t => t.id === debtId && t.dir !== 'settle');
+    if (!debt) return false;
+    const rem = fromCents(remainingCents(current.current.tx, debt));
+    return rem > 0 && settle(debt.personId, rem, debtId) > 0;
+  }, [settle]);
 
   const toggleReminder = useCallback((debtId: string, on: boolean) => {
-    setState(s => ({ ...s, reminderPrefs: { ...s.reminderPrefs, [debtId]: on } }));
-  }, []);
+    if (!current.current.tx.some(t => t.id === debtId && t.dir !== 'settle')) return;
+    commit({ ...current.current, reminderPrefs: { ...current.current.reminderPrefs, [debtId]: on } });
+  }, [commit]);
 
-  const value = useMemo<Store>(
-    () => ({ state, ready, toast, showToast, addPerson, addDebt, settle, markPaid, toggleReminder, set, replaceAll }),
-    [state, ready, toast, showToast, addPerson, addDebt, settle, markPaid, toggleReminder, set, replaceAll],
-  );
+  const value = useMemo<Store>(() => ({
+    state, ready, storageError, recoveryNotice, retryLoad, toast, showToast, addPerson, addDebt, settle, markPaid, toggleReminder, set, replaceAll,
+    updateEntry, cancelEntry, reinstateEntry, revertEntryEdit, listRecoverySnapshots,
+  }), [state, ready, storageError, recoveryNotice, retryLoad, toast, showToast, addPerson, addDebt, settle, markPaid, toggleReminder, set, replaceAll,
+    updateEntry, cancelEntry, reinstateEntry, revertEntryEdit, listRecoverySnapshots]);
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }

@@ -21,8 +21,12 @@ export interface Tx {
   personId: string;
   dir: Dir;
   amount: number;
-  /** ISO date the entry was recorded. */
+  /** Actual calendar date of the debt/payment. */
   createdAt: string;
+  /** When this entry was first saved; separate from the transaction date. */
+  recordedAt?: string;
+  /** Undone entries stay in the ledger for review but never affect balances. */
+  voidedAt?: string;
   note?: string;
   /** ISO date, or null for "no due date". Absent on settlements. */
   dueAt?: string | null;
@@ -32,18 +36,29 @@ export interface Tx {
   debtId?: string;
 }
 
+export interface LedgerChange {
+  id: string;
+  txId: string;
+  at: string;
+  kind: 'edit' | 'void' | 'restore';
+  before: Tx;
+  after: Tx;
+}
+
 export interface ReminderPrefs {
   /** Debt id → enabled. Reminders are derived from open debts. */
   [debtId: string]: boolean;
 }
 
 export interface PersistedState {
-  version: 1;
+  version: 2;
   onboarded: boolean;
   profileName: string;
   people: Person[];
   tx: Tx[];
+  changes: LedgerChange[];
   reminderPrefs: ReminderPrefs;
+  reminderSettings: ReminderSettings;
   weekly: boolean;
   autoBackup: boolean;
   backupTarget: BackupTarget;
@@ -53,3 +68,4 @@ export interface PersistedState {
   accent: string;
   lastBackup: string | null;
 }
+import type { ReminderSettings } from './reminderSettings';

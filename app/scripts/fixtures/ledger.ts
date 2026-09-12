@@ -1,9 +1,10 @@
-import { addDays, todayISO } from './format';
-import { PersistedState, Person, Tx } from './types';
-import { DEFAULT_ACCENT } from './theme';
+import { addDays, todayISO } from '../../src/format';
+import { PersistedState, Person, Tx } from '../../src/types';
+import { DEFAULT_ACCENT } from '../../src/theme';
+import { defaultReminderSettings } from '../../src/reminderSettings';
 
-// The prototype pinned "today" to ٤ سبتمبر and stored day offsets. Here the same
-// ledger is anchored to the real current date so the due labels stay truthful.
+// Test data only: production imports are checked to exclude this directory.
+// Dates follow the current day for deterministic relative due-date assertions.
 
 const PEOPLE: Person[] = [
   { id: 'p1', name: 'سارة', hue: 150 },
@@ -30,40 +31,24 @@ export function seedState(): PersistedState {
       id: 't9', personId: 'p2', dir: 'me', amount: 3000, note: 'سلفة سيارة',
       createdAt: d(-20), dueAt: d(5), freq: 'month',
       installments: [
-        { amount: 1000, label: 'دفعة ١', dueAt: d(-20) },
-        { amount: 1000, label: 'دفعة ٢', dueAt: d(5) },
-        { amount: 1000, label: 'دفعة ٣', dueAt: d(35) },
+        { amount: 1000, label: 'دفعة 1', dueAt: d(-20) },
+        { amount: 1000, label: 'دفعة 2', dueAt: d(5) },
+        { amount: 1000, label: 'دفعة 3', dueAt: d(35) },
       ],
     },
     { id: 't10', personId: 'p2', dir: 'settle', amount: 1000, debtId: 't9', createdAt: d(-19) },
   ];
 
   return {
-    version: 1,
+    version: 2,
     onboarded: false,
     profileName: 'عبدالله',
-    people: PEOPLE,
+    people: PEOPLE.map(person => ({ ...person })),
     tx,
+    changes: [],
+    reminderSettings: defaultReminderSettings(),
     // Matches the design: سارة and فهد on, خالد off.
     reminderPrefs: { t1: true, t4: true, t5: false },
-    weekly: true,
-    autoBackup: true,
-    backupTarget: 'none',
-    backupFolderUri: null,
-    dark: null,
-    accent: DEFAULT_ACCENT,
-    lastBackup: null,
-  };
-}
-
-export function emptyState(): PersistedState {
-  return {
-    version: 1,
-    onboarded: false,
-    profileName: 'دفتري',
-    people: [],
-    tx: [],
-    reminderPrefs: {},
     weekly: true,
     autoBackup: true,
     backupTarget: 'none',

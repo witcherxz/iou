@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, TextInput, View } from 'react-native';
+import React, { useRef, useState } from 'react';
+import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
 
-import { applyKey, Keypad } from '../components/Keypad';
-import { Chip, PrimaryButton, ScreenHeader, Segment, T } from '../components/ui';
-import { fmt } from '../format';
+import { AmountInput, applyKey, isValidAmountInput, Keypad, normalizeAmountInput } from '../components/Keypad';
+import { TransactionDateField } from '../components/TransactionDateField';
+import { Chip, MaterialPressable, OutlinedField, PrimaryButton, ScreenHeader, Segment, T } from '../components/ui';
+import { addDays, addMonths, arDate, fmt, isCalendarDate, todayISO } from '../format';
 import { Colors } from '../theme';
 import { Person } from '../types';
 
@@ -11,9 +12,10 @@ type Dir = 'me' | 'owe';
 type Plan = 'single' | 'install';
 
 const DUE_CHIPS: { days: number | null; label: string }[] = [
-  { days: 7, label: 'أسبوع' },
-  { days: 14, label: 'أسبوعان' },
-  { days: 30, label: 'شهر' },
+  { days: 0, label: 'نفس اليوم' },
+  { days: 7, label: 'بعد أسبوع' },
+  { days: 14, label: 'بعد أسبوعين' },
+  { days: 30, label: 'بعد شهر' },
   { days: null, label: 'بدون' },
 ];
 
@@ -30,8 +32,10 @@ interface Props {
     amount: number;
     note: string;
     dueInDays: number | null;
+    dueAt?: string | null;
     installmentCount?: number;
-  }) => void;
+    transactionDate?: string;
+  }) => boolean | Promise<boolean>;
 }
 
 export function AddDebt({ c, people, initialDir, initialPersonId, onClose, onAddPerson, onSave }: Props) {
@@ -44,21 +48,38 @@ export function AddDebt({ c, people, initialDir, initialPersonId, onClose, onAdd
   const [installN, setInstallN] = useState(3);
   const [newPersonMode, setNewPersonMode] = useState(false);
   const [newPersonName, setNewPersonName] = useState('');
+  const [customDate, setCustomDate] = useState(false);
+  const [dateText, setDateText] = useState('');
+  const [transactionDate, setTransactionDate] = useState(todayISO);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const savingRef = useRef(false);
 
-  const amt = parseFloat(amount) || 0;
+  const validAmount = isValidAmountInput(amount);
+  const amt = validAmount ? Number(amount) : 0;
   const color = dir === 'me' ? c.green : c.red;
-  const canSave = amt > 0 && !!personId;
-
-  const amountLabel = amount
-    ? fmt(parseFloat(amount) || 0) + (amount.endsWith('.') ? '٫' : '')
-    : '٠';
-
-  const perInstallment = amt > 0 ? Math.round((amt / installN) * 100) / 100 : 0;
+  const dateIsValid = isCalendarDate(dateText);
+  const installmentAmountIsValid = plan === 'single' || Math.round(amt * 100) >= installN;
+  const transactionDateValid = isCalendarDate(transactionDate) && transactionDate <= todayISO();
+  const baseDate = transactionDateValid ? transactionDate : todayISO();
+  const dueDateValid = dateIsValid && dateText >= transactionDate;
+  const canSave = validAmount && !!personId && transactionDateValid && installmentAmountIsValid && (!customDate || dueDateValid);
+  const selectedDueAt = customDate ? dateText : dueDays === null ? null : dueDays === 30 ? addMonths(baseDate, 1) : addDays(baseDate, dueDays);
+  const totalCents = Math.round(amt * 100);
+  const perInstallment = Math.floor(totalCents / installN) / 100;
+  const lastInstallment = (totalCents - Math.floor(totalCents / installN) * (installN - 1)) / 100;
 
   const confirmNewPerson = () => {
     const name = newPersonName.trim();
     if (!name) return;
-    setPersonId(onAddPerson(name));
+    const existing = people.find(p => p.name.trim().toLocaleLowerCase() === name.toLocaleLowerCase());
+    const id = existing?.id ?? onAddPerson(name);
+    if (!id) {
+      setError('تعذرت إضافة الشخص. حاول مرة أخرى.');
+      return;
+    }
+    setPersonId(id);
+    setError('');
     setNewPersonMode(false);
     setNewPersonName('');
   };
@@ -71,7 +92,7 @@ export function AddDebt({ c, people, initialDir, initialPersonId, onClose, onAdd
       <ScreenHeader title="دين جديد" glyph="✕" onBack={onClose} c={c} />
 
       <ScrollView
-        contentContainerStyle={{ paddingTop: 8, paddingHorizontal: 20, paddingBottom: 24, gap: 20, flexGrow: 1 }}
+        contentContainerStyle={{ paddingTop: 8, paddingHorizontal: 16, paddingBottom: 24, gap: 20, flexGrow: 1 }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
@@ -82,15 +103,15 @@ export function AddDebt({ c, people, initialDir, initialPersonId, onClose, onAdd
           options={[{ value: 'me', label: 'يدين لي' }, { value: 'owe', label: 'أدين له' }]}
         />
 
-        <View style={{ alignItems: 'center', paddingVertical: 12 }}>
-          <T style={{ fontSize: 13, color: c.muted }}>المبلغ</T>
-          <T style={{ fontSize: 52, fontWeight: '700', color, lineHeight: 58, marginTop: 6 }}>
-            {amountLabel} <T style={{ fontSize: 18, color: c.muted }}>ر.س</T>
-          </T>
-        </View>
+        <AmountInput
+          value={amount} onChange={setAmount} label="المبلغ" c={c} color={color}
+          error={amount !== '' && !validAmount ? 'أدخل مبلغاً أكبر من صفر، بحد أقصى منزلتين عشريتين و9 أرقام قبل الفاصلة.' : undefined}
+        />
+
+        <TransactionDateField c={c} label="تاريخ الدين" value={transactionDate} onChange={setTransactionDate} />
 
         <View>
-          <T style={{ fontSize: 13, color: c.muted, marginBottom: 8 }}>الشخص</T>
+          <T style={{ fontSize: 14, lineHeight: 20, fontWeight: '500', color: c.onSurfaceVariant, marginBottom: 8 }}>الشخص</T>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             {people.map(p => (
               <Chip
@@ -105,129 +126,155 @@ export function AddDebt({ c, people, initialDir, initialPersonId, onClose, onAdd
           </View>
 
           {newPersonMode && (
-            <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
-              <TextInput
+            <View style={{ gap: 12, marginTop: 16 }}>
+              <OutlinedField
+                c={c}
+                label="اسم الشخص"
                 value={newPersonName}
                 onChangeText={setNewPersonName}
                 onSubmitEditing={confirmNewPerson}
-                placeholder="اسم الشخص"
-                placeholderTextColor={c.muted}
+                accessibilityLabel="اسم الشخص الجديد"
+                maxLength={100}
+                returnKeyType="done"
                 autoFocus
-                style={{
-                  flex: 1, height: 44, borderRadius: 14, borderWidth: 1, borderColor: c.border,
-                  backgroundColor: c.card, color: c.text, paddingHorizontal: 14, fontSize: 14, textAlign: 'right',
-                }}
               />
-              <Pressable
-                onPress={confirmNewPerson}
-                disabled={!newPersonName.trim()}
-                style={{
-                  height: 44, paddingHorizontal: 18, borderRadius: 14,
-                  alignItems: 'center', justifyContent: 'center',
-                  backgroundColor: newPersonName.trim() ? c.primary : c.track,
-                }}
-              >
-                <T style={{ color: '#fff', fontSize: 13, fontWeight: '600' }}>إضافة</T>
-              </Pressable>
+              <PrimaryButton label="إضافة" c={c} onPress={confirmNewPerson} disabled={!newPersonName.trim()} />
             </View>
           )}
         </View>
 
         <View>
-          <T style={{ fontSize: 13, color: c.muted, marginBottom: 8 }}>طريقة السداد</T>
+          <T style={{ fontSize: 14, lineHeight: 20, fontWeight: '500', color: c.onSurfaceVariant, marginBottom: 8 }}>طريقة السداد</T>
           <Segment
             c={c}
             value={plan}
-            onChange={setPlan}
+            onChange={value => { setPlan(value); if (value === 'install' && dueDays === null) setDueDays(30); }}
             options={[{ value: 'single', label: 'دفعة واحدة' }, { value: 'install', label: 'دفعات مقسّطة' }]}
           />
         </View>
 
-        {plan === 'install' ? (
+        {plan === 'install' && (
           <>
             <View>
-              <T style={{ fontSize: 13, color: c.muted, marginBottom: 8 }}>عدد الدفعات (شهرياً)</T>
+              <T style={{ fontSize: 14, lineHeight: 20, fontWeight: '500', color: c.onSurfaceVariant, marginBottom: 8 }}>عدد الدفعات (شهرياً)</T>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
-                <Stepper c={c} glyph="−" onPress={() => setInstallN(n => Math.max(2, n - 1))} />
-                <T style={{ flex: 1, textAlign: 'center', fontSize: 22, fontWeight: '700', color: c.text }}>
+                <Stepper c={c} glyph="−" disabled={installN <= 2} onPress={() => setInstallN(n => Math.max(2, n - 1))} />
+                <T style={{ flex: 1, textAlign: 'center', fontSize: 24, lineHeight: 32, fontWeight: '500', color: c.onSurface }}>
                   {fmt(installN, 0)}
                 </T>
-                <Stepper c={c} glyph="+" onPress={() => setInstallN(n => Math.min(36, n + 1))} />
+                <Stepper c={c} glyph="+" disabled={installN >= 36} onPress={() => setInstallN(n => Math.min(36, n + 1))} />
               </View>
             </View>
-            <View style={{ backgroundColor: c.card, borderRadius: 14, paddingVertical: 12, paddingHorizontal: 14 }}>
-              <T style={{ fontSize: 13, color: c.muted }}>
-                {fmt(installN, 0)} دفعات × {fmt(perInstallment)} ر.س، كل شهر، تبدأ بعد شهر واحد
+            <View style={{ backgroundColor: c.surfaceContainerLow, borderRadius: 12, padding: 16 }}>
+              <T style={{ fontSize: 14, lineHeight: 20, color: c.onSurfaceVariant }}>
+                {fmt(installN, 0)} دفعات شهرية. قيمة الدفعة {fmt(perInstallment)} ر.س
+                {lastInstallment !== perInstallment ? `، والأخيرة ${fmt(lastInstallment)} ر.س` : ''}.
               </T>
+              {!installmentAmountIsValid && amt > 0 && <T style={{ color: c.red, fontSize: 14, lineHeight: 20 }}>يجب أن تكون كل دفعة هللة واحدة على الأقل.</T>}
             </View>
           </>
-        ) : (
+        )}
+
           <View>
-            <T style={{ fontSize: 13, color: c.muted, marginBottom: 8 }}>تاريخ الاستحقاق</T>
+            <T style={{ fontSize: 14, lineHeight: 20, fontWeight: '500', color: c.onSurfaceVariant, marginBottom: 8 }}>{plan === 'install' ? 'تاريخ أول دفعة' : 'تاريخ الاستحقاق'}</T>
+            <T style={{ fontSize: 12, lineHeight: 20, color: c.onSurfaceVariant, marginBottom: 8 }}>تُحسب المدة من تاريخ الدين الفعلي.</T>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-              {DUE_CHIPS.map(ch => (
+              {DUE_CHIPS.filter(ch => plan === 'single' || ch.days !== null).map(ch => (
                 <Chip
                   key={String(ch.days)}
                   label={ch.label}
-                  selected={dueDays === ch.days}
-                  onPress={() => setDueDays(ch.days)}
+                  selected={!customDate && dueDays === ch.days}
+                  onPress={() => { setDueDays(ch.days); setCustomDate(false); }}
                   c={c}
                 />
               ))}
+              <Chip label="تاريخ آخر" selected={customDate} onPress={() => setCustomDate(true)} c={c} />
             </View>
+            {customDate ? (
+              <OutlinedField
+                c={c}
+                label={plan === 'install' ? 'تاريخ أول دفعة' : 'تاريخ الاستحقاق'}
+                value={dateText}
+                onChangeText={text => setDateText(normalizeAmountInput(text))}
+                accessibilityLabel={plan === 'install' ? 'تاريخ أول دفعة، سنة ثم شهر ثم يوم' : 'تاريخ الاستحقاق، سنة ثم شهر ثم يوم'}
+                placeholder="YYYY-MM-DD"
+                autoCapitalize="none"
+                maxLength={10}
+                containerStyle={{ marginTop: 16 }}
+                style={{ textAlign: 'left', writingDirection: 'ltr' }}
+                error={!!dateText && !dueDateValid}
+                helperText={dateText && !dateIsValid ? 'أدخل تاريخاً ميلادياً صحيحاً، مثل \u20662026-09-25\u2069.' : dateIsValid && !dueDateValid ? 'لا يمكن أن يسبق الاستحقاق تاريخ الدين.' : 'تاريخ ميلادي: السنة-الشهر-اليوم، مثل \u20662026-09-25\u2069.'}
+              />
+            ) : (
+              <T style={{ fontSize: 14, lineHeight: 20, color: c.onSurfaceVariant, marginTop: 8 }}>
+                {selectedDueAt === null ? 'يمكنك تسجيل السداد في أي وقت.' : `${plan === 'install' ? 'أول دفعة' : 'الاستحقاق'}: ${arDate(selectedDueAt)}`}
+              </T>
+            )}
           </View>
-        )}
 
-        <View>
-          <T style={{ fontSize: 13, color: c.muted, marginBottom: 8 }}>ملاحظة (اختياري)</T>
-          <TextInput
-            value={note}
-            onChangeText={setNote}
-            placeholder="مثال: غداء، تذاكر، سلفة"
-            placeholderTextColor={c.muted}
-            style={{
-              width: '100%', height: 48, borderRadius: 14, borderWidth: 1, borderColor: c.border,
-              backgroundColor: c.card, color: c.text, paddingHorizontal: 14, fontSize: 14, textAlign: 'right',
-            }}
-          />
-        </View>
+        <OutlinedField
+          c={c}
+          label="ملاحظة (اختياري)"
+          value={note}
+          onChangeText={setNote}
+          accessibilityLabel="ملاحظة عن الدين، اختياري"
+          maxLength={500}
+          placeholder="مثال: غداء، تذاكر، سلفة"
+        />
 
         <View style={{ marginTop: 'auto' }}>
           <Keypad c={c} onKey={k => setAmount(v => applyKey(v, k))} />
         </View>
 
+        {!personId && <T style={{ color: c.onSurfaceVariant, fontSize: 14, lineHeight: 20 }}>اختر شخصاً أو أضف شخصاً جديداً لحفظ الدين.</T>}
+        {!!error && <T accessibilityRole="alert" style={{ color: c.red, fontSize: 14, lineHeight: 20 }}>{error}</T>}
         <PrimaryButton
-          label="حفظ"
+          label="حفظ الدين"
           c={c}
           disabled={!canSave}
-          onPress={() =>
-            canSave &&
-            onSave({
-              personId: personId!,
-              dir,
-              amount: amt,
-              note,
-              dueInDays: dueDays,
-              installmentCount: plan === 'install' ? installN : undefined,
-            })
-          }
+          loading={saving}
+          onPress={async () => {
+            if (!canSave || savingRef.current) return;
+            savingRef.current = true;
+            setSaving(true);
+            setError('');
+            try {
+              const saved = await onSave({
+                personId: personId!, dir, amount: amt, note: note.trim(),
+                dueInDays: plan === 'install' && dueDays === null ? 30 : dueDays,
+                dueAt: selectedDueAt,
+                installmentCount: plan === 'install' ? installN : undefined,
+                transactionDate,
+              });
+              if (!saved) setError('تعذر حفظ الدين. تحقق من البيانات وحاول مرة أخرى.');
+            } catch {
+              setError('تعذر حفظ الدين. حاول مرة أخرى.');
+            } finally {
+              savingRef.current = false;
+              setSaving(false);
+            }
+          }}
         />
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
-function Stepper({ c, glyph, onPress }: { c: Colors; glyph: string; onPress: () => void }) {
+function Stepper({ c, glyph, onPress, disabled }: { c: Colors; glyph: string; onPress: () => void; disabled: boolean }) {
   return (
-    <Pressable
+    <MaterialPressable c={c}
       onPress={onPress}
+      disabled={disabled}
+      accessibilityRole="button"
+      accessibilityLabel={glyph === '+' ? 'زيادة عدد الدفعات' : 'تقليل عدد الدفعات'}
+      accessibilityState={{ disabled }}
       style={({ pressed }) => ({
-        width: 44, height: 44, borderRadius: 14,
-        backgroundColor: pressed ? c.cardHover : c.card,
+        width: 48, height: 48, borderRadius: 24, opacity: disabled ? 0.38 : 1,
+        backgroundColor: pressed ? c.surfaceContainerHigh : c.secondaryContainer,
         alignItems: 'center', justifyContent: 'center',
       })}
     >
-      <T style={{ fontSize: 20, fontWeight: '600', color: c.text }}>{glyph}</T>
-    </Pressable>
+      <T style={{ fontSize: 24, lineHeight: 32, fontWeight: '500', color: c.onSecondaryContainer }}>{glyph}</T>
+    </MaterialPressable>
   );
 }

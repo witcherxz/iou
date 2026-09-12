@@ -1,10 +1,10 @@
 import React from 'react';
-import { ScrollView, View } from 'react-native';
+import { Platform, ScrollView, View } from 'react-native';
 
-import { DriveIcon } from '../components/icons';
+import { MaterialIcon } from '../components/icons';
 import { OutlineButton, ScreenHeader, T, Touch } from '../components/ui';
 import { BackupView } from '../useBackup';
-import { Colors } from '../theme';
+import { Colors, M3 } from '../theme';
 import { BackupTarget } from '../types';
 
 interface Props {
@@ -28,18 +28,21 @@ export function BackupSetup({ c, backup, onBack, onSelect, onChooseFolder }: Pro
     {
       id: 'folder',
       title: 'مجلد على الجهاز',
-      body: 'اختر مجلداً مرة واحدة، ويحفظ التطبيق نسخة فيه تلقائياً. يمكن اختيار مجلد يزامنه Google Drive أو أي تطبيق آخر.',
+      body: Platform.OS === 'ios'
+        ? 'آخر 10 نسخ مع تقرير وجداول للقراءة خارج التطبيق. يلزم اختيار المجلد مجدداً بعد إعادة تشغيل التطبيق على iPhone.'
+        : 'آخر 10 نسخ مع تقرير وجداول للقراءة خارج التطبيق. بعد أول حفظ، تُحفظ التغييرات أثناء فتح التطبيق إذا فُعّل النسخ التلقائي.',
+      blocked: backup.folderSupported ? undefined : 'متاح في تطبيق الهاتف. استخدم تصدير ملف في المتصفح.',
     },
     {
       id: 'file',
       title: 'ملف (تصدير واستيراد)',
-      body: 'تصدير نسخة عند الطلب ومشاركتها إلى أي تطبيق، واستيرادها لاحقاً. بدون أي إعداد.',
+      body: 'تقرير HTML يفتح دون التطبيق، مع جداول CSV ونسخة كاملة للاستعادة. يمكنك مشاركته أو استيراده لاحقاً، بدون إعداد.',
     },
     {
       id: 'drive',
       title: 'Google Drive',
       body: 'حفظ تلقائي في مجلد خاص بالتطبيق داخل حسابك على Drive.',
-      blocked: backup.driveConfigured ? undefined : 'يحتاج إعداد OAuth من المطور',
+      blocked: backup.driveConfigured ? undefined : 'غير متاح في هذه النسخة. يمكنك حفظ ملف في Drive من قائمة المشاركة.',
     },
     {
       id: 'none',
@@ -51,106 +54,69 @@ export function BackupSetup({ c, backup, onBack, onSelect, onChooseFolder }: Pro
   return (
     <View style={{ flex: 1 }}>
       <ScreenHeader title="النسخ الاحتياطي" glyph="→" onBack={onBack} c={c} />
-
-      <ScrollView
-        contentContainerStyle={{ paddingTop: 8, paddingHorizontal: 20, paddingBottom: 32, gap: 12 }}
-        showsVerticalScrollIndicator={false}
-      >
-        <T style={{ fontSize: 13, color: c.muted, lineHeight: 21, marginBottom: 4 }}>
-          اختر أين تُحفظ نسخة دفترك. كل الخيارات تحفظ نفس الملف، فيمكنك التبديل بينها في أي وقت.
-        </T>
-
-        {options.map(o => {
-          const selected = backup.target === o.id;
-          const disabled = !!o.blocked;
-          return (
-            <Touch
-              key={o.id}
-              onPress={() => !disabled && onSelect(o.id)}
-              pressedBackground={c.cardHover}
-              style={{
-                backgroundColor: c.card, borderRadius: 20, padding: 16, gap: 12,
-                borderWidth: 1, borderColor: selected ? c.primary : 'transparent',
-                opacity: disabled ? 0.55 : 1,
-              }}
-            >
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-                <View
-                  style={{
-                    width: 40, height: 40, borderRadius: 12, backgroundColor: c.primaryBg,
-                    alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                  }}
-                >
-                  <TargetGlyph id={o.id} color={c.primary} />
-                </View>
-                <View style={{ flex: 1, minWidth: 0 }}>
-                  <T style={{ fontSize: 15, fontWeight: '600', color: c.text }}>{o.title}</T>
-                  <T style={{ fontSize: 12, color: c.muted, marginTop: 4, lineHeight: 19 }}>
-                    {o.blocked ?? o.body}
-                  </T>
-                </View>
-                <View
-                  style={{
-                    width: 22, height: 22, borderRadius: 11, flexShrink: 0,
-                    borderWidth: 2, borderColor: selected ? c.primary : c.border,
-                    backgroundColor: selected ? c.primary : 'transparent',
-                    alignItems: 'center', justifyContent: 'center',
-                  }}
-                >
-                  {selected && <T style={{ color: '#fff', fontSize: 12 }}>✓</T>}
-                </View>
+      <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: 32, gap: 16 }}
+        showsVerticalScrollIndicator={false}>
+        <View style={{ gap: 8 }}>
+          <T accessibilityRole="header" style={{ ...M3.type.headlineSmall, color: c.onSurface }}>أين تحفظ نسخة دفترك؟</T>
+          <T style={{ ...M3.type.bodyMedium, color: c.onSurfaceVariant }}>
+            اختر وجهة تناسبك. يمكنك استعادة ملف النسخة لاحقاً عند تغيير جهازك.
+          </T>
+        </View>
+        <View accessibilityRole="radiogroup" accessibilityLabel="وجهة النسخ الاحتياطي" style={{ gap: 8 }}>
+          {options.map(o => {
+            const selected = backup.target === o.id;
+            const disabled = !!o.blocked || backup.working;
+            const foreground = selected ? c.onSecondaryContainer : c.onSurface;
+            return (
+              <View key={o.id} style={{ backgroundColor: selected ? c.secondaryContainer : c.surfaceContainerLow,
+                borderRadius: M3.shape.medium, borderWidth: 1, borderColor: selected ? c.primary : c.outlineVariant, overflow: 'hidden' }}>
+                <Touch onPress={() => !selected && onSelect(o.id)} disabled={disabled}
+                  accessibilityRole="radio" accessibilityLabel={o.title} accessibilityHint={o.blocked ?? o.body}
+                  accessibilityState={{ checked: selected, selected, disabled }} pressedBackground={c.stateLayer}
+                  style={{ padding: 16, flexDirection: 'row', alignItems: 'center', gap: 16, minHeight: 88 }}>
+                  <TargetGlyph id={o.id} color={disabled ? c.onSurfaceVariant : foreground} />
+                  <View style={{ flex: 1, minWidth: 0, gap: 4 }}>
+                    <T style={{ ...M3.type.titleMedium, color: foreground }}>{o.title}</T>
+                    <T style={{ ...M3.type.bodyMedium, color: selected ? c.onSecondaryContainer : c.onSurfaceVariant }}>{o.blocked ?? o.body}</T>
+                  </View>
+                  <View style={{ width: 20, height: 20, borderRadius: 10, borderWidth: 2,
+                    borderColor: selected ? c.primary : c.outline, alignItems: 'center', justifyContent: 'center', opacity: disabled ? 0.5 : 1 }}>
+                    {selected && <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: c.primary }} />}
+                  </View>
+                </Touch>
+                {o.id === 'folder' && selected && (
+                  <View style={{ paddingHorizontal: 16, paddingBottom: 16, gap: 12 }}>
+                    <T style={{ ...M3.type.labelLarge, color: c.onSecondaryContainer }}>المجلد الحالي</T>
+                    <T style={{ ...M3.type.bodyMedium, color: c.onSecondaryContainer }} numberOfLines={2}>{backup.folderLabel || 'لم يتم اختيار مجلد'}</T>
+                    <View style={{ flexDirection: 'row', backgroundColor: c.surface, borderRadius: 24 }}>
+                      <OutlineButton label="تغيير المجلد" height={48} c={c} onPress={onChooseFolder} disabled={backup.working} />
+                    </View>
+                  </View>
+                )}
               </View>
-
-              {o.id === 'folder' && selected && (
-                <View style={{ gap: 10 }}>
-                  <View style={{ backgroundColor: c.cardHover, borderRadius: 12, padding: 12 }}>
-                    <T style={{ fontSize: 12, color: c.muted }}>المجلد الحالي</T>
-                    <T style={{ fontSize: 13, color: c.text, marginTop: 2 }} numberOfLines={2}>
-                      {backup.folderLabel || 'لم يتم اختيار مجلد'}
-                    </T>
-                  </View>
-                  <View style={{ flexDirection: 'row' }}>
-                    <OutlineButton label="تغيير المجلد" height={44} c={c} onPress={onChooseFolder} />
-                  </View>
-                </View>
-              )}
-            </Touch>
-          );
-        })}
-
-        <T style={{ fontSize: 12, color: c.muted, lineHeight: 19, marginTop: 4 }}>
-          النسخة ملف JSON واحد باسم iou-backup.json. استيراده يستبدل كل البيانات الحالية.
+            );
+          })}
+        </View>
+        <View style={{ backgroundColor: c.surfaceContainerHigh, borderRadius: M3.shape.medium, padding: 16, gap: 8 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <MaterialIcon name="shield" color={c.onSurfaceVariant} />
+            <T style={{ ...M3.type.titleMedium, color: c.onSurface }}>احمِ دفترك خارج الجهاز</T>
+          </View>
+          <T style={{ ...M3.type.bodyMedium, color: c.onSurfaceVariant }}>
+            المجلد المحلي وحده لا يحميك من فقدان الهاتف. احتفظ بنسخة على جهاز آخر أو خدمة سحابية.
+          </T>
+          <T style={{ ...M3.type.bodyMedium, color: c.onSurfaceVariant }}>
+            بعد اختيار الوجهة، استعد نسختك السابقة أو اضغط «نسخ الآن» لإنشاء أول نسخة وتفعيل الحفظ التلقائي.
+          </T>
+        </View>
+        <T style={{ ...M3.type.bodyMedium, color: c.onSurfaceVariant }}>
+          نسخ المجلد والتقرير العادي غير مشفّرة. للتصدير المحمي، اختر «النسخ والاستعادة» من الإعدادات ثم «إنشاء نسخة محمية». الاستعادة تستبدل الدفتر بعد المعاينة والتأكيد.
         </T>
       </ScrollView>
     </View>
   );
 }
 
-function TargetGlyph({ id, color }: { id: BackupTarget; color: string }) {
-  if (id === 'drive') return <DriveIcon color={color} />;
-  if (id === 'folder') {
-    // Folder: a tab sitting on a body.
-    return (
-      <View style={{ width: 18, height: 15 }}>
-        <View style={{ width: 9, height: 4, borderTopLeftRadius: 2, borderTopRightRadius: 2, backgroundColor: color }} />
-        <View style={{ width: 18, height: 11, borderRadius: 3, backgroundColor: color }} />
-      </View>
-    );
-  }
-  if (id === 'file') {
-    return (
-      <View
-        style={{ width: 14, height: 17, borderRadius: 3, borderWidth: 2, borderColor: color, justifyContent: 'center', gap: 2, paddingHorizontal: 2 }}
-      >
-        <View style={{ height: 2, backgroundColor: color }} />
-        <View style={{ height: 2, backgroundColor: color }} />
-      </View>
-    );
-  }
-  // 'none' — a struck-through circle.
-  return (
-    <View style={{ width: 18, height: 18, borderRadius: 9, borderWidth: 2, borderColor: color, alignItems: 'center', justifyContent: 'center' }}>
-      <View style={{ width: 14, height: 2, backgroundColor: color, transform: [{ rotate: '45deg' }] }} />
-    </View>
-  );
+export function TargetGlyph({ id, color }: { id: BackupTarget; color: string }) {
+  return <MaterialIcon name={id === 'drive' ? 'cloud' : id === 'folder' ? 'folder' : id === 'file' ? 'description' : 'cloud_off'} color={color} />;
 }

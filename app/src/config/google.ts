@@ -7,6 +7,8 @@ import { Platform } from 'react-native';
  * Drive API enabled — see README.md for the full walkthrough.
  */
 interface GoogleConfig {
+  /** Enable only after replacing/verifying the platform's Google authorization flow. */
+  enabled?: boolean;
   androidClientId?: string;
   iosClientId?: string;
   webClientId?: string;
@@ -29,5 +31,8 @@ export function clientIdForPlatform(): string | undefined {
   return id;
 }
 
-/** False until real client IDs are filled in; the UI degrades gracefully. */
-export const isGoogleConfigured = () => !!clientIdForPlatform();
+// Client IDs alone do not make the generic iou:// AuthSession flow valid for
+// Google. Android needs a supported native authorization integration; iOS needs
+// a registered reverse-client-ID callback. Keep the unfinished integration off.
+// https://developers.google.com/identity/protocols/oauth2/native-app
+export const isGoogleConfigured = () => GOOGLE.enabled === true && !!clientIdForPlatform();

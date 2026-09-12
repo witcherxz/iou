@@ -1,8 +1,10 @@
-name: Build Android APK
+name: Android production release
 
 on:
   push:
     branches: [main]
+    tags: ['v*']
+    paths-ignore: ['**/*.md', 'app/docs/**', 'design/**']
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -10,54 +12,141 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+
 jobs:
-  build:
+  checks:
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: app
-
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
           cache-dependency-path: app/package-lock.json
-
       - name: Install dependencies
         run: npm ci
-
       - name: Typecheck
         run: npm run typecheck
-
-      - name: Logic checks
+      - name: App checks
         run: npm run check
+      - name: Android release checks
+        run: node scripts/release-workflow-checks.mjs
 
+  build:
+    needs: checks
+    # Pull requests validate code without access to the release signing key.
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      artifact: ${{ steps.version.outputs.artifact }}
+    defaults:
+      run:
+        working-directory: app
+    env:
+      CI: '1'
+      NODE_ENV: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - name: Validate release version
+        id: version
+        run: node scripts/android-release-version.mjs
+      - name: Install dependencies
+        run: npm ci --include=dev
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
-
       - uses: android-actions/setup-android@v3
-
-      # android/ is generated, not committed — prebuild recreates it from app.json.
+      - name: Prepare release signing key
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          ANDROID_KEYSTORE_PATH="$RUNNER_TEMP/iou-release.keystore"
+          printf 'ANDROID_KEYSTORE_PATH=%s\n' "$ANDROID_KEYSTORE_PATH" >> "$GITHUB_ENV"
+          for name in ANDROID_KEYSTORE_BASE64 ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD; do
+            if [[ -z "${!name}" ]]; then
+              echo "::error::Missing required release signing secret: $name"
+              exit 1
+            fi
+          done
+          umask 077
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$ANDROID_KEYSTORE_PATH"
+          keytool -list -keystore "$ANDROID_KEYSTORE_PATH" -storetype PKCS12 -storepass:env ANDROID_KEYSTORE_PASSWORD -alias "$ANDROID_KEY_ALIAS" > /dev/null
+      # Native directories are generated from the checked-in Expo configuration.
       - name: Prebuild Android project
         run: npx expo prebuild --platform android --no-install
-
-      - name: Gradle build
+      - name: Build signed production APK
         working-directory: app/android
-        run: ./gradlew assembleRelease --no-daemon
-
-      # The Expo template signs release builds with the checked-in debug keystore,
-      # so this APK installs on any device but is NOT suitable for the Play Store.
-      # To publish, add your own keystore and wire it into signingConfigs.release.
-      - name: Rename APK
-        run: mv android/app/build/outputs/apk/release/app-release.apk iou-debug-signed.apk
-
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: ./gradlew :app:assembleRelease --no-daemon --init-script ../scripts/android-release.init.gradle
+      - name: Verify and name APK
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: node scripts/verify-android-release.mjs android/app/build/outputs/apk/release/app-release.apk
+      - name: Remove signing material
+        if: always()
+        run: rm -f "$RUNNER_TEMP/iou-release.keystore"
       - uses: actions/upload-artifact@v4
         with:
-          name: iou-apk
-          path: app/iou-debug-signed.apk
+          name: ${{ steps.version.outputs.artifact }}
+          path: |
+            app/release/*.apk
+            app/release/*.sha256
           if-no-files-found: error
+          retention-days: 30
+
+  publish:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.build.outputs.artifact }}
+          path: app/release
+      - name: Publish versioned APK
+        working-directory: app
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_VERSION: ${{ needs.build.outputs.version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          notes="docs/releases/$RELEASE_VERSION.md"
+          test -s "$notes"
+          cd release
+          sha256sum --check "iou-$RELEASE_VERSION.apk.sha256"
+          cd ..
+          flags=()
+          if [[ "$RELEASE_VERSION" == *-* ]]; then flags+=(--prerelease); fi
+          gh release create "$RELEASE_TAG" \
+            "release/iou-$RELEASE_VERSION.apk" \
+            "release/iou-$RELEASE_VERSION.apk.sha256" \
+            --verify-tag --title "دفتر الديون $RELEASE_VERSION" \
+            --notes-file "$notes" "${flags[@]}"

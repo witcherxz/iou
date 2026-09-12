@@ -3,24 +3,30 @@
     "name": "دفتر الديون",
     "slug": "iou",
     "scheme": "iou",
-    "version": "1.0.0",
+    "version": "0.1.0-alpha.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "backgroundColor": "#f6f5fa",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.example.iou"
+      "bundleIdentifier": "io.github.witcherxz.iou",
+      "version": "0.1.0",
+      "buildNumber": "1"
     },
     "android": {
-      "package": "com.example.iou",
+      "package": "io.github.witcherxz.iou",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#D9E2FF",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "versionCode": 1,
+      "blockedPermissions": [
+        "android.permission.SYSTEM_ALERT_WINDOW"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -29,14 +35,18 @@
       "expo-web-browser",
       "expo-font",
       "expo-secure-store",
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "استخدم بصمة الوجه لفتح دفتر ديونك بأمان."
+        }
+      ],
       "expo-notifications",
       "expo-sharing"
     ],
     "extra": {
       "google": {
-        "androidClientId": "YOUR_ANDROID_CLIENT_ID.apps.googleusercontent.com",
-        "iosClientId": "YOUR_IOS_CLIENT_ID.apps.googleusercontent.com",
-        "webClientId": "YOUR_WEB_CLIENT_ID.apps.googleusercontent.com"
+        "enabled": false
       }
     }
   }

@@ -1,6 +1,8 @@
 import { arDate, daysUntil, dueLabelFor, fmt } from './format';
 import { avatarColors, Colors } from './theme';
 import { Installment, Person, Tx } from './types';
+import { remainingCents } from './ledger';
+import { fromCents, toCents } from './money';
 
 export interface ScheduleRow {
   index: number;
@@ -8,6 +10,8 @@ export interface ScheduleRow {
   total: string;
   amount: number;
   amountLabel: string;
+  remainingAmount: number;
+  remainingLabel: string;
   label: string;
   dueAt: string;
   dueIn: number;
@@ -56,6 +60,7 @@ export interface DebtView extends Tx {
   dueColor: string;
   dateLabel: string;
   dueDateLabel: string;
+  nextDueAt: string | null;
   remainingLabel: string;
   amountLabel: string;
   pct: `${number}%`;
@@ -69,18 +74,17 @@ export interface DebtView extends Tx {
 
 /** Amount still outstanding on a debt after its settlements. */
 export function remaining(tx: Tx[], debt: Tx): number {
-  const paid = tx.filter(t => t.debtId === debt.id).reduce((s, t) => s + t.amount, 0);
-  return Math.max(0, round2(debt.amount - paid));
+  return fromCents(remainingCents(tx, debt));
 }
 
-export const round2 = (n: number) => Math.round(n * 100) / 100;
+export const round2 = (n: number) => fromCents(toCents(n));
 
 /** Net balance with one person: positive = they owe me. */
 export function balance(tx: Tx[], personId: string): number {
-  return round2(
+  return fromCents(
     tx
-      .filter(t => t.personId === personId && t.dir !== 'settle')
-      .reduce((s, t) => s + (t.dir === 'me' ? 1 : -1) * remaining(tx, t), 0),
+      .filter(t => !t.voidedAt && t.personId === personId && t.dir !== 'settle')
+      .reduce((s, t) => s + (t.dir === 'me' ? 1 : -1) * remainingCents(tx, t), 0),
   );
 }
 
@@ -90,11 +94,12 @@ function buildSchedule(
   rem: number,
   c: Colors,
 ): ScheduleRow[] {
-  const paidTotal = debt.amount - rem;
+  const paidTotal = toCents(debt.amount) - toCents(rem);
   let cum = 0;
   return installments.map((ins, i) => {
-    cum += ins.amount;
-    const paid = paidTotal >= cum - 0.01;
+    cum += toCents(ins.amount);
+    const remainingAmount = fromCents(Math.min(toCents(ins.amount), Math.max(0, cum - paidTotal)));
+    const paid = remainingAmount === 0;
     const dueIn = daysUntil(ins.dueAt);
     return {
       index: i,
@@ -102,6 +107,8 @@ function buildSchedule(
       total: fmt(installments.length, 0),
       amount: ins.amount,
       amountLabel: fmt(ins.amount),
+      remainingAmount,
+      remainingLabel: fmt(remainingAmount),
       label: ins.label,
       dueAt: ins.dueAt,
       dueIn,
@@ -122,10 +129,12 @@ export function debtView(debt: Tx, tx: Tx[], people: PersonView[], c: Colors): D
   const partial = !paid && rem < debt.amount;
 
   let dueIn = daysUntil(debt.dueAt);
+  let nextDueAt = debt.dueAt ?? null;
   let schedule: ScheduleRow[] | null = null;
   if (debt.installments?.length) {
     schedule = buildSchedule(debt, debt.installments, rem, c);
     const nextUnpaid = schedule.find(x => !x.paid);
+    nextDueAt = nextUnpaid?.dueAt ?? null;
     dueIn = nextUnpaid ? nextUnpaid.dueIn : schedule[schedule.length - 1].dueIn;
   }
 
@@ -158,7 +167,8 @@ export function debtView(debt: Tx, tx: Tx[], people: PersonView[], c: Colors): D
     dueLabel: dueLabelFor(dueIn, paid),
     dueColor: over ? c.red : c.muted,
     dateLabel: arDate(debt.createdAt),
-    dueDateLabel: arDate(debt.dueAt),
+    nextDueAt,
+    dueDateLabel: arDate(nextDueAt),
     remainingLabel: fmt(rem),
     amountLabel: fmt(debt.amount),
     pct: `${Math.round((1 - rem / debt.amount) * 100)}%` as `${number}%`,
@@ -175,9 +185,9 @@ export function debtView(debt: Tx, tx: Tx[], people: PersonView[], c: Colors): D
 export function peopleView(people: Person[], tx: Tx[], c: Colors, dark: boolean): PersonView[] {
   return people
     .map(p => {
-      const own = tx.filter(t => t.personId === p.id && t.dir !== 'settle');
-      const iouAmt = round2(own.filter(t => t.dir === 'me').reduce((x, t) => x + remaining(tx, t), 0));
-      const uomeAmt = round2(own.filter(t => t.dir === 'owe').reduce((x, t) => x + remaining(tx, t), 0));
+      const own = tx.filter(t => !t.voidedAt && t.personId === p.id && t.dir !== 'settle');
+      const iouAmt = fromCents(own.filter(t => t.dir === 'me').reduce((x, t) => x + remainingCents(tx, t), 0));
+      const uomeAmt = fromCents(own.filter(t => t.dir === 'owe').reduce((x, t) => x + remainingCents(tx, t), 0));
       const bal = round2(iouAmt - uomeAmt);
       const a = avatarColors(p.hue, dark);
       return {
@@ -195,7 +205,7 @@ export function peopleView(people: Person[], tx: Tx[], c: Colors, dark: boolean)
         uomeLabel: fmt(uomeAmt),
         amountLabel: fmt(Math.abs(bal)),
         dirLong: bal > 0 ? 'يدين لي بـ' : bal < 0 ? 'أدين له بـ' : 'لا يوجد رصيد',
-        sub: fmt(tx.filter(t => t.personId === p.id).length, 0) + ' عمليات',
+        sub: fmt(tx.filter(t => !t.voidedAt && t.personId === p.id).length, 0) + ' عمليات',
         heroBg: bal > 0 ? c.greenBg : bal < 0 ? c.redBg : c.card,
       };
     })
@@ -203,5 +213,5 @@ export function peopleView(people: Person[], tx: Tx[], c: Colors, dark: boolean)
 }
 
 export function allDebts(tx: Tx[], people: PersonView[], c: Colors): DebtView[] {
-  return tx.filter(t => t.dir !== 'settle').map(d => debtView(d, tx, people, c));
+  return tx.filter(t => !t.voidedAt && t.dir !== 'settle').map(d => debtView(d, tx, people, c));
 }

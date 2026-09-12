@@ -1,27 +1,17 @@
-import React from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import React, { useState } from 'react';
+import { ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { ThemeGlyph } from '../components/icons';
-import { Avatar, Badge, T, Touch } from '../components/ui';
+import { Avatar, Badge, MaterialPressable, OutlineButton, T, Touch } from '../components/ui';
 import { arDateWithWeekday, fmt, todayISO } from '../format';
 import { DebtView, PersonView } from '../selectors';
 import { Colors } from '../theme';
-
-export type PeopleFilter = 'all' | 'me' | 'owe';
-
-const FILTERS: { id: PeopleFilter; label: string }[] = [
-  { id: 'all', label: 'الكل' },
-  { id: 'me', label: 'لي' },
-  { id: 'owe', label: 'عليّ' },
-];
 
 interface Props {
   c: Colors;
   dark: boolean;
   people: PersonView[];
   debts: DebtView[];
-  filter: PeopleFilter;
-  onFilter: (f: PeopleFilter) => void;
   onToggleDark: () => void;
   onOpenPerson: (id: string) => void;
   onOpenDebt: (id: string) => void;
@@ -30,138 +20,125 @@ interface Props {
 }
 
 export function Home({
-  c, dark, people, debts, filter, onFilter, onToggleDark, onOpenPerson, onOpenDebt, onGoIou, onGoUome,
+  c, dark, people, debts, onToggleDark, onOpenPerson, onOpenDebt, onGoIou, onGoUome,
 }: Props) {
-  const owedMe = people.filter(p => p.bal > 0).reduce((x, p) => x + p.bal, 0);
-  const iOwe = people.filter(p => p.bal < 0).reduce((x, p) => x - p.bal, 0);
+  const { width } = useWindowDimensions();
+  const [showAllDue, setShowAllDue] = useState(false);
+  const owedMe = people.reduce((total, person) => total + person.iouAmt, 0);
+  const iOwe = people.reduce((total, person) => total + person.uomeAmt, 0);
   const iouCount = debts.filter(d => d.dir === 'me' && !d.paid).length;
   const uomeCount = debts.filter(d => d.dir === 'owe' && !d.paid).length;
 
   const dueSoon = debts.filter(d => !d.paid && d.dueIn <= 7).sort((a, b) => a.dueIn - b.dueIn);
-  const shown = people.filter(p => filter === 'all' || (filter === 'me' ? p.bal > 0 : p.bal < 0));
 
   return (
     <ScrollView
-      contentContainerStyle={{ paddingTop: 8, paddingHorizontal: 20, paddingBottom: 100, gap: 20 }}
+      contentContainerStyle={{ paddingTop: 8, paddingHorizontal: 16, paddingBottom: 104, gap: 24 }}
       showsVerticalScrollIndicator={false}
     >
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', height: 48 }}>
-        <View>
-          <T style={{ fontSize: 22, fontWeight: '700', color: c.text }}>لوحة الديون</T>
-          <T style={{ fontSize: 12, color: c.muted }}>{arDateWithWeekday(todayISO())}</T>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', minHeight: 64, gap: 16 }}>
+        <View style={{ flex: 1 }}>
+          <T accessibilityRole="header" style={{ fontSize: 28, lineHeight: 36, fontWeight: '400', color: c.onSurface }}>لوحة الديون</T>
+          <T style={{ fontSize: 14, lineHeight: 20, color: c.onSurfaceVariant }}>{arDateWithWeekday(todayISO())}</T>
         </View>
-        <Pressable
+        <MaterialPressable c={c}
           onPress={onToggleDark}
           accessibilityRole="button"
-          accessibilityLabel="تبديل الوضع الداكن"
+          accessibilityLabel={dark ? 'تفعيل الوضع الفاتح' : 'تفعيل الوضع الداكن'}
           style={{
-            width: 40, height: 40, borderRadius: 20, backgroundColor: c.card,
-            alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: c.border,
+            width: 48, height: 48, borderRadius: 24, backgroundColor: c.surfaceContainerHigh,
+            alignItems: 'center', justifyContent: 'center',
           }}
         >
-          <ThemeGlyph dark={dark} cardBg={c.card} />
-        </Pressable>
+          <ThemeGlyph dark={dark} cardBg={c.surfaceContainerHigh} color={c.onSurfaceVariant} />
+        </MaterialPressable>
       </View>
 
-      <View style={{ flexDirection: 'row', gap: 12 }}>
+      <View style={{ flexDirection: width < 480 && Math.max(fmt(owedMe).length, fmt(iOwe).length) > 10 ? 'column' : 'row', gap: 12 }}>
         <TotalCard
           label="يدينون لي" amount={owedMe} count={iouCount}
-          bg={c.greenBg} fg={c.green} onPress={onGoIou}
+          bg={c.greenBg} fg={c.onGreenContainer} onPress={onGoIou}
         />
         <TotalCard
           label="أدين لهم" amount={iOwe} count={uomeCount}
-          bg={c.redBg} fg={c.red} onPress={onGoUome}
+          bg={c.redBg} fg={c.onErrorContainer} onPress={onGoUome}
         />
       </View>
 
       {dueSoon.length > 0 && (
-        <View>
-          <T style={{ fontSize: 15, fontWeight: '600', marginBottom: 10, color: c.text }}>مستحقات قريبة</T>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={{ marginHorizontal: -20 }}
-            contentContainerStyle={{ gap: 10, paddingHorizontal: 20, paddingBottom: 4 }}
-          >
-            {dueSoon.map(d => (
+        <View style={{ gap: 12 }}>
+          <T accessibilityRole="header" style={{ fontSize: 22, lineHeight: 28, fontWeight: '400', color: c.onSurface }}>المستحق قريباً والمتأخر</T>
+          <View style={{ backgroundColor: c.surfaceContainerLow, borderRadius: 12, overflow: 'hidden' }}>
+            {(showAllDue ? dueSoon : dueSoon.slice(0, 3)).map((d, index) => (
               <Touch
                 key={d.id}
                 onPress={() => onOpenDebt(d.id)}
-                pressedBackground={c.cardHover}
+                accessibilityLabel={`${d.personName}، ${d.dirLong}، ${d.remainingLabel} ريال سعودي، ${d.dueLabel}`}
+                pressedBackground={c.surfaceContainerHigh}
                 style={{
-                  width: 170, backgroundColor: c.card, borderRadius: 16, padding: 14,
-                  borderWidth: 1, borderColor: d.border,
+                  minHeight: 88, padding: 16, gap: 8,
+                  borderTopWidth: index ? 1 : 0, borderTopColor: c.outlineVariant,
                 }}
               >
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Badge label={d.badge} bg={d.badgeBg} fg={d.badgeFg} />
-                  <T style={{ fontSize: 11, color: c.muted }}>{d.dueDateLabel}</T>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                  <T style={{ flex: 1, fontSize: 16, lineHeight: 24, fontWeight: '500', color: c.onSurface }}>
+                    {d.personName}
+                  </T>
+                  <T style={{ maxWidth: '60%', fontSize: d.remainingLabel.length > 10 ? 14 : 16, lineHeight: 24, fontWeight: '600', color: d.color }} numberOfLines={1} adjustsFontSizeToFit>
+                    {d.remainingLabel} ر.س
+                  </T>
                 </View>
-                <T style={{ fontSize: 14, fontWeight: '600', marginTop: 10, color: c.text }} numberOfLines={1}>
-                  {d.note}
-                </T>
-                <T style={{ fontSize: 18, fontWeight: '700', color: d.color, marginTop: 6 }}>
-                  {d.amountLabel} ر.س
-                </T>
+                <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+                  <Badge label={d.badge} bg={d.badgeBg} fg={d.badgeFg} />
+                  <T style={{ fontSize: 14, lineHeight: 20, color: c.onSurfaceVariant }}>{d.dirLong} · {d.dueDateLabel}</T>
+                </View>
               </Touch>
             ))}
-          </ScrollView>
+          </View>
+          {dueSoon.length > 3 && (
+            <OutlineButton
+              c={c}
+              label={showAllDue ? 'عرض أقل' : `عرض كل المستحقات (${fmt(dueSoon.length, 0)})`}
+              onPress={() => setShowAllDue(value => !value)}
+            />
+          )}
         </View>
       )}
 
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
-        <T style={{ fontSize: 16, fontWeight: '600', color: c.text }}>الأشخاص</T>
-        <View style={{ flexDirection: 'row', backgroundColor: c.card, borderRadius: 14, padding: 3 }}>
-          {FILTERS.map(f => {
-            const on = filter === f.id;
-            return (
-              <Pressable
-                key={f.id}
-                onPress={() => onFilter(f.id)}
-                style={{
-                  height: 30, paddingHorizontal: 12, borderRadius: 11,
-                  alignItems: 'center', justifyContent: 'center',
-                  backgroundColor: on ? c.primary : 'transparent',
-                }}
-              >
-                <T style={{ fontSize: 12, fontWeight: '600', color: on ? '#fff' : c.muted }}>{f.label}</T>
-              </Pressable>
-            );
-          })}
+      <View style={{ gap: 12 }}>
+        <T accessibilityRole="header" style={{ fontSize: 22, lineHeight: 28, fontWeight: '400', color: c.onSurface }}>الأشخاص</T>
+        <View style={{ gap: 8 }}>
+          {people.map(p => (
+            <Touch
+              key={p.id}
+              onPress={() => onOpenPerson(p.id)}
+              pressedBackground={c.cardHover}
+              style={{
+                flexDirection: 'row', alignItems: 'center', gap: 16,
+                backgroundColor: c.surfaceContainerLow, borderRadius: 12, minHeight: 88, paddingVertical: 16, paddingHorizontal: 16,
+              }}
+            >
+              <Avatar initial={p.initial} size={40} radius={20} bg={p.avatarBg} fg={p.avatarFg} fontSize={16} />
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <T style={{ fontSize: 16, lineHeight: 24, fontWeight: '500', color: c.onSurface }}>{p.name}</T>
+                <T style={{ fontSize: 14, lineHeight: 20, color: c.onSurfaceVariant, marginTop: 4 }}>{p.sub}</T>
+              </View>
+              <View style={{ gap: 4, alignItems: 'flex-end', maxWidth: '52%' }}>
+                {p.hasIou && (
+                  <T numberOfLines={1} adjustsFontSizeToFit style={{ fontSize: p.iouLabel.length > 10 ? 12 : 14, lineHeight: 20, fontWeight: '600', color: c.green }}>لي {p.iouLabel}</T>
+                )}
+                {p.hasUome && (
+                  <T numberOfLines={1} adjustsFontSizeToFit style={{ fontSize: p.uomeLabel.length > 10 ? 12 : 14, lineHeight: 20, fontWeight: '600', color: c.red }}>عليّ {p.uomeLabel}</T>
+                )}
+              </View>
+            </Touch>
+          ))}
+          {people.length === 0 && (
+            <T style={{ padding: 24, textAlign: 'center', color: c.onSurfaceVariant, fontSize: 16, lineHeight: 24, backgroundColor: c.surfaceContainerLow, borderRadius: 12 }}>
+              ابدأ بإضافة أول دين من زر +. سيظهر هنا كل شخص ورصيده.
+            </T>
+          )}
         </View>
-      </View>
-
-      <View style={{ gap: 8 }}>
-        {shown.map(p => (
-          <Touch
-            key={p.id}
-            onPress={() => onOpenPerson(p.id)}
-            pressedBackground={c.cardHover}
-            style={{
-              flexDirection: 'row', alignItems: 'center', gap: 14,
-              backgroundColor: c.card, borderRadius: 16, paddingVertical: 14, paddingHorizontal: 16,
-            }}
-          >
-            <Avatar initial={p.initial} size={44} radius={22} bg={p.avatarBg} fg={p.avatarFg} fontSize={16} />
-            <View style={{ flex: 1, minWidth: 0 }}>
-              <T style={{ fontSize: 15, fontWeight: '600', color: c.text }} numberOfLines={1}>{p.name}</T>
-              <T style={{ fontSize: 12, color: c.muted, marginTop: 2 }}>{p.sub}</T>
-            </View>
-            <View style={{ gap: 2, alignItems: 'flex-end' }}>
-              {p.hasIou && (
-                <T style={{ fontSize: 14, fontWeight: '700', color: c.green }}>لي {p.iouLabel}</T>
-              )}
-              {p.hasUome && (
-                <T style={{ fontSize: 14, fontWeight: '700', color: c.red }}>عليّ {p.uomeLabel}</T>
-              )}
-            </View>
-          </Touch>
-        ))}
-        {shown.length === 0 && (
-          <T style={{ paddingVertical: 40, textAlign: 'center', color: c.muted, fontSize: 14 }}>
-            لا يوجد أشخاص هنا
-          </T>
-        )}
       </View>
     </ScrollView>
   );
@@ -170,17 +147,24 @@ export function Home({
     label, amount, count, bg, fg, onPress,
   }: { label: string; amount: number; count: number; bg: string; fg: string; onPress: () => void }) {
     return (
-      <Pressable
+      <MaterialPressable c={c}
         onPress={onPress}
-        style={({ pressed }) => ({
-          flex: 1, backgroundColor: bg, borderRadius: 20,
-          paddingVertical: 18, paddingHorizontal: 16, opacity: pressed ? 0.85 : 1,
-        })}
+        accessibilityRole="button"
+        accessibilityLabel={`${label}: ${fmt(amount)} ريال سعودي، ${fmt(count, 0)} ديون`}
+        style={{
+          flex: 1, backgroundColor: bg, borderRadius: 24, overflow: 'hidden',
+          paddingVertical: 20, paddingHorizontal: 16,
+        }}
       >
-        <T style={{ fontSize: 13, color: fg, fontWeight: '600' }}>{label}</T>
-        <T style={{ fontSize: 30, fontWeight: '700', color: fg, marginTop: 6 }}>{fmt(amount)}</T>
-        <T style={{ fontSize: 12, color: fg, opacity: 0.8 }}>ر.س · {fmt(count, 0)} ديون</T>
-      </Pressable>
+        {({ pressed, hovered }) => (
+          <>
+            {(pressed || hovered) && <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: fg, opacity: pressed ? 0.12 : 0.08 }]} />}
+            <T style={{ fontSize: 14, lineHeight: 20, color: fg, fontWeight: '500' }}>{label}</T>
+            <T adjustsFontSizeToFit numberOfLines={1} style={{ fontSize: fmt(amount).length > 10 ? 24 : 28, lineHeight: 36, fontWeight: '500', color: fg, marginTop: 8 }}>{fmt(amount)}</T>
+            <T style={{ fontSize: 12, lineHeight: 16, color: fg, marginTop: 4 }}>ر.س · {fmt(count, 0)} ديون</T>
+          </>
+        )}
+      </MaterialPressable>
     );
   }
 }

@@ -1,7 +1,7 @@
 import React from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 
-import { Avatar, Badge, T, Touch } from '../components/ui';
+import { Avatar, Badge, Chip, T, Touch } from '../components/ui';
 import { fmt } from '../format';
 import { DebtView } from '../selectors';
 import { Colors } from '../theme';
@@ -31,44 +31,32 @@ export function DebtList({ c, debts, dir, status, onStatus, onOpenDebt }: Props)
     .sort((a, b) => a.dueIn - b.dueIn);
 
   const title = dir === 'me' ? 'يدينون لي' : 'أدين لهم';
-  const color = dir === 'me' ? c.green : c.red;
+  const color = dir === 'me' ? c.onGreenContainer : c.onErrorContainer;
   const total = all.reduce((x, d) => x + d.rem, 0);
 
   return (
     <ScrollView
-      contentContainerStyle={{ paddingTop: 8, paddingHorizontal: 20, paddingBottom: 100, gap: 16 }}
+      contentContainerStyle={{ paddingTop: 8, paddingHorizontal: 16, paddingBottom: 104, gap: 16 }}
       showsVerticalScrollIndicator={false}
     >
-      <View style={{ height: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-        <View>
-          <T style={{ fontSize: 22, fontWeight: '700', color: c.text }}>{title}</T>
-          <T style={{ fontSize: 12, color: c.muted }}>
-            {fmt(all.filter(d => !d.paid).length, 0)} ديون مفتوحة
-          </T>
-        </View>
-        <T style={{ fontSize: 20, fontWeight: '700', color }}>
-          {fmt(total)} <T style={{ fontSize: 12, color }}>ر.س</T>
+      <View style={{ minHeight: 64, justifyContent: 'center' }}>
+        <T accessibilityRole="header" style={{ fontSize: 28, lineHeight: 36, fontWeight: '400', color: c.onSurface }}>{title}</T>
+        <T style={{ fontSize: 14, lineHeight: 20, color: c.onSurfaceVariant }}>
+          {fmt(all.filter(d => !d.paid).length, 0)} ديون مفتوحة
         </T>
       </View>
 
-      <View style={{ flexDirection: 'row', gap: 8 }}>
-        {FILTERS.map(f => {
-          const on = status === f.id;
-          return (
-            <Pressable
-              key={f.id}
-              onPress={() => onStatus(f.id)}
-              style={{
-                height: 34, paddingHorizontal: 14, borderRadius: 17,
-                alignItems: 'center', justifyContent: 'center', borderWidth: 1,
-                borderColor: on ? c.primary : c.border,
-                backgroundColor: on ? c.primary : c.card,
-              }}
-            >
-              <T style={{ fontSize: 13, fontWeight: '600', color: on ? '#fff' : c.text }}>{f.label}</T>
-            </Pressable>
-          );
-        })}
+      <View style={{ backgroundColor: dir === 'me' ? c.greenBg : c.redBg, padding: 20, borderRadius: 24, gap: 4 }}>
+        <T style={{ fontSize: 14, lineHeight: 20, color }}>إجمالي المتبقي</T>
+        <T numberOfLines={1} adjustsFontSizeToFit style={{ fontSize: fmt(total).length > 10 ? 28 : 32, lineHeight: 40, fontWeight: '500', color }}>
+          {fmt(total)} <T style={{ fontSize: 16, lineHeight: 24, color }}>ر.س</T>
+        </T>
+      </View>
+
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        {FILTERS.map(f => (
+          <Chip key={f.id} label={f.label} selected={status === f.id} onPress={() => onStatus(f.id)} c={c} />
+        ))}
       </View>
 
       <View style={{ gap: 8 }}>
@@ -78,31 +66,31 @@ export function DebtList({ c, debts, dir, status, onStatus, onOpenDebt }: Props)
             onPress={() => onOpenDebt(d.id)}
             pressedBackground={c.cardHover}
             style={{
-              backgroundColor: c.card, borderRadius: 16, paddingVertical: 14, paddingHorizontal: 16,
-              flexDirection: 'row', alignItems: 'center', gap: 14,
-              borderWidth: 1, borderColor: d.border,
+              backgroundColor: c.surfaceContainerLow, borderRadius: 12, minHeight: 88, paddingVertical: 16, paddingHorizontal: 16,
+              flexDirection: 'row', alignItems: 'center', gap: 16,
             }}
           >
-            <Avatar initial={d.initial} size={44} radius={14} bg={d.avatarBg} fg={d.avatarFg} fontSize={16} />
+            <Avatar initial={d.initial} size={40} radius={20} bg={d.avatarBg} fg={d.avatarFg} fontSize={16} />
             <View style={{ flex: 1, minWidth: 0 }}>
-              <T style={{ fontSize: 15, fontWeight: '600', color: c.text }} numberOfLines={1}>
-                {d.personName} <T style={{ fontWeight: '400', color: c.muted, fontSize: 15 }}>· {d.note}</T>
+              <T style={{ fontSize: 16, lineHeight: 24, fontWeight: '500', color: c.onSurface }} numberOfLines={1}>
+                {d.personName}
               </T>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 }}>
+              {!!d.note && <T numberOfLines={1} style={{ fontSize: 14, lineHeight: 20, color: c.onSurfaceVariant }}>{d.note}</T>}
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginTop: 4 }}>
                 <Badge label={d.badge} bg={d.badgeBg} fg={d.badgeFg} />
-                <T style={{ fontSize: 12, color: c.muted }}>{d.dueLabel}</T>
+                <T style={{ fontSize: 12, lineHeight: 16, color: c.onSurfaceVariant }}>{d.dueLabel}</T>
               </View>
             </View>
-            <View style={{ alignItems: 'flex-end' }}>
-              <T style={{ fontSize: 17, fontWeight: '700', color: d.color }}>{d.remainingLabel}</T>
-              <T style={{ fontSize: 11, color: c.muted }}>من {d.amountLabel}</T>
+            <View style={{ alignItems: 'flex-end', maxWidth: '52%' }}>
+              <T numberOfLines={1} adjustsFontSizeToFit style={{ fontSize: d.remainingLabel.length > 10 ? 12 : 16, lineHeight: 24, fontWeight: '600', color: d.color }}>{d.remainingLabel} <T style={{ fontSize: 12 }}>ر.س</T></T>
+              <T style={{ fontSize: 12, lineHeight: 16, color: c.onSurfaceVariant }}>من {d.amountLabel}</T>
             </View>
           </Touch>
         ))}
 
         {items.length === 0 && (
-          <T style={{ paddingVertical: 40, textAlign: 'center', color: c.muted, fontSize: 14 }}>
-            لا توجد ديون هنا
+          <T style={{ padding: 24, textAlign: 'center', color: c.onSurfaceVariant, fontSize: 16, lineHeight: 24, backgroundColor: c.surfaceContainerLow, borderRadius: 12 }}>
+            {status === 'over' ? 'لا توجد ديون متأخرة في هذا الاتجاه.' : status === 'paid' ? 'لم تُسدّد ديون في هذا الاتجاه بعد.' : status === 'open' && all.length ? 'كل الديون في هذا الاتجاه مسددة.' : 'لا توجد ديون في هذا الاتجاه. أضف ديناً من زر +.'}
           </T>
         )}
       </View>

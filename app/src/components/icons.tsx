@@ -1,116 +1,59 @@
 import React from 'react';
-import { View } from 'react-native';
+import { Text } from 'react-native';
 
-// The design draws its nav icons out of plain boxes and CSS triangles rather
-// than an icon font; these reproduce the same shapes with RN views.
+// Subset of Google's Material Symbols Rounded (24dp, weight400; selected500/FILL1).
+// Bundled fonts keep icons available offline without a new native dependency.
+const SYMBOLS = {
+  home: '\ue9b2',
+  south_west: '\uf1e5',
+  north_east: '\uf1e1',
+  notifications: '\ue7f5',
+  settings: '\ue8b8',
+  dark_mode: '\ue51c',
+  light_mode: '\ue518',
+  cloud: '\uf15c',
+  folder: '\ue2c7',
+  description: '\ue873',
+  cloud_off: '\ue2c1',
+  arrow_forward: '\ue5c8',
+  chevron_left: '\ue5cb',
+  close: '\ue5cd',
+  add: '\ue145',
+  check: '\ue668',
+  backspace: '\ue14a',
+  more_vert: '\ue5d4',
+  edit: '\uf097',
+  schedule: '\uefd6',
+  account_balance_wallet: '\ue850',
+  info: '\ue88e',
+  shield: '\ue9e0',
+  cloud_done: '\ue2bf',
+  error: '\uf8b6',
+  payments: '\uef63',
+} as const;
 
-const Triangle = ({ color, up, w = 10, h = 6 }: { color: string; up: boolean; w?: number; h?: number }) => (
-  <View
-    style={{
-      width: 0,
-      height: 0,
-      borderLeftWidth: w / 2,
-      borderRightWidth: w / 2,
-      borderLeftColor: 'transparent',
-      borderRightColor: 'transparent',
-      ...(up
-        ? { borderBottomWidth: h, borderBottomColor: color, borderTopWidth: 0 }
-        : { borderTopWidth: h, borderTopColor: color, borderBottomWidth: 0 }),
-    }}
-  />
-);
-
-const Bar = ({ color, w = 16 }: { color: string; w?: number }) => (
-  <View style={{ width: w, height: 2, borderRadius: 1, backgroundColor: color }} />
-);
-
-export function HomeIcon({ color }: { color: string }) {
+export type MaterialIconName = keyof typeof SYMBOLS;
+export function MaterialIcon({ name, color, size = 24, selected = false }: {
+  name: MaterialIconName; color: string; size?: number; selected?: boolean;
+}) {
+  const filled = selected && ['home', 'south_west', 'north_east', 'notifications', 'settings'].includes(name);
   return (
-    <View style={{ width: 16, height: 14 }}>
-      <View style={{ position: 'absolute', top: 0, left: 1 }}>
-        <Triangle color={color} up w={14} h={7} />
-      </View>
-      <View
-        style={{
-          position: 'absolute', bottom: 0, width: 16, height: 8,
-          borderWidth: 2, borderTopWidth: 0, borderColor: color,
-        }}
-      />
-    </View>
+    <Text accessible={false} aria-hidden importantForAccessibility="no" allowFontScaling={false}
+      style={{ fontFamily: filled ? 'MaterialSymbolsRoundedSelected' : 'MaterialSymbolsRounded',
+        color, fontSize: size, lineHeight: size, width: size, height: size,
+        textAlign: 'center', writingDirection: 'ltr', includeFontPadding: false }}>
+      {SYMBOLS[name]}
+    </Text>
   );
 }
 
-export function IouIcon({ color }: { color: string }) {
-  return (
-    <View style={{ alignItems: 'center', gap: 2 }}>
-      <Triangle color={color} up={false} />
-      <Bar color={color} />
-    </View>
-  );
-}
-
-export function UomeIcon({ color }: { color: string }) {
-  return (
-    <View style={{ alignItems: 'center', gap: 2 }}>
-      <Bar color={color} />
-      <Triangle color={color} up />
-    </View>
-  );
-}
-
-export function BellIcon({ color }: { color: string }) {
-  return (
-    <View style={{ width: 14, height: 16 }}>
-      <View
-        style={{
-          width: 14, height: 11, borderWidth: 2, borderBottomWidth: 0, borderColor: color,
-          borderTopLeftRadius: 7, borderTopRightRadius: 7, borderBottomLeftRadius: 2, borderBottomRightRadius: 2,
-        }}
-      />
-      <View
-        style={{ position: 'absolute', left: 5, bottom: 0, width: 4, height: 4, borderRadius: 2, backgroundColor: color }}
-      />
-    </View>
-  );
-}
-
-export function SettingsIcon({ color }: { color: string }) {
-  return (
-    <View style={{ alignItems: 'flex-end', gap: 3 }}>
-      <Bar color={color} />
-      <Bar color={color} w={11} />
-      <Bar color={color} />
-    </View>
-  );
-}
-
-/** Sun / moon glyph on the home screen's theme toggle. */
-export function ThemeGlyph({ dark, cardBg }: { dark: boolean; cardBg: string }) {
-  if (dark) {
-    return (
-      <View style={{ width: 16, height: 16, borderRadius: 8, backgroundColor: '#f2c66d', overflow: 'hidden' }}>
-        <View
-          style={{ position: 'absolute', top: -4, left: -6, width: 16, height: 16, borderRadius: 8, backgroundColor: cardBg }}
-        />
-      </View>
-    );
-  }
-  const ray = (top: number, left: number) => (
-    <View key={`${top}-${left}`} style={{ position: 'absolute', top, left, width: 2, height: 2, backgroundColor: '#1b1a22' }} />
-  );
-  return (
-    <View style={{ width: 14, height: 14 }}>
-      <View style={{ position: 'absolute', top: 3, left: 3, width: 8, height: 8, borderRadius: 4, backgroundColor: '#1b1a22' }} />
-      {ray(6, 6)}
-      {ray(0, 6)}
-      {ray(12, 6)}
-      {ray(6, 0)}
-      {ray(6, 12)}
-    </View>
-  );
-}
-
-/** Small "drive" rectangle in the settings backup row. */
-export function DriveIcon({ color }: { color: string }) {
-  return <View style={{ width: 18, height: 14, borderRadius: 3, borderWidth: 2, borderColor: color }} />;
+type IconProps = { color: string; selected?: boolean };
+export const HomeIcon = (props: IconProps) => <MaterialIcon name="home" {...props} />;
+export const IouIcon = (props: IconProps) => <MaterialIcon name="south_west" {...props} />;
+export const UomeIcon = (props: IconProps) => <MaterialIcon name="north_east" {...props} />;
+export const BellIcon = (props: IconProps) => <MaterialIcon name="notifications" {...props} />;
+export const SettingsIcon = (props: IconProps) => <MaterialIcon name="settings" {...props} />;
+export const DriveIcon = (props: IconProps) => <MaterialIcon name="cloud" {...props} />;
+export function ThemeGlyph({ dark, color }: { dark: boolean; cardBg: string; color?: string }) {
+  return <MaterialIcon name={dark ? 'light_mode' : 'dark_mode'} color={color ?? (dark ? '#e2e2e9' : '#1a1b20')} />;
 }
