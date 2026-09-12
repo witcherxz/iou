@@ -15,17 +15,16 @@ export function signerCertificateDigests(output) {
   const certificates = lines.filter(line => line.includes(' certificate SHA-256')
     && !/^Source Stamp Signer:? certificate SHA-256 /.test(line));
   assert.ok(certificates.length, 'APK signer certificate SHA-256 digest is missing');
-  const labels = new Set();
   return certificates.map(line => {
-    // AOSP ApkSignerTool can label certificates by number or SDK range. SDK 37
-    // adds scheme labels such as "V3.0 Signer:" (confirmed against its official
-    // apksigner binary). Require every APK certificate to match our pinned key;
-    // a source stamp or public-key digest must never substitute for it.
+    // Signer labels are presentation, not certificate identity. Official SDK 36
+    // prints "Signer #1"; SDK 37 prints "V1 Signer:", "V2 Signer:" or
+    // "V3.0 Signer:" for the same key, and can add SDK ranges/hybrid roles.
+    // Parse every certificate digest regardless of that label, then require ALL
+    // of them to match the pinned key. This also rejects a different certificate
+    // under a new label. Source-stamp/public-key digests never substitute for it.
     // https://android.googlesource.com/platform/tools/apksig/+/refs/heads/main/src/apksigner/java/com/android/apksigner/ApkSignerTool.java
-    const match = line.match(/^(Signer #1:?|Signer \(minSdkVersion=\d+(?: \(dev release=true\))?, maxSdkVersion=\d+\)|(?:Signer|V3\.[01] Signer):(?: \(minSdkVersion=\d+(?: \(dev release=true\))?, maxSdkVersion=\d+\))?) certificate SHA-256 digest: ([a-fA-F0-9]{64})$/);
-    assert.ok(match, `Malformed or unsupported APK signer certificate digest: ${line}`);
-    assert.ok(!labels.has(match[1]), 'APK signer certificate label is duplicated');
-    labels.add(match[1]);
+    const match = line.match(/^(.+) certificate SHA-256 digest: ([a-fA-F0-9]{64})$/);
+    assert.ok(match, `Malformed APK signer certificate digest: ${line}`);
     return match[2].toLowerCase();
   });
 }

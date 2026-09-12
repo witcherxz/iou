@@ -4,7 +4,7 @@ Goal: Provide a private Arabic debt ledger with clear balances and recoverable r
 Phase: verify
 
 ## Now
-Production 0.1.0-alpha.1 was committed and pushed with an empty initial ledger, production package identity and app branding. The first GitHub APK compiled, but verification stopped on Android SDK 37's changed certificate labels. The parser fix passes against real SDK 36/37 output; retry the unpublished release and verify its download.
+Production 0.1.0-alpha.1 was committed and pushed with an empty initial ledger, production package identity and app branding. GitHub APK compilation passes, but certificate-label parsing stopped two publication attempts. Verification now checks every certificate digest independently of scheme labels and passes against the exact CI output; retry the unpublished release and verify its download.
 
 Next:
 1. Push the verifier correction, retry the unpublished tag and verify signed APK publication and download.
@@ -15,10 +15,10 @@ Next:
 
 | metric | current | measured | previous | threshold | goal | source |
 |---|---:|---|---:|---:|---:|---|
-| Automated checks passing | 1076 count | 2026-09-12 | 1061 count | >= 1076 count | 1076 count | `cd app && npm run check`; `node scripts/release-workflow-checks.mjs`; `/tmp/iou-alpha/checks.log` |
+| Automated checks passing | 1082 count | 2026-09-12 | 1076 count | >= 1082 count | 1082 count | `cd app && npm run check`; `node scripts/release-workflow-checks.mjs`; `/tmp/iou-alpha/checks.log` |
 | TypeScript | PASS | 2026-09-12 | PASS | = PASS | PASS | `cd app && npm run typecheck` |
 | Clean launch and preservation scenarios | 8 count | 2026-09-12 | — | >= 8 count | 8 count | `/tmp/iou-release/clean-install-results.json`; `/tmp/iou-alpha/production-browser-results.json` |
-| GitHub production APK | FAIL | 2026-09-12 | — | = PASS | PASS | [First run](https://github.com/witcherxz/iou/actions/runs/34679580743): compilation passed; signer-output parser fix awaiting retry |
+| GitHub production APK | FAIL | 2026-09-12 | FAIL | = PASS | PASS | [Second run](https://github.com/witcherxz/iou/actions/runs/34680459085): compilation and signature passed; V2 certificate-label parser correction awaiting retry |
 
 ## DoD — 0.1 Alpha production release
 
@@ -52,6 +52,8 @@ Next:
 - 2026-09-12: Facing potential overwrite of external backups during startup or recovery, chose explicit first save and suspended automatic backup after local recovery, to protect older/newer copies, accepting a manual review step.
 
 ## Log
+
+- 2026-09-12 [incident]: The first parser correction covered SDK 37 V3 labels but missed Gradle's V2-only signature. Replaced the scheme-label whitelist with verification of every non-source-stamp certificate digest against the pinned key. Passed 49 release checks, including the complete CI output; APK signature, package, version and non-debuggable manifest had already passed before this parser error.
 
 - 2026-09-12 [incident]: First alpha APK compiled in GitHub Actions, but its certificate parser rejected SDK 37's new `V3.0 Signer:` label and prevented publication. Reproduced with the official SDK 37 binary, retained strict certificate pinning, and passed 43 release checks plus real SDK 36/37 output probes. Retrying the unpublished tag after the verifier correction.
 

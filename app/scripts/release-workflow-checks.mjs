@@ -62,6 +62,37 @@ check('v3.1 development SDK-range labels are accepted with the pinned release ke
 check('real SDK 37 V3.0 signer label is accepted', () => {
   assert.doesNotThrow(() => verifyInspection({ ...inspection, signature: inspection.signature.replaceAll('Signer #1', 'V3.0 Signer:') }, expected));
 });
+for (const label of ['V1 Signer:', 'V2 Signer:', 'V3.1 Signer:', 'V3.2 Hybrid Classical Signer:', 'V3.2 Hybrid PQC Signer:']) {
+  check(`SDK 37 ${label} still requires the pinned certificate`, () => {
+    const signature = inspection.signature.replaceAll('Signer #1', label);
+    assert.doesNotThrow(() => verifyInspection({ ...inspection, signature }, expected));
+    assert.throws(() => verifyInspection({ ...inspection, signature: signature.replace(expected.certificateDigest, 'cd'.repeat(32)) }, expected), /signer must match/);
+  });
+}
+// Replayed from the actual failed Actions APK inspection (build-tools 37.0.0).
+// The signing certificate here is a harmless test fingerprint.
+check('complete real CI v2-only verifier output is accepted', () => {
+  const signature = `Verifies
+Verified using v1 scheme (JAR signing): false
+Verified using v2 scheme (APK Signature Scheme v2): true
+Verified using v3 scheme (APK Signature Scheme v3): false
+Verified using v3.1 scheme (APK Signature Scheme v3.1): false
+Verified using v3.2 scheme (APK Signature Scheme v3.2): false
+Verified using v4 scheme (APK Signature Scheme v4): false
+Verified for SourceStamp: false
+Number of signers: 1
+V2 Signer: certificate DN: O=witcherxz, CN=IoU Android Release
+V2 Signer: certificate SHA-256 digest: ${expected.certificateDigest}
+V2 Signer: certificate SHA-1 digest: 2d65aa31dca538db4a2c6a4ac04d24927f6179e2
+V2 Signer: certificate MD5 digest: ded5d6ae0c8f189a4ed0d4cc13ffaefb
+V2 Signer: key algorithm: RSA
+V2 Signer: key size (bits): 3072
+V2 Signer: public key SHA-256 digest: 546d696299e75217e9d22ce4fc462ecf83fb95705f54eb9eb7fa34efa7fcebe1
+V2 Signer: public key SHA-1 digest: 9ea4a8a3cf9c35f208a77aba3c094135d884facd
+V2 Signer: public key MD5 digest: 9b0168faeb8464372620790e297094f8
+`;
+  assert.doesNotThrow(() => verifyInspection({ ...inspection, signature }, expected));
+});
 check('SDK 37 scheme labels with SDK ranges are accepted', () => {
   const signature = rangeSignature.replaceAll('Signer (minSdkVersion=33', 'V3.1 Signer: (minSdkVersion=33')
     .replaceAll('Signer (minSdkVersion=24', 'V3.0 Signer: (minSdkVersion=24');
@@ -74,9 +105,9 @@ check('SDK 37 wrong signer certificate is rejected', () => {
   const signature = inspection.signature.replaceAll('Signer #1', 'V3.0 Signer:').replace(expected.certificateDigest, 'cd'.repeat(32));
   assert.throws(() => verifyInspection({ ...inspection, signature }, expected), /signer must match/);
 });
-check('an unsupported new signature scheme cannot hide a different certificate', () => {
+check('a new signature scheme cannot hide a different certificate', () => {
   const signature = `${inspection.signature}V3.2 Hybrid PQC Signer: certificate SHA-256 digest: ${'cd'.repeat(32)}\n`;
-  assert.throws(() => verifyInspection({ ...inspection, signature }, expected), /Malformed or unsupported/);
+  assert.throws(() => verifyInspection({ ...inspection, signature }, expected), /signer must match/);
 });
 check('v3.1 cannot hide a different certificate in an older SDK range', () => {
   assert.throws(() => verifyInspection({ ...inspection, signature: rangeSignature.replaceAll(`maxSdkVersion=32) certificate SHA-256 digest: ${expected.certificateDigest}`, `maxSdkVersion=32) certificate SHA-256 digest: ${'cd'.repeat(32)}`) }, expected), /signer must match/);
@@ -98,11 +129,14 @@ check('source stamp and public-key fingerprints do not override the correct APK 
 check('malformed SHA-256 digest is rejected explicitly', () => {
   assert.throws(() => verifyInspection({ ...inspection, signature: inspection.signature.replace(expected.certificateDigest, expected.certificateDigest.slice(2)) }, expected), /Malformed/);
 });
-check('unsupported signer labels cannot evade certificate verification', () => {
-  assert.throws(() => verifyInspection({ ...inspection, signature: inspection.signature.replaceAll('Signer #1', 'Signer #2') }, expected), /Malformed or unsupported/);
+check('changed display labels cannot evade certificate verification', () => {
+  const signature = inspection.signature.replaceAll('Signer #1', 'Future SDK Signer #1:');
+  assert.doesNotThrow(() => verifyInspection({ ...inspection, signature }, expected));
+  assert.throws(() => verifyInspection({ ...inspection, signature: signature.replace(expected.certificateDigest, 'cd'.repeat(32)) }, expected), /signer must match/);
 });
-check('duplicate signer reports are rejected', () => {
-  assert.throws(() => verifyInspection({ ...inspection, signature: `${inspection.signature}Signer #1 certificate SHA-256 digest: ${expected.certificateDigest}\n` }, expected), /label is duplicated/);
+check('a certificate repeated by signing schemes must always match the pinned key', () => {
+  assert.doesNotThrow(() => verifyInspection({ ...inspection, signature: `${inspection.signature}Signer #1 certificate SHA-256 digest: ${expected.certificateDigest}\n` }, expected));
+  assert.throws(() => verifyInspection({ ...inspection, signature: `${inspection.signature}Signer #1 certificate SHA-256 digest: ${'cd'.repeat(32)}\n` }, expected), /signer must match/);
 });
 for (const [field, value, reason] of [
   ['debuggable', 'true', /not be debuggable/],
