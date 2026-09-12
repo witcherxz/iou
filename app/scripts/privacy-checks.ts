@@ -6,6 +6,7 @@ const { pbkdf2Sync, webcrypto } = require('node:crypto') as {
 import { PrivacyAdapter, PrivacyController } from '../src/privacy/controller';
 import { derivePin } from '../src/privacy/crypto';
 import { failedAttempt, LockRecord, normalizePin, parseLockRecord, PIN_ITERATIONS, sameVerifier } from '../src/privacy/policy';
+import { confirmAction, registerConfirmationHandler } from '../src/confirm';
 
 let passed = 0;
 function check(condition: unknown, label: string) { if (!condition) throw new Error(label); passed++; }
@@ -318,6 +319,27 @@ async function main() {
   await noLock.controller.initialize(); noLock.controller.setForeground(true);
   check(!await noLock.controller.autoUnlockWithBiometrics() && noLock.biometricCount() === 0,
     'The optional lock stays optional and never prompts while disabled');
+
+  check(!await confirmAction('Private restore', 'Preview'), 'A confirmation cannot open before the private dialog host mounts');
+  let confirmation: string[] = [];
+  const unregisterFirst = registerConfirmationHandler(async (...request) => { confirmation = request; return true; });
+  check(await confirmAction('Restore', 'Preview', 'Apply') && confirmation.join('|') === 'Restore|Preview|Apply',
+    'The mounted host receives the intended confirmation and returns approval');
+  let cancelingHostCalls = 0;
+  const unregisterSecond = registerConfirmationHandler(async () => { cancelingHostCalls++; return false; });
+  unregisterFirst();
+  check(!await confirmAction('Restore', 'Preview') && cancelingHostCalls === 1,
+    'Cleanup from an older host cannot remove the current canceling host');
+  unregisterSecond();
+  check(!await confirmAction('Private restore', 'Preview'), 'Unmounting the host cancels subsequent private confirmations');
+  let finishRead!: () => void;
+  const readFinishes = new Promise<void>(resolve => { finishRead = resolve; });
+  let lateHostCalls = 0;
+  const unregisterLate = registerConfirmationHandler(async () => { lateHostCalls++; return true; });
+  const lateConfirmation = readFinishes.then(() => confirmAction('Private restore', 'Late decrypted preview'));
+  unregisterLate(); finishRead();
+  check(!await lateConfirmation && lateHostCalls === 0,
+    'A restore completing after a privacy lock cannot show a preview or receive approval outside the gate');
 
   const salt = '0123456789abcdef0123456789abcdef';
   const saltBytes = Uint8Array.from(salt.match(/../g)!, byte => parseInt(byte, 16));

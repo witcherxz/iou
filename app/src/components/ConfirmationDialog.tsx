@@ -1,10 +1,11 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Modal, Pressable, ScrollView, useWindowDimensions, View } from 'react-native';
+import { Pressable, ScrollView, useWindowDimensions, View } from 'react-native';
 
 import { registerConfirmationHandler } from '../confirm';
 import { Colors, M3 } from '../theme';
 import { MaterialIcon } from './icons';
 import { T, Touch } from './ui';
+import { AppDialog } from './AppDialog';
 
 type Request = { title: string; message: string; confirmLabel: string; resolve: (choice: boolean) => void };
 
@@ -52,7 +53,7 @@ export function ConfirmationDialog({ c }: { c: Colors }) {
 
   // React Native Web's Modal contains keyboard focus and handles Escape.
   return (
-    <Modal visible={!!current} transparent animationType="fade" onRequestClose={() => answer(false)}
+    <AppDialog visible={!!current} transparent animationType="fade" onRequestClose={() => answer(false)}
       onDismiss={() => {
         if (!queue.current.length) requestAnimationFrame(() => returnFocus.current?.focus?.());
       }}
@@ -82,6 +83,6 @@ export function ConfirmationDialog({ c }: { c: Colors }) {
           </View>
         </View>
       </View>
-    </Modal>
+    </AppDialog>
   );
 }

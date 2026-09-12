@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
 
-import { AmountInput, applyKey, isValidAmountInput, Keypad, normalizeAmountInput } from '../components/Keypad';
+import { AmountInput, isValidAmountInput, normalizeAmountInput } from '../components/Keypad';
 import { TransactionDateField } from '../components/TransactionDateField';
 import { Chip, MaterialPressable, OutlineButton, OutlinedField, PrimaryButton, ScreenHeader, Segment, T } from '../components/ui';
 import { addDays, addMonths, arDate, fmt, isCalendarDate, todayISO } from '../format';
@@ -235,10 +235,6 @@ export function AddDebt({ c, people, draft, onDraftChange, onClose, onAddPerson,
           maxLength={500}
           placeholder="مثال: غداء، تذاكر، سلفة"
         />
-
-        <View style={{ marginTop: 'auto' }}>
-          <Keypad c={c} onKey={k => onDraftChange(current => ({ ...current, amount: applyKey(current.amount, k) }))} />
-        </View>
 
         {!personId && <T style={{ color: c.onSurfaceVariant, fontSize: 14, lineHeight: 20 }}>اختر شخصاً أو أضف شخصاً جديداً لحفظ الدين.</T>}
         {!!error && <T accessibilityRole="alert" style={{ color: c.red, fontSize: 14, lineHeight: 20 }}>{error}</T>}

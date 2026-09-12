@@ -4,35 +4,35 @@ Goal: Provide a private Arabic debt ledger with clear balances and recoverable r
 Phase: verify
 
 ## Now
-[Alpha 4](https://github.com/witcherxz/iou/releases/tag/v0.1.0-alpha.4) is published and installed on the S24 Ultra. Automatic biometrics and PIN fallback are verified, and ADB reached Drive's upload screen. Saving to the existing Dropbox folder still failed with `FOLDER_SNAPSHOT_IO`. Preparing Alpha 5 with provider display-name metadata, owned Android output streams for new and existing documents, and preservation of the entry form when adding a person or temporarily locking/backgrounding the app.
+[Alpha 5](https://github.com/witcherxz/iou/releases/tag/v0.1.0-alpha.5) is published and installed on the S24 Ultra after 1,254 checks passed. The entry draft fix is verified in full UI and privacy lifecycle tests. Native backup testing exposed a separate blocker: opening the existing-backup confirmation triggers Android focus locking and cancels the save before writing. Preparing Alpha 6 with dialogs inside the Android app window and the user's requested removal of embedded number pads; amount fields use the OS keyboard.
 
 Next:
-1. Publish and install the checked Alpha 5 production update.
-2. Test the existing folder's save and recovery-history flow on the phone; record any remaining provider limitation accurately.
+1. Publish and install the checked Alpha 6 production update.
+2. Test the existing folder's save and recovery-history flow plus native keyboard/draft preservation on the phone.
 3. Complete broader native accessibility/reminder/provider validation; direct automatic Drive sync still requires native authorization and Google Cloud setup.
 
 ## Health
 
 | metric | current | measured | previous | threshold | goal | source |
 |---|---:|---|---:|---:|---:|---|
-| Automated checks passing | 1254 count | 2026-09-12 | 1231 count | >= 1254 count | 1254 count | `cd app && npm run check`; `node scripts/release-workflow-checks.mjs`; `JAVA_HOME=/tmp/iou-device-debug/jdk-17.0.20.1+1 node scripts/native-pin-checks.mjs` |
+| Automated checks passing | 1259 count | 2026-09-12 | 1254 count | >= 1259 count | 1259 count | `cd app && npm run check`; `node scripts/release-workflow-checks.mjs`; `JAVA_HOME=/tmp/iou-device-debug/jdk-17.0.20.1+1 node scripts/native-pin-checks.mjs` |
 | TypeScript | PASS | 2026-09-12 | PASS | = PASS | PASS | `cd app && npm run typecheck` |
-| Alpha 4 production APK | PASS | 2026-09-12 | PASS | = PASS | PASS | [Release workflow](https://github.com/witcherxz/iou/actions/runs/34703133871); [verification and device installation](app/docs/RELEASING.md#alpha-4) |
-| Native Dropbox folder save | FAIL | 2026-09-12 | UNMEASURED | = PASS | PASS | `/tmp/iou-device-debug/backup-observation-20260912-185954.json`; [Alpha 4 verification](app/docs/RELEASING.md#alpha-4) |
+| Alpha 5 production APK | PASS | 2026-09-12 | PASS | = PASS | PASS | [Release workflow](https://github.com/witcherxz/iou/actions/runs/34705200101); [verification and device installation](app/docs/RELEASING.md#alpha-5) |
+| Native Dropbox folder save | FAIL | 2026-09-12 | UNMEASURED | = PASS | PASS | `/tmp/iou-device-debug/auto-biometric-20260912-194119/summary.json`; [Alpha 5 verification](app/docs/RELEASING.md#alpha-5) |
 
-## DoD — Alpha 5 provider backups and entry drafts
+## DoD — Alpha 6 system keyboard and usable backup confirmations
 
-- [x] Reproduce the native folder failure and preserve private data during diagnostics.
-- [x] Use paired provider display names and exact document identities for folder history/recovery.
-- [x] Complete owning Android output streams and safe operation-specific failures.
-- [x] Preserve the full unfinished entry across person creation and temporary privacy-gate remounts.
-- [x] Pass integrated checks after the final native writer change and focused draft/backup lifecycle scenarios.
-- [ ] Publish/install Alpha 5 with production signing and existing data preserved.
-- [ ] Verify native folder save and readable recovery history.
+- [x] Remove embedded number pads while retaining OS decimal input and 0–9 normalization.
+- [x] Verify full form/settlement flows and preserve unfinished entry drafts.
+- [x] Reproduce confirmation-triggered focus locking on the S24 Ultra without collecting private contents.
+- [x] Keep Android dialogs inside the app window while preserving background/notification-shade privacy.
+- [x] Pass integrated and dialog-specific checks.
+- [ ] Publish/install Alpha 6 with production signing and existing data preserved.
+- [ ] Verify native folder save, recovery previews, OS keyboard, and draft preservation.
 
 ## Blockers / Risks
 
-- PIN performance, automatic biometric prompting, cancellation/PIN fallback and native share/Drive upload-screen navigation are confirmed on the connected S24 Ultra. Dropbox folder saves still fail on Alpha 4; Alpha 5 provider compatibility changes need device verification. Full app-switcher privacy, TalkBack/font scaling and notifications still need native validation. Response: test the updated folder flow and complete broader validation before a stable release.
+- PIN performance, automatic biometric prompting, cancellation/PIN fallback and native share/Drive upload-screen navigation are confirmed on the connected S24 Ultra. Alpha 5 native backup confirmations cancel due to focus locking; Alpha 6 dialog handling must unblock completed provider verification. Full app-switcher privacy, TalkBack/font scaling and notifications still need native validation. Response: test the updated folder flow and complete broader validation before a stable release.
 - Direct Google Drive authorization is unfinished. Response: keep direct sync disabled and offer the tested manual share/download and file-restore flow. Drive upload-screen navigation is verified; upload completion remains unverified.
 - The app lock controls access; ordinary local/folder/CSV/report data remains readable. Protected manual exports use a separate password. Response: explain the distinction and keep off-device copies private.
 - Automatic backups run after foreground edits and are suspended after local recovery; reminders retain the nearest 60 alerts plus weekly and refresh on foreground. Response: explain these operating limits in the feature notes.
@@ -51,6 +51,10 @@ Next:
 - 2026-09-12: Facing potential overwrite of external backups during startup or recovery, chose explicit first save and suspended automatic backup after local recovery, to protect older/newer copies, accepting a manual review step.
 
 ## Log
+
+- 2026-09-12 [work]: Prepared Alpha 6 after the user requested OS keyboard input: removed embedded keypads from debt and settlement screens, with eight form and fourteen settlement/edit/export UI scenarios passing. Native Alpha 5 backup attempts reproduced confirmation-triggered focus locking while IoU remained resumed; replaced Android modal windows with in-window dialogs. Passed 1,259 integrated checks and TypeScript. A held-decryption regression confirmed a native restore alert could appear/apply after locking; confirmations now cancel when their private host is unavailable, and the same test confirms no preview or restore while locked. Eight independent real-provider/gate dialog scenarios passed for confirmation queues, Back ordering, background cancellation, and narrow dialog layouts.
+
+- 2026-09-12 [release]: Published and installed Alpha 5 from 0ac6046 after both Actions runs and 1,254 integrated checks passed. Independent APK verification confirmed signature, manifest, offline bundle and both native modules. Provider writes remain unverified because opening the existing-backup confirmation cancels through the privacy focus lock before writing; no backup error or timestamp change was observed.
 
 - 2026-09-12 [work]: Prepared Alpha 5 with paired native document metadata, owned and explicitly closed native output streams, strict recovery identities, and entry drafts held above the privacy gate. Passed 1,254 integrated checks, TypeScript, eight full Expo form-flow scenarios, seven real privacy-gate lifecycle scenarios (including the failing previous source), and six asynchronous backup-hook scenarios. Provider tests cover opaque IDs, duplicates, actual Expo URL parsing, and stalled metadata queries. Native verification follows the production build.
 

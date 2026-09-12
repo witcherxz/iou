@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
 
 import { MaterialIcon } from '../components/icons';
-import { AmountInput, applyKey, isValidAmountInput, Keypad } from '../components/Keypad';
+import { AmountInput, isValidAmountInput } from '../components/Keypad';
 import { OutlinedField, PrimaryButton, ScreenHeader, Segment, T } from '../components/ui';
 import { TransactionDateField } from '../components/TransactionDateField';
 import { calendarISO, fmt, isCalendarDate, localDate, todayISO } from '../format';
@@ -121,8 +121,6 @@ export function Settle({
             ? 'أدخل مبلغاً أكبر من صفر، بحد أقصى منزلتين عشريتين.'
             : mode === 'partial' && amount > max ? `المبلغ أكبر من المتبقي (${fmt(max)} ر.س).` : undefined}
         />
-
-        {mode === 'partial' && <Keypad c={c} onKey={key => setRaw(value => applyKey(value, key))} />}
 
         <TransactionDateField c={c} label={`تاريخ ${entryLabel}`} value={transactionDate} onChange={setTransactionDate} />
         {validDate && max === 0 && <T style={{ color: c.error, fontSize: 14, lineHeight: 22 }}>لا يوجد دين متبقٍ في هذا التاريخ. لا يمكن أن يسبق تاريخ العملية تاريخ الدين.</T>}

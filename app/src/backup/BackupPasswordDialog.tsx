@@ -1,17 +1,20 @@
 import React, { useEffect, useState } from 'react';
-import { KeyboardAvoidingView, Modal, Platform, ScrollView, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
 import { OutlineButton, OutlinedField, PrimaryButton, T } from '../components/ui';
 import { Colors, M3 } from '../theme';
 import { BackupPasswordRequest } from '../useBackup';
+import { AppDialog } from '../components/AppDialog';
 
 export function BackupPasswordDialog({ c, request, onSubmit, onCancel }: {
   c: Colors; request: BackupPasswordRequest | null; onSubmit: (password: string) => void; onCancel: () => void;
 }) {
   const [password, setPassword] = useState('');
   useEffect(() => { if (!request || request.error || request.verifying) setPassword(''); }, [request]);
+  // A genuine privacy lock unmounts this form; settle any waiting password.
+  useEffect(() => () => { onCancel(); }, [onCancel]);
   if (!request) return null;
   return (
-    <Modal visible transparent animationType="none" onRequestClose={onCancel}>
+    <AppDialog visible transparent animationType="none" onRequestClose={onCancel}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1, backgroundColor: c.scrim }}>
         <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: 24 }}>
         <View role="dialog" accessibilityLabel="نسخة محمية بكلمة مرور" accessibilityViewIsModal
@@ -27,6 +30,6 @@ export function BackupPasswordDialog({ c, request, onSubmit, onCancel }: {
         </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </Modal>
+    </AppDialog>
   );
 }

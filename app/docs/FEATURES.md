@@ -13,6 +13,8 @@ Implemented locally on 2026-09-12. The Arabic Material 3 interface continues to 
 | Optional privacy lock | Settings → **قفل التطبيق** | Confirm a 4–6 digit PIN; supported strong biometrics default on and prompt automatically on entry. Cancellation leaves PIN fallback available. Lock on leaving the app, or use **قفل الآن**. |
 | Flexible reminders | **التذكيرات** tab | Set a local time, advance notice, overdue cadence, weekly day, notification privacy and individual snoozes. |
 
+Amount fields open the system decimal keyboard when tapped; there is no embedded number pad. Arabic/Persian number input still normalizes to 0–9. An unfinished new debt keeps its fields and selected person while adding or cancelling a person and through a temporary lock/background transition. The draft stays in memory for the current app process and clears on save, close/back, restore, or a new entry session.
+
 ## Financial corrections
 
 Corrections preserve exact before/after snapshots. Cancellation adds a `voidedAt` timestamp; cancelled records remain visible in person/payment history and exported tables, and contribute nothing to balances or reminders. Restoring an entry validates its relationships and outstanding balance again. Undo of the latest edit is itself recorded as a correction; it does not erase history.

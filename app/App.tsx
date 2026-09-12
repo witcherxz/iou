@@ -16,6 +16,7 @@ import { fmt, todayISO } from './src/format';
 import { PrimaryButton, OutlineButton, T } from './src/components/ui';
 import { confirmAction } from './src/confirm';
 import { ConfirmationDialog } from './src/components/ConfirmationDialog';
+import { AppDialogLayer } from './src/components/AppDialog';
 import { exportToFile } from './src/backup/fileShare';
 import { portableData, serialize } from './src/backup/types';
 import { BackupPasswordDialog } from './src/backup/BackupPasswordDialog';
@@ -83,6 +84,7 @@ function Root() {
   const c = useMemo(() => makeColors(dark, state.accent), [dark, state.accent]);
 
   const [screen, setScreen] = useState<Screen>('main');
+  const [dialogOpen, setDialogOpen] = useState(false);
   const [tab, setTab] = useState<Tab>('home');
   const [personId, setPersonId] = useState<string | null>(null);
   const [debtId, setDebtId] = useState<string | null>(null);
@@ -165,6 +167,8 @@ function Root() {
   }, [personId, addPersonId]);
 
   const back = useCallback((): boolean => {
+    // Let the dialog consume Back even if this listener was registered later.
+    if (dialogOpen) return false;
     if (!privacy.unlocked) return false;
     if (screen === 'entry') { setScreen('person'); return true; }
     if (screen === 'localRecovery') { setScreen('backupTools'); return true; }
@@ -190,7 +194,7 @@ function Root() {
       return true;
     }
     return false; // let Android close the app
-  }, [screen, tab, cameFrom, closeAdd, settleFrom, privacy.unlocked]);
+  }, [screen, tab, cameFrom, closeAdd, settleFrom, privacy.unlocked, dialogOpen]);
 
   useEffect(() => {
     const sub = BackHandler.addEventListener('hardwareBackPress', back);
@@ -251,6 +255,10 @@ function Root() {
     <PrivacyGate c={c}>
     <SafeAreaView style={{ flex: 1, backgroundColor: wide || screen !== 'main' ? c.surface : c.surfaceContainer }} edges={['top', 'bottom']}>
       <StatusBar style={dark ? 'light' : 'dark'} />
+      <AppDialogLayer onOpenChange={setDialogOpen} dialogs={<>
+        <ConfirmationDialog c={c} />
+        <BackupPasswordDialog c={c} request={passwordRequest} onSubmit={submitPassword} onCancel={cancelPassword} />
+      </>}>
       <View style={{ flex: 1, direction: 'rtl', backgroundColor: c.bg }}>
         {recoveryNotice && !storageError && (
           <View style={{ backgroundColor: c.warnBg, paddingHorizontal: 20, paddingVertical: 12 }}>
@@ -475,9 +483,8 @@ function Root() {
         {toast && <Snackbar c={c} message={toast} bottom={toastBottom} />}
           </View>
         </View>
-        <ConfirmationDialog c={c} />
-        <BackupPasswordDialog c={c} request={passwordRequest} onSubmit={submitPassword} onCancel={cancelPassword} />
       </View>
+      </AppDialogLayer>
     </SafeAreaView>
     </PrivacyGate>
   );
