@@ -4,31 +4,32 @@ Goal: Provide a private Arabic debt ledger with clear balances and recoverable r
 Phase: verify
 
 ## Now
-[Alpha 7](https://github.com/witcherxz/iou/releases/tag/v0.1.0-alpha.7) is published, independently verified and tested in an isolated Android 16 emulator. One monthly due-day edit now updates all remaining installments with preview, short-month clamping and audited Undo. Native saved backups confirm completed rows and payment/forgiveness records stay intact. TypeScript, 1,298 integrated checks, 18 full Expo screen scenarios and both Actions runs pass. Local folder backup/recovery, OS keyboard and draft preservation also pass in the emulator. Phone testing has stopped; the S24 Ultra remains on Alpha 5 and can install the published update.
+Preparing Alpha 8 after a reported exemption appeared as a cash payment. Reproduced a real Alpha 7 native lock/unlock bug: the settlement form reset a selected partial exemption to its original full-payment defaults. The fix keeps the complete session and receipt above the privacy gate; histories now prominently distinguish exempted amounts from cash paid. TypeScript and 1,298 integrated checks pass, plus 19 full-App history/creation/privacy UI scenarios, 14 existing financial workflows and 4 real privacy lifecycle scenarios. The durable full-App PIN/background regression passes; preparing the signed release. Testing uses the isolated emulator; no phone connection is needed.
 
 Next:
-1. Validate completed cloud-provider backup/recovery when a suitable test account is available.
-2. Complete broader native accessibility and reminder delivery validation before a stable release.
-3. Keep direct automatic Drive sync disabled until native authorization and Google Cloud setup are complete.
+1. Publish the signed Alpha 8 update.
+2. Verify the published APK and repeat the failed exemption flow on the emulator.
+3. Continue cloud-provider, accessibility and reminder validation before a stable release.
 
 ## Health
 
 | metric | current | measured | previous | threshold | goal | source |
 |---|---:|---|---:|---:|---:|---|
-| Automated checks passing | 1298 count | 2026-09-12 | 1259 count | >= 1298 count | 1298 count | `cd app && npm run check`; `node scripts/release-workflow-checks.mjs`; `JAVA_HOME=/tmp/iou-device-debug/jdk-17.0.20.1+1 node scripts/native-pin-checks.mjs` |
+| Automated checks passing | 1298 count | 2026-09-12 | 1298 count | >= 1298 count | 1298 count | `cd app && npm run check`; `node scripts/release-workflow-checks.mjs`; `JAVA_HOME=/tmp/iou-device-debug/jdk-17.0.20.1+1 node scripts/native-pin-checks.mjs` |
 | TypeScript | PASS | 2026-09-12 | PASS | = PASS | PASS | `cd app && npm run typecheck` |
 | Alpha 7 production APK | PASS | 2026-09-12 | PASS | = PASS | PASS | [Release workflow](https://github.com/witcherxz/iou/actions/runs/34708711318); [independent APK verification](app/docs/RELEASING.md#alpha-7) |
-| Native local folder save/recovery | PASS | 2026-09-12 | UNMEASURED | = PASS | PASS | `/tmp/iou-emulator-qa/results.json`; `/tmp/iou-emulator-qa/backup-first-evidence.json`; `/tmp/iou-emulator-qa/backup-second-evidence.json` |
+| Settlement lock lifecycle | PASS | 2026-09-12 | FAIL | = PASS | PASS | `/tmp/iou-settle-lifecycle/before-results.json`; `/tmp/iou-settle-lifecycle/after-results.json`; native before: `/tmp/iou-emulator-qa/alpha8-before-native.json` |
 
-## DoD — Alpha 7 bulk installment due-day editing
+## DoD — Alpha 8 exemption clarity and preserved transaction type
 
-- [x] Change the monthly day for all remaining installments with one preview/apply action.
-- [x] Preserve completed rows, months, amounts, cash/forgiveness history, and exact unchanged legacy dates.
-- [x] Reject invalid day/date collisions and retain per-row editing plus audited save/undo.
-- [x] Pass integrated checks and TypeScript.
-- [x] Pass full Expo screen scenarios for both directions, partial/completed rows, cancellation, save, undo, and narrow layout.
-- [x] Publish Alpha 7 with production signing and independently verify its APK.
-- [x] Install and verify the bulk edit/save/undo flow in the isolated emulator.
+- [x] Distinguish cash and exemptions using prominent Arabic titles, labelled amounts, icons and separate notes.
+- [x] Show paid/waived totals and full/partial/mixed closure accurately, including cancelled records.
+- [x] Preserve all transaction draft fields, pending submission and successful receipt across privacy locking.
+- [x] Isolate late callbacks from new sessions and clear drafts on explicit exit/restoration.
+- [x] Pass integrated, type, history/creation UI and real privacy lifecycle checks.
+- [x] Pass the durable full-App lock/unlock and receipt regression.
+- [ ] Publish and independently verify the signed Alpha 8 APK.
+- [ ] Verify corrected exemption submission and retained receipt on the isolated emulator.
 
 ## Blockers / Risks
 
@@ -51,6 +52,8 @@ Next:
 - 2026-09-12: Facing potential overwrite of external backups during startup or recovery, chose explicit first save and suspended automatic backup after local recovery, to protect older/newer copies, accepting a manual review step.
 
 ## Log
+
+- 2026-09-12 [work]: Reproduced Alpha 7 native settlement draft reset after background/PIN unlock (partial exemption13.50 became full payment63.67); cancelled without saving. Lifted the whole session/receipt above PrivacyGate and guarded stale completions. Added clear shared payment/exemption history rows, separate amount labels/icons/notes and paid/waived summaries. TypeScript, 1,298 integrated checks, 19 full-App history/creation/privacy UI, 14 financial workflows and 4 actual privacy lifecycle scenarios pass; preparing Alpha 8.
 
 - 2026-09-12 [release]: Published Alpha 7 from 1685bed after both Actions runs and 1,298 integrated checks passed. Independently verified the 72,412,646-byte production APK, signature, manifest, fixture-free bundle and native modules, then installed it over Alpha 6 in the isolated Android 16 emulator. Native preview/save preserves paid rows, cash and forgiveness records while changing remaining days with short-month clamping; the exported ledger has one exact audit change. Native Undo and a subsequent backup restored the complete original debt exactly and retained the reversal; [verification record](app/docs/verification/alpha7-native.json).
 

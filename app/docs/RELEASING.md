@@ -1,20 +1,20 @@
 # Android alpha releases
 
-The application version is `0.1.0-alpha.7`, Android version code `7`, and production application ID `io.github.witcherxz.iou`. The same version is recorded in `app.json`, `package.json`, and the package-lock root. iOS uses the numeric marketing version `0.1.0` and build number `7` if built separately.
+The application version is `0.1.0-alpha.8`, Android version code `8`, and production application ID `io.github.witcherxz.iou`. The same version is recorded in `app.json`, `package.json`, and the package-lock root. iOS uses the numeric marketing version `0.1.0` and build number `8` if built separately.
 
 ## Build and publish
 
 1. Update the version in all three files, increase Android `versionCode`, and add `docs/releases/<version>.md`.
 2. Run `npm run typecheck` and `npm run check`. The release check traverses the production source graph and rejects test fixtures, mocks, sample ledger markers and seeding switches.
 3. Commit/push the reviewed changes. Main-branch Actions runs produce a signed APK artifact.
-4. Push a matching version tag, such as `v0.1.0-alpha.7`. Actions builds and verifies the APK, then publishes it and its `.apk.sha256` checksum to a GitHub prerelease. Tag/version mismatches fail.
+4. Push a matching version tag, such as `v0.1.0-alpha.8`. Actions builds and verifies the APK, then publishes it and its `.apk.sha256` checksum to a GitHub prerelease. Tag/version mismatches fail.
 
 The workflow runs checks for pull requests without exposing signing credentials. Release builds use Node 22, JDK 17, Expo prebuild, and Gradle `:app:assembleRelease`. A Gradle init script assigns the dedicated release signing configuration and disables debugging; it does not silently fall back to the template debug key.
 
 Before upload, the APK verifier checks package ID, version name/code, non-debuggable manifest, signature certificate, embedded Hermes/JavaScript and absence of demo fixture content. Downloaded APK checksums can be verified using:
 
 ```bash
-sha256sum -c iou-0.1.0-alpha.7.apk.sha256
+sha256sum -c iou-0.1.0-alpha.8.apk.sha256
 ```
 
 ## Signing key

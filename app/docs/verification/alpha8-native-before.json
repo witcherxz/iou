@@ -1,0 +1,20 @@
+{
+  "version": "0.1.0-alpha.7",
+  "serial": "emulator-5580",
+  "reproduced": true,
+  "beforeLock": {
+    "kind": "forgiveness",
+    "mode": "partial",
+    "amount": "13.50",
+    "actualDate": "2026-09-11",
+    "note": "privacy-waiver-qa"
+  },
+  "afterUnlock": {
+    "kind": "payment",
+    "mode": "full",
+    "amount": "63.67",
+    "actualDate": "2026-09-12",
+    "noteReset": true
+  },
+  "wrongRecordSubmitted": false
+}

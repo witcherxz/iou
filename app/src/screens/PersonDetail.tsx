@@ -2,6 +2,8 @@ import React from 'react';
 import { ScrollView, useWindowDimensions, View } from 'react-native';
 
 import { Avatar, Badge, OutlineButton, PrimaryButton, ScreenHeader, T, Touch } from '../components/ui';
+import { ReductionHistoryRow } from '../components/ReductionHistoryRow';
+import { MaterialIcon } from '../components/icons';
 import { arDate, fmt } from '../format';
 import { isDebt, isReduction } from '../ledger';
 import { DebtView, PersonView } from '../selectors';
@@ -77,16 +79,28 @@ export function PersonDetail({ c, person, tx, debts, onBack, onSettle, onAdd, on
         <View style={{ backgroundColor: c.surfaceContainerLow, borderRadius: 12, paddingHorizontal: 16 }}>
           {history.map(t => {
             const debt = debts.find(d => d.id === (isReduction(t) ? t.debtId : t.id));
+            if (isReduction(t)) {
+              const originalDebt = tx.find(row => row.id === t.debtId && isDebt(row));
+              const debtDirection = originalDebt?.dir === 'me' || originalDebt?.dir === 'owe' ? originalDebt.dir : undefined;
+              return <ReductionHistoryRow key={t.id} c={c} entry={t} debtDirection={debtDirection}
+                accessibilityLabel={`${t.voidedAt ? `عملية ملغاة · ${t.dir === 'forgive' ? 'إعفاء' : 'دفعة'}` : t.dir === 'forgive' ? 'تعديل إعفاء' : 'تعديل دفعة'}: ${t.note || ''}، ${fmt(t.amount)} ريال سعودي`}
+                onPress={() => onOpenEntry(t.id)} />;
+            }
             const status: [string, string, string] = t.voidedAt ? ['ملغاة', c.surfaceContainerHigh, c.onSurfaceVariant] : debt && isDebt(t)
               ? [debt.badge, debt.badgeBg, debt.badgeFg]
-              : [t.dir === 'forgive' ? 'إعفاء' : 'دفعة', c.primaryBg, c.primary];
+              : ['دين', c.surfaceContainerHigh, c.onSurfaceVariant];
             const color = t.dir === 'me' ? c.green : t.dir === 'owe' ? c.red : c.muted;
             const sign = t.dir === 'me' ? '+' : t.dir === 'owe' ? '−' : '';
+            const amount = <T numberOfLines={1} adjustsFontSizeToFit style={{ maxWidth: compact ? '100%' : '52%',
+              fontSize: fmt(t.amount).length > 10 ? 12 : 16, lineHeight: 24, fontWeight: '600', color,
+              textDecorationLine: t.voidedAt ? 'line-through' : undefined }}>
+              {sign}{fmt(t.amount)} <T style={{ fontSize: 12, lineHeight: 16 }}>ر.س</T>
+            </T>;
             return (
               <Touch
                 key={t.id}
-                accessibilityLabel={`${t.voidedAt ? 'عملية ملغاة' : t.dir === 'forgive' ? 'تعديل إعفاء' : t.dir === 'settle' ? 'تعديل دفعة' : 'تفاصيل الدين'}: ${t.note || ''}، ${fmt(t.amount)} ريال سعودي`}
-                onPress={() => isReduction(t) || t.voidedAt ? onOpenEntry(t.id) : debt && onOpenDebt(debt.id)}
+                accessibilityLabel={`${t.voidedAt ? 'عملية ملغاة' : 'تفاصيل الدين'}: ${t.note || ''}، ${fmt(t.amount)} ريال سعودي`}
+                onPress={() => t.voidedAt ? onOpenEntry(t.id) : debt && onOpenDebt(debt.id)}
                 pressedBackground={c.surfaceContainerHigh}
                 style={{
                   flexDirection: 'row', alignItems: 'center', gap: 12,
@@ -94,19 +108,22 @@ export function PersonDetail({ c, person, tx, debts, onBack, onSettle, onAdd, on
                   borderBottomWidth: 1, borderBottomColor: c.outlineVariant,
                 }}
               >
-                <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: color, flexShrink: 0 }} />
+                <MaterialIcon name={t.voidedAt ? 'close' : 'account_balance_wallet'} color={t.voidedAt ? c.onSurfaceVariant : color} size={22} />
                 <View style={{ flex: 1, minWidth: 0 }}>
-                  <T style={{ fontSize: 14, lineHeight: 20, fontWeight: '500', color: c.onSurface }} numberOfLines={1}>
-                    {t.dir === 'forgive' ? `${debt?.dir === 'me' ? 'إعفاء للشخص' : 'إعفاء من الشخص'}${t.note ? ` · ${t.note}` : ''}` : t.note || (t.dir === 'settle' ? debt?.dir === 'me' ? 'دفعة مستلمة' : 'دفعة مدفوعة' : 'دين')}
+                  <T style={{ fontSize: 14, lineHeight: 20, fontWeight: '600', color: c.onSurface }}>
+                    دين · {t.dir === 'me' ? 'يدين لي' : 'أدين له'}
                   </T>
+                  {!!t.note && <T numberOfLines={2} style={{ fontSize: 14, lineHeight: 20, color: c.onSurfaceVariant, marginTop: 4 }}>{t.note}</T>}
                   <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginTop: 4 }}>
                     <T style={{ fontSize: 12, lineHeight: 16, color: c.onSurfaceVariant }}>{arDate(t.createdAt)}</T>
                     <Badge label={status[0]} bg={status[1]} fg={status[2]} />
                   </View>
+                  {!t.voidedAt && !!debt?.forgivenAmount && <T style={{ fontSize: 12, lineHeight: 18, color: c.onSurfaceVariant, marginTop: 8 }}>
+                    مسدد {fmt(debt.paidAmount)} · معفى منه {fmt(debt.forgivenAmount)} ر.س
+                  </T>}
+                  {compact && <View style={{ marginTop: 8 }}>{amount}</View>}
                 </View>
-                <T numberOfLines={1} adjustsFontSizeToFit style={{ maxWidth: '52%', fontSize: fmt(t.amount).length > 10 ? 12 : 16, lineHeight: 24, fontWeight: '600', color }}>
-                  {sign}{fmt(t.amount)} <T style={{ fontSize: 12, lineHeight: 16 }}>ر.س</T>
-                </T>
+                {!compact && amount}
               </Touch>
             );
           })}

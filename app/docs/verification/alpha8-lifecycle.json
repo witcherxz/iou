@@ -1,0 +1,111 @@
+{
+  "testedAt": "2026-09-12",
+  "before": {
+    "target": "before",
+    "result": "pre-fix-defects-reproduced",
+    "scenarios": 3,
+    "findings": [
+      {
+        "scenario": "draft-and-dispatch",
+        "preserved": false,
+        "expected": {
+          "kind": "forgiveness",
+          "mode": "partial",
+          "dir": "owe",
+          "amount": "200",
+          "date": "2026-09-10",
+          "note": "waiver draft retained"
+        },
+        "afterLock": {
+          "kind": "payment",
+          "mode": "full",
+          "dir": "me",
+          "amount": "750",
+          "date": "2026-09-12",
+          "note": ""
+        },
+        "recordedKind": "settle",
+        "recordedAmount": 750,
+        "persistentDraftWrites": 0
+      },
+      {
+        "scenario": "successful-receipt-remount",
+        "receiptPreserved": false,
+        "submitFormReopened": true,
+        "submittedCalls": 1
+      },
+      {
+        "scenario": "pending-remount",
+        "duplicateSubmissionBlocked": false,
+        "completionReceiptPreserved": false,
+        "submittedCalls": 1
+      }
+    ],
+    "browserErrors": [],
+    "scope": "Real React Settle, real PrivacyProvider/Controller/Gate; actual visibility-change lock/unlock; in-memory secure adapter and synthetic ledger dispatch. No device/user data.",
+    "sourceSha256": {
+      "/tmp/iou-settle-lifecycle/Settle.before.tsx": "9fb2469b97df0e0f0922123fbb33807aab2d8547f124af548795b9fab05942ee",
+      "/tmp/iou-settle-lifecycle/App.before.tsx": "b8e9a09354800de19f5a28a516222232661d4f38a41d9ccbb7af4ea968b6e970",
+      "/home/ak/Projects/iou/app/src/privacy/PrivacyGate.tsx": "26d4824ff71957ddfa2f589ec89d07ce0263c8317542d26c23920394c644e596",
+      "/home/ak/Projects/iou/app/src/privacy/PrivacyProvider.tsx": "499b160858d6cc4c719c9a35906528850d69803a39b573b40c7d28780b5efbb5",
+      "/home/ak/Projects/iou/app/src/privacy/controller.ts": "4d173999fe3a6e199d42da92d6bbb852a5756ec8ef2138cb5b6ba2c9fe540f90"
+    }
+  },
+  "after": {
+    "target": "after",
+    "result": "regressions-passed",
+    "scenarios": 4,
+    "findings": [
+      {
+        "scenario": "draft-and-dispatch",
+        "preserved": true,
+        "expected": {
+          "kind": "forgiveness",
+          "mode": "partial",
+          "dir": "owe",
+          "amount": "200",
+          "date": "2026-09-10",
+          "note": "waiver draft retained"
+        },
+        "afterLock": {
+          "kind": "forgiveness",
+          "mode": "partial",
+          "dir": "owe",
+          "amount": "200",
+          "date": "2026-09-10",
+          "note": "waiver draft retained"
+        },
+        "recordedKind": "forgive",
+        "recordedAmount": 200,
+        "persistentDraftWrites": 0
+      },
+      {
+        "scenario": "successful-receipt-remount",
+        "receiptPreserved": true,
+        "submitFormReopened": false,
+        "submittedCalls": 1
+      },
+      {
+        "scenario": "pending-remount",
+        "duplicateSubmissionBlocked": true,
+        "completionReceiptPreserved": true,
+        "submittedCalls": 1
+      },
+      {
+        "scenario": "stale-completion-isolation",
+        "newSessionUnchanged": true,
+        "explicitClearResetsAllDraftFields": true
+      }
+    ],
+    "browserErrors": [],
+    "scope": "Real React Settle, real PrivacyProvider/Controller/Gate; actual visibility-change lock/unlock; in-memory secure adapter and synthetic ledger dispatch. No device/user data.",
+    "sourceSha256": {
+      "/home/ak/Projects/iou/app/src/screens/Settle.tsx": "5426725ad8dec4e737b66d75a94355a3ddd76ef592ea2b0e2f6d3829182dcfc0",
+      "/home/ak/Projects/iou/app/src/useSettleSession.ts": "5c23b92dadf344db7c95177ca3cad42179b90c1f04f82432cbb37dd2fcc157a8",
+      "/home/ak/Projects/iou/app/App.tsx": "4a7bc1c97724474caae6786006bdd05501949868e2530ea53a70991253e713cb",
+      "/home/ak/Projects/iou/app/src/privacy/PrivacyGate.tsx": "26d4824ff71957ddfa2f589ec89d07ce0263c8317542d26c23920394c644e596",
+      "/home/ak/Projects/iou/app/src/privacy/PrivacyProvider.tsx": "499b160858d6cc4c719c9a35906528850d69803a39b573b40c7d28780b5efbb5",
+      "/home/ak/Projects/iou/app/src/privacy/controller.ts": "4d173999fe3a6e199d42da92d6bbb852a5756ec8ef2138cb5b6ba2c9fe540f90"
+    }
+  }
+}

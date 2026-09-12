@@ -39,6 +39,7 @@ import { Reminders } from './src/screens/Reminders';
 import { Settings } from './src/screens/Settings';
 import { BackupSetup } from './src/screens/BackupSetup';
 import { Settle } from './src/screens/Settle';
+import { useSettleSession } from './src/useSettleSession';
 import { StoreProvider, useStore } from './src/store/store';
 import { makeColors, M3 } from './src/theme';
 import { useBackup } from './src/useBackup';
@@ -96,9 +97,8 @@ function Root() {
   const [addDraft, setAddDraft] = useState(createAddDebtDraft);
   const [addPersonId, setAddPersonId] = useState<string | null>(null);
   const [settleDebtId, setSettleDebtId] = useState<string | null>(null);
-  const [settleMode, setSettleMode] = useState<'full' | 'partial'>('full');
-  const [settleKind, setSettleKind] = useState<'payment' | 'forgiveness'>('payment');
-  const [settleSeed, setSettleSeed] = useState('');
+  const settleSession = useSettleSession();
+  const { clear: clearSettle, start: startSettle } = settleSession;
   const [settleFrom, setSettleFrom] = useState<'person' | 'debt'>('person');
   const [today, setToday] = useState(todayISO);
   const [recovering, setRecovering] = useState(false);
@@ -113,9 +113,6 @@ function Root() {
     });
     return () => { clearInterval(timer); sub.remove(); };
   }, []);
-  // Remounts the settle screen so its local "done" state resets between visits.
-  const [settleKey, setSettleKey] = useState(0);
-
   const people = useMemo(() => peopleView(state.people, state.tx, c, dark), [state.people, state.tx, c, dark]);
   const debts = useMemo(() => allDebts(state.tx, people, c), [state.tx, people, c, today]);
 
@@ -132,8 +129,9 @@ function Root() {
     setDebtId(null);
     setEntryId(null);
     setAddDraft(createAddDebtDraft());
+    clearSettle();
     return applied;
-  }, [replaceAll, privacy.enabled]);
+  }, [replaceAll, privacy.enabled, clearSettle]);
 
   const { backup, backupNow, restore, restoreFile, chooseFolder, selectTarget,
     versions, historyError, refreshVersions, restoreVersion, exportPortable,
@@ -159,7 +157,8 @@ function Root() {
     setScreen('main');
     setTab('home');
     setAddDraft(createAddDebtDraft());
-  }, []);
+    clearSettle();
+  }, [clearSettle]);
 
   const closeAdd = useCallback(() => {
     setAddDraft(createAddDebtDraft());
@@ -182,6 +181,7 @@ function Root() {
       return true;
     }
     if (screen === 'settle') {
+      clearSettle();
       setScreen(settleFrom);
       return true;
     }
@@ -194,7 +194,7 @@ function Root() {
       return true;
     }
     return false; // let Android close the app
-  }, [screen, tab, cameFrom, closeAdd, settleFrom, privacy.unlocked, dialogOpen]);
+  }, [screen, tab, cameFrom, closeAdd, clearSettle, settleFrom, privacy.unlocked, dialogOpen]);
 
   useEffect(() => {
     const sub = BackHandler.addEventListener('hardwareBackPress', back);
@@ -230,12 +230,11 @@ function Root() {
   const openSettle = useCallback((forDebtId: string | null, mode: 'full' | 'partial', seed = '', kind: 'payment' | 'forgiveness' = 'payment') => {
     setSettleFrom(screen === 'debt' ? 'debt' : 'person');
     setSettleDebtId(forDebtId);
-    setSettleMode(mode);
-    setSettleKind(kind);
-    setSettleSeed(seed);
-    setSettleKey(k => k + 1);
+    const target = debts.find(d => d.id === forDebtId);
+    const dir = target ? target.dir === 'owe' ? 'owe' : 'me' : person?.hasIou ? 'me' : 'owe';
+    startSettle(mode, kind, seed, dir);
     setScreen('settle');
-  }, [screen]);
+  }, [screen, debts, person, startSettle]);
 
   if (!ready || (!fontsLoaded && !fontError)) {
     return (
@@ -462,15 +461,14 @@ function Root() {
 
             {screen === 'settle' && person && (
               <Settle
-                key={settleKey}
+                key={settleSession.id}
                 c={c}
                 person={person}
                 debts={debts}
                 targetDebt={settleDebtId ? debts.find(d => d.id === settleDebtId) ?? null : null}
-                initialMode={settleMode}
-                initialKind={settleKind}
-                initialAmount={settleSeed}
-                onBack={() => setScreen(settleFrom)}
+                draft={settleSession.draft}
+                onDraftChange={settleSession.updateDraft}
+                onBack={() => { clearSettle(); setScreen(settleFrom); }}
                 onConfirm={(amount, dir, date, note, kind) => kind === 'forgiveness'
                   ? forgive(person.id, amount, settleDebtId, dir, date, note)
                   : settle(person.id, amount, settleDebtId, dir, date, note)}

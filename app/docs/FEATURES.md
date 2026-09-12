@@ -15,6 +15,10 @@ Implemented locally on 2026-09-12. The Arabic Material 3 interface continues to 
 
 Amount fields open the system decimal keyboard when tapped; there is no embedded number pad. Arabic/Persian number input still normalizes to 0–9. An unfinished new debt keeps its fields and selected person while adding or cancelling a person and through a temporary lock/background transition. The draft stays in memory for the current app process and clears on save, close/back, restore, or a new entry session.
 
+Payment/exemption forms also preserve the selected type, full/partial mode, direction, amount, actual date, note, in-progress submission and saved receipt across locking. Explicit exit or a new session clears them. A completed operation stays on its receipt when unlocked, preventing accidental resubmission. These drafts and receipts remain in memory only.
+
+History shows a prominent type/direction heading, distinct icon and **مبلغ الإعفاء** or **مبلغ الدفعة** label. Notes remain separate. Existing incorrectly classified records are not guessed or relabelled: cancel the wrong payment and record the exemption with the original amount/date.
+
 ## Financial corrections
 
 Corrections preserve exact before/after snapshots. Cancellation adds a `voidedAt` timestamp; cancelled records remain visible in person/payment history and exported tables, and contribute nothing to balances or reminders. Restoring an entry validates its relationships and outstanding balance again. Undo of the latest edit is itself recorded as a correction; it does not erase history.
@@ -67,3 +71,7 @@ Alpha 3 adds automatic biometric prompting on entry while preserving PIN fallbac
 ### Bulk installment due day
 
 ![Monthly due-day preview showing two updated installments](screenshots/features-installment-day.png)
+
+### Distinct exemption and payment history
+
+![Separate200SAR exemption and550SAR cash payment](screenshots/features-forgiveness-history.png)

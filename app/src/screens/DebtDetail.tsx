@@ -2,11 +2,12 @@ import React from 'react';
 import { ScrollView, useWindowDimensions, View } from 'react-native';
 
 import { MaterialIcon } from '../components/icons';
+import { ReductionHistoryRow } from '../components/ReductionHistoryRow';
 import { Avatar, Badge, OutlineButton, PrimaryButton, ScreenHeader, T, Touch } from '../components/ui';
-import { arDate, fmt } from '../format';
+import { fmt } from '../format';
 import { DebtView } from '../selectors';
 import { Colors } from '../theme';
-import { Tx } from '../types';
+import { isReduction, Tx } from '../types';
 
 interface Props {
   c: Colors;
@@ -51,9 +52,15 @@ export function DebtDetail({ c, debt, payments, onBack, onPay, onForgive, onMark
             {debt.remainingLabel} <T style={{ fontSize: 16, lineHeight: 24, color: heroColor }}>ر.س</T>
           </T>
           <T style={{ fontSize: 12, lineHeight: 16, color: heroColor, marginTop: 8 }}>المتبقي من {debt.amountLabel} ر.س</T>
-          {debt.forgivenAmount > 0 && <View style={{ marginTop: 12, gap: 4 }}>
-            <T style={{ fontSize: 14, lineHeight: 22, color: heroColor }}>المسدد: {fmt(debt.paidAmount)} ر.س</T>
-            <T style={{ fontSize: 14, lineHeight: 22, color: heroColor }}>المعفى منه: {fmt(debt.forgivenAmount)} ر.س</T>
+          {debt.forgivenAmount > 0 && <View style={{ marginTop: 16, gap: 8, padding: 12, borderRadius: 12, backgroundColor: c.surfaceContainerLow }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <MaterialIcon name="payments" color={c.onSurfaceVariant} size={18} />
+              <T style={{ flex: 1, fontSize: 14, lineHeight: 22, color: c.onSurface }}>المسدد: {fmt(debt.paidAmount)} ر.س</T>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <MaterialIcon name="description" color={c.primary} size={18} />
+              <T style={{ flex: 1, fontSize: 14, lineHeight: 22, fontWeight: '600', color: c.primary }}>المعفى منه: {fmt(debt.forgivenAmount)} ر.س</T>
+            </View>
           </View>}
 
           <View accessibilityRole="progressbar" accessibilityLabel="نسبة إغلاق الدين بالسداد والإعفاء" accessibilityValue={{ min: 0, max: 100, now: Math.round(parseFloat(debt.pct)) }} style={{ height: 4, borderRadius: 2, backgroundColor: c.track, marginTop: 16, overflow: 'hidden' }}>
@@ -140,24 +147,10 @@ export function DebtDetail({ c, debt, payments, onBack, onPay, onForgive, onMark
 
         <T accessibilityRole="header" style={{ fontSize: 22, lineHeight: 28, fontWeight: '400', color: c.onSurface }}>سجل الدفعات والإعفاءات</T>
         <View style={{ backgroundColor: c.surfaceContainerLow, borderRadius: 12, paddingHorizontal: 16 }}>
-          {payments.map(p => (
-            <Touch
-              key={p.id}
-              accessibilityLabel={`${p.dir === 'forgive' ? 'إعفاء' : 'دفعة'} ${p.voidedAt ? 'ملغاة' : '· تعديل'}: ${fmt(p.amount)} ريال سعودي`}
-              onPress={() => onOpenEntry(p.id)} pressedBackground={c.surfaceContainerHigh}
-              style={{
-                flexDirection: 'row', alignItems: 'center', gap: 12,
-                minHeight: 72, paddingVertical: 16,
-                borderBottomWidth: 1, borderBottomColor: c.outlineVariant,
-              }}
-            >
-              <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: c.primary }} />
-              <View style={{ flex: 1 }}>
-                <T style={{ fontSize: 14, lineHeight: 20, fontWeight: '500', color: c.onSurface }}>{p.dir === 'forgive' ? 'إعفاء' : 'دفعة'}{p.voidedAt ? ' · ملغاة' : ''}{p.note ? ` · ${p.note}` : ' · اضغط للتعديل'}</T>
-                <T style={{ fontSize: 12, lineHeight: 16, color: c.onSurfaceVariant }}>{arDate(p.createdAt)}</T>
-              </View>
-              <T style={{ maxWidth: '56%', fontSize: fmt(p.amount).length > 10 ? 12 : 16, lineHeight: 24, fontWeight: '600', color: c.onSurface }}>{fmt(p.amount)} ر.س</T>
-            </Touch>
+          {payments.filter(isReduction).map(p => (
+            <ReductionHistoryRow key={p.id} c={c} entry={p} debtDirection={debt.dir === 'me' ? 'me' : 'owe'}
+              accessibilityLabel={`${p.dir === 'forgive' ? 'إعفاء' : 'دفعة'} ${p.voidedAt ? p.dir === 'forgive' ? 'ملغى' : 'ملغاة' : '· تعديل'}: ${fmt(p.amount)} ريال سعودي`}
+              onPress={() => onOpenEntry(p.id)} />
           ))}
           {payments.length === 0 && (
             <T style={{ paddingVertical: 20, color: c.onSurfaceVariant, fontSize: 14, lineHeight: 20 }}>لا توجد دفعات أو إعفاءات بعد</T>

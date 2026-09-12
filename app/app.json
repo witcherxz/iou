@@ -3,7 +3,7 @@
     "name": "دفتر الديون",
     "slug": "iou",
     "scheme": "iou",
-    "version": "0.1.0-alpha.7",
+    "version": "0.1.0-alpha.8",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -12,7 +12,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "io.github.witcherxz.iou",
       "version": "0.1.0",
-      "buildNumber": "7"
+      "buildNumber": "8"
     },
     "android": {
       "package": "io.github.witcherxz.iou",
@@ -23,7 +23,7 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "versionCode": 7,
+      "versionCode": 8,
       "blockedPermissions": [
         "android.permission.SYSTEM_ALERT_WINDOW"
       ]
