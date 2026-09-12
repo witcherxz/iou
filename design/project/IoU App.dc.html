@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>body{margin:0;background:#e9e7ef;font-family:'IBM Plex Sans Arabic',system-ui,sans-serif}a{color:#2f5fb0;text-decoration:none}a:hover{color:#1f4489}*{box-sizing:border-box}input{font-family:inherit}</style>
+</helmet>
+<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:32px;gap:40px">
+<x-import component-from-global-scope="AndroidDevice" from="./android-frame.jsx" dark="{{ dark }}" hint-size="412px,892px">
+<div dir="rtl" style="height:100%;display:flex;flex-direction:column;font-family:'IBM Plex Sans Arabic',system-ui,sans-serif;color:{{ c.text }};background:{{ c.bg }};position:relative">
+
+<!-- ONBOARDING -->
+<sc-if value="{{ isOnboarding }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;display:flex;flex-direction:column;padding:48px 28px 28px">
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:28px">
+    <div style="width:72px;height:72px;border-radius:20px;background:{{ c.primary }};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:26px">ر.س</div>
+    <div>
+      <div style="font-size:32px;font-weight:700;line-height:1.25">{{ ob.title }}</div>
+      <div style="font-size:16px;color:{{ c.muted }};margin-top:12px;line-height:1.7">{{ ob.body }}</div>
+    </div>
+    <div style="display:flex;gap:6px">
+      <sc-for list="{{ obDots }}" as="d" hint-placeholder-count="3"><div style="height:6px;border-radius:3px;width:{{ d.w }};background:{{ d.bg }}"></div></sc-for>
+    </div>
+  </div>
+  <button onClick="{{ obNext }}" style="height:56px;border-radius:28px;border:none;background:{{ c.primary }};color:#fff;font-size:16px;font-weight:600;font-family:inherit;cursor:pointer">{{ ob.cta }}</button>
+</div>
+</sc-if>
+
+<!-- MAIN TABBED SCREENS -->
+<sc-if value="{{ isMain }}" hint-placeholder-val="{{ true }}">
+<div style="flex:1;overflow:auto;display:flex;flex-direction:column">
+
+  <!-- HOME -->
+  <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+  <div style="padding:8px 20px 100px;display:flex;flex-direction:column;gap:20px">
+    <div style="display:flex;justify-content:space-between;align-items:center;height:48px">
+      <div><div style="font-size:22px;font-weight:700">لوحة الديون</div><div style="font-size:12px;color:{{ c.muted }}">{{ today }}</div></div>
+      <div onClick="{{ toggleDark }}" style="width:40px;height:40px;border-radius:50%;background:{{ c.card }};display:flex;align-items:center;justify-content:center;cursor:pointer;border:1px solid {{ c.border }}">
+        <sc-if value="{{ dark }}" hint-placeholder-val="{{ false }}">
+          <div style="position:relative;width:16px;height:16px;border-radius:50%;background:#f2c66d;overflow:hidden">
+            <div style="position:absolute;top:-4px;left:-6px;width:16px;height:16px;border-radius:50%;background:{{ c.card }}"></div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ darkOff }}" hint-placeholder-val="{{ true }}">
+          <div style="position:relative;width:14px;height:14px">
+            <div style="width:8px;height:8px;border-radius:50%;background:#1b1a22;position:absolute;top:3px;left:3px"></div>
+            <div style="position:absolute;top:6px;left:6px;width:2px;height:2px;background:#1b1a22"></div>
+            <div style="position:absolute;top:0;left:6px;width:2px;height:2px;background:#1b1a22"></div>
+            <div style="position:absolute;top:12px;left:6px;width:2px;height:2px;background:#1b1a22"></div>
+            <div style="position:absolute;top:6px;left:0;width:2px;height:2px;background:#1b1a22"></div>
+            <div style="position:absolute;top:6px;left:12px;width:2px;height:2px;background:#1b1a22"></div>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div onClick="{{ goIou }}" style="background:{{ c.greenBg }};border-radius:20px;padding:18px 16px;cursor:pointer">
+        <div style="font-size:13px;color:{{ c.green }};font-weight:600">يدينون لي</div>
+        <div style="font-size:30px;font-weight:700;color:{{ c.green }};margin-top:6px;font-variant-numeric:tabular-nums">{{ totalOwedMe }}</div>
+        <div style="font-size:12px;color:{{ c.green }};opacity:.8">ر.س · {{ iouCount }} ديون</div>
+      </div>
+      <div onClick="{{ goUome }}" style="background:{{ c.redBg }};border-radius:20px;padding:18px 16px;cursor:pointer">
+        <div style="font-size:13px;color:{{ c.red }};font-weight:600">أدين لهم</div>
+        <div style="font-size:30px;font-weight:700;color:{{ c.red }};margin-top:6px;font-variant-numeric:tabular-nums">{{ totalIOwe }}</div>
+        <div style="font-size:12px;color:{{ c.red }};opacity:.8">ر.س · {{ uomeCount }} ديون</div>
+      </div>
+    </div>
+    <sc-if value="{{ hasDue }}" hint-placeholder-val="{{ true }}">
+    <div>
+      <div style="font-size:15px;font-weight:600;margin-bottom:10px">مستحقات قريبة</div>
+      <div style="display:flex;gap:10px;overflow-x:auto;margin:0 -20px;padding:0 20px 4px">
+        <sc-for list="{{ dueSoon }}" as="d" hint-placeholder-count="2">
+          <div onClick="{{ d.open }}" style="flex:none;width:170px;background:{{ c.card }};border-radius:16px;padding:14px;cursor:pointer;border:1px solid {{ d.border }}">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:8px;background:{{ d.badgeBg }};color:{{ d.badgeFg }}">{{ d.badge }}</div>
+              <div style="font-size:11px;color:{{ c.muted }}">{{ d.due }}</div>
+            </div>
+            <div style="font-size:14px;font-weight:600;margin-top:10px">{{ d.note }}</div>
+            <div style="font-size:18px;font-weight:700;color:{{ d.color }};margin-top:6px;font-variant-numeric:tabular-nums">{{ d.amountLabel }} ر.س</div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    </sc-if>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">
+      <div style="font-size:16px;font-weight:600">الأشخاص</div>
+      <div style="display:flex;background:{{ c.card }};border-radius:14px;padding:3px">
+        <sc-for list="{{ filters }}" as="f" hint-placeholder-count="3">
+          <div onClick="{{ f.pick }}" style="height:30px;padding:0 12px;border-radius:11px;display:flex;align-items:center;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;background:{{ f.bg }};color:{{ f.fg }}">{{ f.label }}</div>
+        </sc-for>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <sc-for list="{{ people }}" as="p" hint-placeholder-count="4">
+        <div onClick="{{ p.open }}" style="display:flex;align-items:center;gap:14px;background:{{ c.card }};border-radius:16px;padding:14px 16px;cursor:pointer" style-hover="background:{{ c.cardHover }}">
+          <div style="width:44px;height:44px;border-radius:50%;background:{{ p.avatarBg }};color:{{ p.avatarFg }};display:flex;align-items:center;justify-content:center;font-weight:600;font-size:16px;flex-shrink:0">{{ p.initial }}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:15px;font-weight:600">{{ p.name }}</div>
+            <div style="font-size:12px;color:{{ c.muted }};margin-top:2px">{{ p.sub }}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:2px;align-items:flex-end">
+            <sc-if value="{{ p.hasIou }}" hint-placeholder-val="{{ false }}">
+              <div style="font-size:14px;font-weight:700;color:{{ c.green }};font-variant-numeric:tabular-nums">لي {{ p.iouLabel }}</div>
+            </sc-if>
+            <sc-if value="{{ p.hasUome }}" hint-placeholder-val="{{ false }}">
+              <div style="font-size:14px;font-weight:700;color:{{ c.red }};font-variant-numeric:tabular-nums">عليّ {{ p.uomeLabel }}</div>
+            </sc-if>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- DEBT LISTS -->
+  <sc-if value="{{ isList }}" hint-placeholder-val="{{ false }}">
+  <div style="padding:8px 20px 100px;display:flex;flex-direction:column;gap:16px">
+    <div style="height:48px;display:flex;align-items:center;justify-content:space-between">
+      <div><div style="font-size:22px;font-weight:700">{{ listTitle }}</div><div style="font-size:12px;color:{{ c.muted }}">{{ listSub }}</div></div>
+      <div style="font-size:20px;font-weight:700;color:{{ listColor }};font-variant-numeric:tabular-nums">{{ listTotal }} <span style="font-size:12px">ر.س</span></div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <sc-for list="{{ statusFilters }}" as="f" hint-placeholder-count="3">
+        <div onClick="{{ f.pick }}" style="height:34px;padding:0 14px;border-radius:17px;display:flex;align-items:center;font-size:13px;font-weight:600;cursor:pointer;border:1px solid {{ f.border }};background:{{ f.bg }};color:{{ f.fg }}">{{ f.label }}</div>
+      </sc-for>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <sc-for list="{{ listItems }}" as="d" hint-placeholder-count="4">
+        <div onClick="{{ d.open }}" style="background:{{ c.card }};border-radius:16px;padding:14px 16px;display:flex;align-items:center;gap:14px;cursor:pointer;border:1px solid {{ d.border }}" style-hover="background:{{ c.cardHover }}">
+          <div style="width:44px;height:44px;border-radius:14px;background:{{ d.avatarBg }};color:{{ d.avatarFg }};display:flex;align-items:center;justify-content:center;font-weight:600;font-size:16px;flex-shrink:0">{{ d.initial }}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:15px;font-weight:600">{{ d.personName }} <span style="font-weight:400;color:{{ c.muted }}">· {{ d.note }}</span></div>
+            <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
+              <div style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:8px;background:{{ d.badgeBg }};color:{{ d.badgeFg }}">{{ d.badge }}</div>
+              <div style="font-size:12px;color:{{ c.muted }}">{{ d.dueLabel }}</div>
+            </div>
+          </div>
+          <div style="text-align:left">
+            <div style="font-size:17px;font-weight:700;color:{{ d.color }};font-variant-numeric:tabular-nums">{{ d.remainingLabel }}</div>
+            <div style="font-size:11px;color:{{ c.muted }}">من {{ d.amountLabel }}</div>
+          </div>
+        </div>
+      </sc-for>
+      <sc-if value="{{ listEmpty }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:40px 0;text-align:center;color:{{ c.muted }};font-size:14px">لا توجد ديون هنا</div>
+      </sc-if>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- REMINDERS -->
+  <sc-if value="{{ isReminders }}" hint-placeholder-val="{{ false }}">
+  <div style="padding:8px 20px 100px;display:flex;flex-direction:column;gap:16px">
+    <div style="font-size:22px;font-weight:700;height:48px;display:flex;align-items:center">التذكيرات</div>
+    <div style="font-size:13px;color:{{ c.muted }};line-height:1.6">تذكيرات خاصة لك فقط. لا يتم إرسال أي شيء للطرف الآخر.</div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <sc-for list="{{ reminders }}" as="r" hint-placeholder-count="3">
+        <div style="background:{{ c.card }};border-radius:16px;padding:14px 16px;display:flex;align-items:center;gap:14px">
+          <div style="width:40px;height:40px;border-radius:12px;background:{{ r.bg }};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:{{ r.fg }};flex-shrink:0;text-align:center;line-height:1.1">{{ r.day }}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:15px;font-weight:600">{{ r.title }}</div>
+            <div style="font-size:12px;color:{{ c.muted }};margin-top:2px">{{ r.sub }}</div>
+          </div>
+          <div onClick="{{ r.toggle }}" style="width:44px;height:26px;border-radius:13px;background:{{ r.trackBg }};position:relative;cursor:pointer;transition:background .2s;flex-shrink:0">
+            <div style="position:absolute;top:3px;right:{{ r.knobRight }};width:20px;height:20px;border-radius:50%;background:#fff;transition:right .2s;box-shadow:0 1px 3px rgba(0,0,0,.25)"></div>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+    <div style="background:{{ c.card }};border-radius:16px;padding:16px;display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <div style="font-size:14px;font-weight:600">تذكير أسبوعي عام</div>
+        <div style="font-size:12px;color:{{ c.muted }};margin-top:2px">كل خميس، ٨:٠٠ م</div>
+      </div>
+      <div onClick="{{ toggleWeekly }}" style="width:44px;height:26px;border-radius:13px;background:{{ weeklyTrack }};position:relative;cursor:pointer;transition:background .2s">
+        <div style="position:absolute;top:3px;right:{{ weeklyKnob }};width:20px;height:20px;border-radius:50%;background:#fff;transition:right .2s;box-shadow:0 1px 3px rgba(0,0,0,.25)"></div>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- SETTINGS -->
+  <sc-if value="{{ isSettings }}" hint-placeholder-val="{{ false }}">
+  <div style="padding:8px 20px 100px;display:flex;flex-direction:column;gap:16px">
+    <div style="font-size:22px;font-weight:700;height:48px;display:flex;align-items:center">الإعدادات</div>
+    <div style="display:flex;align-items:center;gap:14px;padding:4px 0 8px">
+      <div style="width:56px;height:56px;border-radius:50%;background:{{ c.primary }};color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700">ع</div>
+      <div><div style="font-size:17px;font-weight:600">عبدالله</div><div style="font-size:13px;color:{{ c.muted }}">دفتر خاص · ر.س</div></div>
+    </div>
+    <div style="font-size:12px;font-weight:600;color:{{ c.muted }};letter-spacing:.5px">النسخ الاحتياطي</div>
+    <div style="background:{{ c.card }};border-radius:20px;overflow:hidden">
+      <div style="padding:16px;display:flex;align-items:center;gap:14px">
+        <div style="width:40px;height:40px;border-radius:12px;background:{{ c.primaryBg }};display:flex;align-items:center;justify-content:center;flex-shrink:0"><div style="width:18px;height:14px;border-radius:3px;border:2px solid {{ c.primary }}"></div></div>
+        <div style="flex:1"><div style="font-size:15px;font-weight:600">Google Drive</div><div style="font-size:12px;color:{{ c.muted }};margin-top:2px">{{ backupStatus }}</div></div>
+        <div style="width:8px;height:8px;border-radius:50%;background:{{ backupDot }}"></div>
+      </div>
+      <div style="height:1px;background:{{ c.divider }};margin:0 16px"></div>
+      <div style="padding:14px 16px;display:flex;justify-content:space-between;align-items:center">
+        <div style="font-size:14px">نسخ احتياطي تلقائي</div>
+        <div onClick="{{ toggleAuto }}" style="width:44px;height:26px;border-radius:13px;background:{{ autoTrack }};position:relative;cursor:pointer;transition:background .2s">
+          <div style="position:absolute;top:3px;right:{{ autoKnob }};width:20px;height:20px;border-radius:50%;background:#fff;transition:right .2s;box-shadow:0 1px 3px rgba(0,0,0,.25)"></div>
+        </div>
+      </div>
+      <div style="height:1px;background:{{ c.divider }};margin:0 16px"></div>
+      <div style="padding:14px 16px;display:flex;gap:10px">
+        <button onClick="{{ backupNow }}" style="flex:1;height:44px;border-radius:22px;border:none;background:{{ c.primary }};color:#fff;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer">{{ backupBtn }}</button>
+        <button style="flex:1;height:44px;border-radius:22px;border:1px solid {{ c.border }};background:transparent;color:{{ c.text }};font-family:inherit;font-size:14px;font-weight:600;cursor:pointer">استعادة</button>
+      </div>
+    </div>
+    <div style="font-size:12px;font-weight:600;color:{{ c.muted }};letter-spacing:.5px">عام</div>
+    <div style="background:{{ c.card }};border-radius:20px;overflow:hidden">
+      <div style="padding:14px 16px;display:flex;justify-content:space-between;align-items:center"><div style="font-size:14px">العملة</div><div style="font-size:14px;color:{{ c.muted }}">ريال سعودي (ر.س)</div></div>
+      <div style="height:1px;background:{{ c.divider }};margin:0 16px"></div>
+      <div style="padding:14px 16px;display:flex;justify-content:space-between;align-items:center"><div style="font-size:14px">اللغة</div><div style="font-size:14px;color:{{ c.muted }}">العربية</div></div>
+      <div style="height:1px;background:{{ c.divider }};margin:0 16px"></div>
+      <div style="padding:14px 16px;display:flex;justify-content:space-between;align-items:center">
+        <div style="font-size:14px">الوضع الداكن</div>
+        <div onClick="{{ toggleDark }}" style="width:44px;height:26px;border-radius:13px;background:{{ darkTrack }};position:relative;cursor:pointer;transition:background .2s">
+          <div style="position:absolute;top:3px;right:{{ darkKnob }};width:20px;height:20px;border-radius:50%;background:#fff;transition:right .2s;box-shadow:0 1px 3px rgba(0,0,0,.25)"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+</div>
+
+<!-- FAB -->
+<sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+<button onClick="{{ openAdd }}" style="position:absolute;bottom:96px;left:20px;height:56px;padding:0 20px;border-radius:16px;border:none;background:{{ c.primary }};color:#fff;font-size:15px;font-weight:600;font-family:inherit;box-shadow:0 6px 16px rgba(0,0,0,.2);cursor:pointer;display:flex;align-items:center;gap:8px"><span style="font-size:22px;line-height:1">+</span> إضافة دين</button>
+</sc-if>
+<sc-if value="{{ isList }}" hint-placeholder-val="{{ false }}">
+<button onClick="{{ openAdd }}" style="position:absolute;bottom:96px;left:20px;height:56px;padding:0 20px;border-radius:16px;border:none;background:{{ c.primary }};color:#fff;font-size:15px;font-weight:600;font-family:inherit;box-shadow:0 6px 16px rgba(0,0,0,.2);cursor:pointer;display:flex;align-items:center;gap:8px"><span style="font-size:22px;line-height:1">+</span> إضافة دين</button>
+</sc-if>
+
+<!-- BOTTOM NAV -->
+<div style="height:80px;background:{{ c.nav }};display:flex;align-items:stretch;padding:8px 8px 12px;flex-shrink:0">
+  <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="5">
+    <div onClick="{{ t.go }}" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer">
+      <div style="width:56px;height:30px;border-radius:15px;background:{{ t.pillBg }};display:flex;align-items:center;justify-content:center;transition:background .2s">
+        <sc-if value="{{ t.isHome }}" hint-placeholder-val="{{ false }}">
+          <div style="position:relative;width:16px;height:14px">
+            <div style="position:absolute;top:0;left:1px;width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-bottom:7px solid {{ t.fg }}"></div>
+            <div style="position:absolute;bottom:0;width:16px;height:8px;border:2px solid {{ t.fg }};border-top:none;box-sizing:border-box"></div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ t.isIou }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+            <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:6px solid {{ t.fg }}"></div>
+            <div style="width:16px;height:2px;background:{{ t.fg }};border-radius:1px"></div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ t.isUome }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+            <div style="width:16px;height:2px;background:{{ t.fg }};border-radius:1px"></div>
+            <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:6px solid {{ t.fg }}"></div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ t.isReminders }}" hint-placeholder-val="{{ false }}">
+          <div style="position:relative;width:14px;height:16px">
+            <div style="width:14px;height:11px;border:2px solid {{ t.fg }};border-bottom:none;border-radius:7px 7px 2px 2px;box-sizing:border-box"></div>
+            <div style="position:absolute;left:5px;bottom:0;width:4px;height:4px;border-radius:50%;background:{{ t.fg }}"></div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ t.isSettings }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-end">
+            <div style="width:16px;height:2px;background:{{ t.fg }};border-radius:1px"></div>
+            <div style="width:11px;height:2px;background:{{ t.fg }};border-radius:1px"></div>
+            <div style="width:16px;height:2px;background:{{ t.fg }};border-radius:1px"></div>
+          </div>
+        </sc-if>
+      </div>
+      <div style="font-size:11.5px;font-weight:{{ t.weight }};color:{{ t.fg }}">{{ t.label }}</div>
+    </div>
+  </sc-for>
+</div>
+</sc-if>
+
+<!-- PERSON DETAIL -->
+<sc-if value="{{ isPerson }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+  <div style="display:flex;align-items:center;gap:8px;padding:4px 8px;height:56px">
+    <button onClick="{{ goHome }}" style="width:48px;height:48px;border:none;background:transparent;color:{{ c.text }};font-size:22px;cursor:pointer;font-family:inherit">→</button>
+    <div style="font-size:18px;font-weight:600;flex:1">{{ person.name }}</div>
+  </div>
+  <div style="flex:1;overflow:auto;padding:8px 20px 120px;display:flex;flex-direction:column;gap:18px">
+    <div style="background:{{ person.heroBg }};border-radius:24px;padding:24px 20px;display:flex;flex-direction:column;align-items:center;gap:8px">
+      <div style="width:64px;height:64px;border-radius:50%;background:{{ person.avatarBg }};color:{{ person.avatarFg }};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:24px">{{ person.initial }}</div>
+      <div style="font-size:13px;color:{{ person.color }};font-weight:600;margin-top:6px">{{ person.dirLong }}</div>
+      <div style="font-size:40px;font-weight:700;color:{{ person.color }};font-variant-numeric:tabular-nums;line-height:1">{{ person.amountLabel }} <span style="font-size:16px">ر.س</span></div>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button onClick="{{ openSettle }}" style="flex:1;height:48px;border-radius:24px;border:none;background:{{ c.primary }};color:#fff;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer">تسوية</button>
+      <button onClick="{{ openAddForPerson }}" style="flex:1;height:48px;border-radius:24px;border:1px solid {{ c.border }};background:transparent;color:{{ c.text }};font-family:inherit;font-size:14px;font-weight:600;cursor:pointer">+ إضافة</button>
+    </div>
+    <div style="font-size:15px;font-weight:600">السجل</div>
+    <div style="display:flex;flex-direction:column;gap:2px">
+      <sc-for list="{{ personTx }}" as="tx" hint-placeholder-count="4">
+        <div onClick="{{ tx.open }}" style="display:flex;align-items:center;gap:12px;padding:12px 4px;border-bottom:1px solid {{ c.divider }};cursor:pointer">
+          <div style="width:10px;height:10px;border-radius:50%;background:{{ tx.color }};flex-shrink:0"></div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:14px;font-weight:500">{{ tx.note }}</div>
+            <div style="display:flex;align-items:center;gap:8px;margin-top:3px">
+              <div style="font-size:12px;color:{{ c.muted }}">{{ tx.date }}</div>
+              <div style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:8px;background:{{ tx.statusBg }};color:{{ tx.statusFg }}">{{ tx.status }}</div>
+            </div>
+          </div>
+          <div style="font-size:15px;font-weight:600;color:{{ tx.color }};font-variant-numeric:tabular-nums">{{ tx.amountLabel }}</div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<!-- DEBT DETAIL -->
+<sc-if value="{{ isDebt }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+  <div style="display:flex;align-items:center;gap:8px;padding:4px 8px;height:56px">
+    <button onClick="{{ backFromDebt }}" style="width:48px;height:48px;border:none;background:transparent;color:{{ c.text }};font-size:22px;cursor:pointer;font-family:inherit">→</button>
+    <div style="font-size:18px;font-weight:600;flex:1">تفاصيل الدين</div>
+  </div>
+  <div style="flex:1;overflow:auto;padding:8px 20px 32px;display:flex;flex-direction:column;gap:18px">
+    <div style="background:{{ debt.heroBg }};border-radius:24px;padding:22px 20px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="font-size:12px;font-weight:600;padding:4px 10px;border-radius:10px;background:{{ debt.badgeBg }};color:{{ debt.badgeFg }}">{{ debt.badge }}</div>
+        <div style="font-size:12px;color:{{ debt.color }}">{{ debt.dirLong }}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;margin-top:16px">
+        <div style="width:48px;height:48px;border-radius:14px;background:{{ debt.avatarBg }};color:{{ debt.avatarFg }};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px">{{ debt.initial }}</div>
+        <div><div style="font-size:17px;font-weight:600">{{ debt.personName }}</div><div style="font-size:13px;color:{{ c.muted }}">{{ debt.note }} · {{ debt.date }}</div></div>
+      </div>
+      <div style="font-size:40px;font-weight:700;color:{{ debt.color }};font-variant-numeric:tabular-nums;line-height:1;margin-top:18px">{{ debt.remainingLabel }} <span style="font-size:16px">ر.س</span></div>
+      <div style="font-size:12px;color:{{ c.muted }};margin-top:6px">المتبقي من {{ debt.amountLabel }} ر.س</div>
+      <div style="height:6px;border-radius:3px;background:{{ c.track }};margin-top:14px;overflow:hidden"><div style="height:100%;width:{{ debt.pct }};background:{{ debt.color }};border-radius:3px;transition:width .3s"></div></div>
+    </div>
+    <div style="background:{{ c.card }};border-radius:16px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center">
+      <div><div style="font-size:13px;color:{{ c.muted }}">تاريخ الاستحقاق</div><div style="font-size:15px;font-weight:600;margin-top:2px">{{ debt.due }}</div></div>
+      <div style="font-size:13px;font-weight:600;color:{{ debt.dueColor }}">{{ debt.dueLabel }}</div>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button onClick="{{ payDebt }}" disabled="{{ debt.paid }}" style="flex:1;height:48px;border-radius:24px;border:none;background:{{ debt.payBg }};color:#fff;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer">تسجيل دفعة</button>
+      <button onClick="{{ markPaid }}" disabled="{{ debt.paid }}" style="flex:1;height:48px;border-radius:24px;border:1px solid {{ c.border }};background:transparent;color:{{ c.text }};font-family:inherit;font-size:14px;font-weight:600;cursor:pointer">تحديد كمسدد</button>
+    </div>
+    <sc-if value="{{ debt.hasSchedule }}" hint-placeholder-val="{{ false }}">
+    <div>
+      <div style="font-size:15px;font-weight:600;margin-bottom:10px">جدول السداد <span style="font-weight:400;color:{{ c.muted }};font-size:13px">· {{ debt.scheduleFreqLabel }}</span></div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <sc-for list="{{ debt.schedule }}" as="ins" hint-placeholder-count="4">
+          <div onClick="{{ ins.pay }}" style="display:flex;align-items:center;gap:12px;background:{{ c.card }};border-radius:14px;padding:12px 14px;cursor:pointer;opacity:{{ ins.opacity }}">
+            <div style="width:26px;height:26px;border-radius:50%;border:2px solid {{ ins.dotColor }};background:{{ ins.dotFill }};display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;font-size:13px">{{ ins.check }}</div>
+            <div style="flex:1"><div style="font-size:14px;font-weight:600">دفعة {{ ins.n }} من {{ ins.total }}</div><div style="font-size:12px;color:{{ c.muted }};margin-top:2px">{{ ins.dueLabel }}</div></div>
+            <div style="font-size:15px;font-weight:700;font-variant-numeric:tabular-nums">{{ ins.amountLabel }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    </sc-if>
+    <div style="font-size:15px;font-weight:600">سجل الدفعات</div>
+    <div style="display:flex;flex-direction:column">
+      <sc-for list="{{ debtPayments }}" as="p" hint-placeholder-count="2">
+        <div style="display:flex;align-items:center;gap:12px;padding:12px 4px;border-bottom:1px solid {{ c.divider }}">
+          <div style="width:10px;height:10px;border-radius:50%;background:{{ c.primary }}"></div>
+          <div style="flex:1"><div style="font-size:14px;font-weight:500">دفعة</div><div style="font-size:12px;color:{{ c.muted }}">{{ p.date }}</div></div>
+          <div style="font-size:15px;font-weight:600;font-variant-numeric:tabular-nums">{{ p.amountLabel }}</div>
+        </div>
+      </sc-for>
+      <sc-if value="{{ debtNoPayments }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:20px 0;color:{{ c.muted }};font-size:13px">لا توجد دفعات بعد</div>
+      </sc-if>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<!-- ADD IOU SHEET -->
+<sc-if value="{{ isAdd }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+  <div style="display:flex;align-items:center;gap:8px;padding:4px 8px;height:56px">
+    <button onClick="{{ closeAdd }}" style="width:48px;height:48px;border:none;background:transparent;color:{{ c.text }};font-size:22px;cursor:pointer;font-family:inherit">✕</button>
+    <div style="font-size:18px;font-weight:600;flex:1">دين جديد</div>
+  </div>
+  <div style="flex:1;overflow:auto;padding:8px 20px 24px;display:flex;flex-direction:column;gap:20px">
+    <div style="display:flex;background:{{ c.card }};border-radius:16px;padding:4px">
+      <div onClick="{{ setOwedMe }}" style="flex:1;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;background:{{ segMe.bg }};color:{{ segMe.fg }}">يدين لي</div>
+      <div onClick="{{ setIOwe }}" style="flex:1;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;background:{{ segOwe.bg }};color:{{ segOwe.fg }}">أدين له</div>
+    </div>
+    <div style="text-align:center;padding:12px 0">
+      <div style="font-size:13px;color:{{ c.muted }}">المبلغ</div>
+      <div style="font-size:52px;font-weight:700;color:{{ addColor }};font-variant-numeric:tabular-nums;line-height:1.1;margin-top:6px">{{ addAmountLabel }} <span style="font-size:18px;color:{{ c.muted }}">ر.س</span></div>
+    </div>
+    <div>
+      <div style="font-size:13px;color:{{ c.muted }};margin-bottom:8px">الشخص</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <sc-for list="{{ personChips }}" as="ch" hint-placeholder-count="4">
+          <div onClick="{{ ch.pick }}" style="height:36px;padding:0 14px;border-radius:18px;display:flex;align-items:center;font-size:13px;font-weight:500;cursor:pointer;border:1px solid {{ ch.border }};background:{{ ch.bg }};color:{{ ch.fg }};transition:all .15s">{{ ch.name }}</div>
+        </sc-for>
+        <div onClick="{{ openNewPerson }}" style="height:36px;padding:0 14px;border-radius:18px;display:flex;align-items:center;gap:6px;font-size:13px;font-weight:500;cursor:pointer;border:1px dashed {{ c.primary }};background:transparent;color:{{ c.primary }}"><span style="font-size:15px;line-height:1">+</span> شخص جديد</div>
+      </div>
+      <sc-if value="{{ isNewPerson }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <input value="{{ newPersonName }}" onChange="{{ setNewPersonName }}" placeholder="اسم الشخص" autoFocus="{{ true }}" style="flex:1;height:44px;border-radius:14px;border:1px solid {{ c.border }};background:{{ c.card }};color:{{ c.text }};padding:0 14px;font-size:14px;outline:none" />
+          <button onClick="{{ confirmNewPerson }}" disabled="{{ newPersonDisabled }}" style="height:44px;padding:0 18px;border-radius:14px;border:none;background:{{ newPersonBtnBg }};color:#fff;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer">إضافة</button>
+        </div>
+      </sc-if>
+    </div>
+    <div>
+      <div style="font-size:13px;color:{{ c.muted }};margin-bottom:8px">طريقة السداد</div>
+      <div style="display:flex;background:{{ c.card }};border-radius:16px;padding:4px">
+        <div onClick="{{ setPlanSingle }}" style="flex:1;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;background:{{ segSingle.bg }};color:{{ segSingle.fg }}">دفعة واحدة</div>
+        <div onClick="{{ setPlanInstall }}" style="flex:1;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;background:{{ segInstall.bg }};color:{{ segInstall.fg }}">دفعات مقسّطة</div>
+      </div>
+    </div>
+    <sc-if value="{{ isInstallPlan }}" hint-placeholder-val="{{ false }}">
+    <div>
+      <div style="font-size:13px;color:{{ c.muted }};margin-bottom:8px">عدد الدفعات (شهرياً)</div>
+      <div style="display:flex;align-items:center;gap:16px">
+        <div onClick="{{ decInstallN }}" style="width:44px;height:44px;border-radius:14px;background:{{ c.card }};display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:600;cursor:pointer;user-select:none">−</div>
+        <div style="flex:1;text-align:center;font-size:22px;font-weight:700;font-variant-numeric:tabular-nums">{{ installNLabel }}</div>
+        <div onClick="{{ incInstallN }}" style="width:44px;height:44px;border-radius:14px;background:{{ c.card }};display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:600;cursor:pointer;user-select:none">+</div>
+      </div>
+    </div>
+    <div style="background:{{ c.card }};border-radius:14px;padding:12px 14px;font-size:13px;color:{{ c.muted }}">{{ installPreview }}</div>
+    </sc-if>
+    <sc-if value="{{ isSinglePlan }}" hint-placeholder-val="{{ true }}">
+    <div>
+      <div style="font-size:13px;color:{{ c.muted }};margin-bottom:8px">تاريخ الاستحقاق</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <sc-for list="{{ dueChips }}" as="ch" hint-placeholder-count="4">
+          <div onClick="{{ ch.pick }}" style="height:36px;padding:0 14px;border-radius:18px;display:flex;align-items:center;font-size:13px;font-weight:500;cursor:pointer;border:1px solid {{ ch.border }};background:{{ ch.bg }};color:{{ ch.fg }}">{{ ch.label }}</div>
+        </sc-for>
+      </div>
+    </div>
+    </sc-if>
+    <div>
+      <div style="font-size:13px;color:{{ c.muted }};margin-bottom:8px">ملاحظة (اختياري)</div>
+      <input value="{{ addNote }}" onChange="{{ setNote }}" placeholder="مثال: غداء، تذاكر، سلفة" style="width:100%;height:48px;border-radius:14px;border:1px solid {{ c.border }};background:{{ c.card }};color:{{ c.text }};padding:0 14px;font-size:14px;outline:none" />
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:auto">
+      <sc-for list="{{ keys }}" as="k" hint-placeholder-count="12">
+        <div onClick="{{ k.press }}" style="height:52px;border-radius:14px;background:{{ c.card }};display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:500;cursor:pointer;user-select:none" style-active="background:{{ c.cardHover }}">{{ k.label }}</div>
+      </sc-for>
+    </div>
+    <button onClick="{{ saveAdd }}" disabled="{{ addDisabled }}" style="height:56px;border-radius:28px;border:none;background:{{ addBtnBg }};color:#fff;font-size:16px;font-weight:600;font-family:inherit;cursor:pointer;transition:background .2s">حفظ</button>
+  </div>
+</div>
+</sc-if>
+
+<!-- SETTLE -->
+<sc-if value="{{ isSettle }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+  <div style="display:flex;align-items:center;gap:8px;padding:4px 8px;height:56px">
+    <button onClick="{{ backToPerson }}" style="width:48px;height:48px;border:none;background:transparent;color:{{ c.text }};font-size:22px;cursor:pointer;font-family:inherit">→</button>
+    <div style="font-size:18px;font-weight:600;flex:1">تسوية مع {{ person.name }}</div>
+  </div>
+  <div style="flex:1;overflow:auto;padding:8px 20px 24px;display:flex;flex-direction:column;gap:20px">
+    <sc-if value="{{ settleDone }}" hint-placeholder-val="{{ false }}">
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center">
+        <div style="width:88px;height:88px;border-radius:50%;background:{{ c.greenBg }};display:flex;align-items:center;justify-content:center;color:{{ c.green }};font-size:40px">✓</div>
+        <div style="font-size:24px;font-weight:700">تمت التسوية</div>
+        <div style="font-size:14px;color:{{ c.muted }};line-height:1.7">تم تسجيل {{ settleAmountLabel }} ر.س مع {{ person.name }}.<br>الرصيد المتبقي: {{ person.amountLabel }} ر.س</div>
+        <button onClick="{{ goHome }}" style="height:48px;padding:0 32px;border-radius:24px;border:none;background:{{ c.primary }};color:#fff;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;margin-top:12px">العودة للرئيسية</button>
+      </div>
+    </sc-if>
+    <sc-if value="{{ settleNotDone }}" hint-placeholder-val="{{ true }}">
+      <div style="background:{{ c.card }};border-radius:20px;padding:18px;display:flex;justify-content:space-between;align-items:center">
+        <div style="font-size:14px;color:{{ c.muted }}">{{ person.dirLong }}</div>
+        <div style="font-size:20px;font-weight:700;color:{{ person.color }};font-variant-numeric:tabular-nums">{{ person.amountLabel }} ر.س</div>
+      </div>
+      <div style="display:flex;background:{{ c.card }};border-radius:16px;padding:4px">
+        <div onClick="{{ setFull }}" style="flex:1;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;background:{{ segFull.bg }};color:{{ segFull.fg }}">المبلغ كامل</div>
+        <div onClick="{{ setPartial }}" style="flex:1;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;background:{{ segPartial.bg }};color:{{ segPartial.fg }}">جزء من المبلغ</div>
+      </div>
+      <div style="text-align:center;padding:12px 0">
+        <div style="font-size:13px;color:{{ c.muted }}">مبلغ التسوية</div>
+        <div style="font-size:52px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.1;margin-top:6px">{{ settleAmountLabel }} <span style="font-size:18px;color:{{ c.muted }}">ر.س</span></div>
+      </div>
+      <sc-if value="{{ isPartial }}" hint-placeholder-val="{{ false }}">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+          <sc-for list="{{ settleKeys }}" as="k" hint-placeholder-count="12">
+            <div onClick="{{ k.press }}" style="height:52px;border-radius:14px;background:{{ c.card }};display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:500;cursor:pointer;user-select:none">{{ k.label }}</div>
+          </sc-for>
+        </div>
+      </sc-if>
+      <button onClick="{{ confirmSettle }}" disabled="{{ settleDisabled }}" style="height:56px;border-radius:28px;border:none;background:{{ settleBtnBg }};color:#fff;font-size:16px;font-weight:600;font-family:inherit;cursor:pointer;margin-top:auto">تأكيد التسوية</button>
+    </sc-if>
+  </div>
+</div>
+</sc-if>
+
+<!-- SNACKBAR -->
+<sc-if value="{{ hasToast }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;bottom:96px;right:20px;left:20px;background:{{ c.toastBg }};color:{{ c.toastFg }};border-radius:12px;padding:14px 16px;font-size:14px;box-shadow:0 6px 20px rgba(0,0,0,.25)">{{ toast }}</div>
+</sc-if>
+
+</div>
+</x-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;darkMode&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Theme&quot;},&quot;accent&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#2f5fb0&quot;,&quot;options&quot;:[&quot;#2f5fb0&quot;,&quot;#1e7a4c&quot;,&quot;#6b4fbb&quot;,&quot;#0e7c86&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Theme&quot;}}">
+class Component extends DCLogic {
+  state = {
+    screen: 'main', obStep: 0, tab: 'home', personId: null,
+    dir: 'me', amount: '', note: '', addPerson: null,
+    settleMode: 'full', settleAmount: '', settleDone: false,
+    weekly: true, auto: true, backing: false, lastBackup: 'اليوم ٧:١٢ ص', toast: null, dark: null,
+    reminders: [
+      { id: 1, day: 'الأحد', title: 'متابعة سارة', sub: '١٢٠ ر.س · غداء', on: true },
+      { id: 2, day: 'الثلاثاء', title: 'سداد فهد', sub: '٤٥٠ ر.س · سلفة', on: true },
+      { id: 3, day: '١٢ سبتمبر', title: 'متابعة خالد', sub: '٨٠ ر.س · تذاكر', on: false },
+    ],
+    people: [
+      { id: 1, name: 'سارة', hue: 150 }, { id: 2, name: 'فهد', hue: 30 }, { id: 3, name: 'خالد', hue: 260 }, { id: 4, name: 'نورة', hue: 340 }, { id: 5, name: 'محمد', hue: 200 },
+    ],
+    // dueIn: days from today (negative = overdue). Payments: dir 'settle' + debtId.
+    tx: [
+      { id: 1, personId: 1, dir: 'me', amount: 120, note: 'غداء', date: '٢ سبتمبر', due: '٧ سبتمبر', dueIn: 3 },
+      { id: 2, personId: 1, dir: 'me', amount: 60, note: 'قهوة ومواصلات', date: '٢٨ أغسطس', due: '٤ سبتمبر', dueIn: 0 },
+      { id: 3, personId: 1, dir: 'settle', amount: 40, debtId: 2, date: '٣٠ أغسطس' },
+      { id: 4, personId: 2, dir: 'owe', amount: 450, note: 'سلفة', date: '١ سبتمبر', due: '١ أكتوبر', dueIn: 27 },
+      { id: 5, personId: 3, dir: 'me', amount: 80, note: 'تذاكر', date: '٢٥ أغسطس', due: '١ سبتمبر', dueIn: -3 },
+      { id: 6, personId: 4, dir: 'owe', amount: 35, note: 'توصيل', date: '٣٠ أغسطس', due: '٦ سبتمبر', dueIn: 2 },
+      { id: 7, personId: 5, dir: 'me', amount: 200, note: 'حصة الإيجار', date: '٢٩ أغسطس', due: '٣ سبتمبر', dueIn: -1 },
+      { id: 8, personId: 5, dir: 'settle', amount: 200, debtId: 7, date: '٣ سبتمبر' },
+      { id: 9, personId: 2, dir: 'me', amount: 3000, note: 'سلفة سيارة', date: '١٥ أغسطس', dueIn: 5, freq: 'month',
+        installments: [{ amount: 1000, due: 'دفعة ١', dueIn: -20 }, { amount: 1000, due: 'دفعة ٢', dueIn: 5 }, { amount: 1000, due: 'دفعة ٣', dueIn: 35 }] },
+      { id: 10, personId: 2, dir: 'settle', amount: 1000, debtId: 9, date: '١٦ أغسطس' },
+    ],
+  };
+  fmt(n) { return new Intl.NumberFormat('ar-SA', { maximumFractionDigits: 2 }).format(n); }
+  remaining(d) { return Math.max(0, d.amount - this.state.tx.filter(t => t.debtId === d.id).reduce((s, t) => s + t.amount, 0)); }
+  balance(pid) {
+    return this.state.tx.filter(t => t.personId === pid && t.dir !== 'settle').reduce((s, t) => s + (t.dir === 'me' ? 1 : -1) * this.remaining(t), 0);
+  }
+  debtView(d, c, people, dark) {
+    const p = people.find(x => x.id === d.personId) || {};
+    const rem = this.remaining(d), paid = rem === 0, partial = !paid && rem < d.amount;
+    let dueIn = d.dueIn;
+    let schedule = null;
+    if (d.installments) {
+      const paidTotal = d.amount - rem;
+      let cum = 0;
+      schedule = d.installments.map((ins, i) => {
+        cum += ins.amount;
+        const insPaid = paidTotal >= cum - 0.01;
+        return { n: this.fmt(i + 1), total: this.fmt(d.installments.length), amount: ins.amount, amountLabel: this.fmt(ins.amount), due: ins.due, dueIn: ins.dueIn,
+          dueLabel: insPaid ? 'مسدد' : ins.dueIn < 0 ? 'متأخر ' + this.fmt(-ins.dueIn) + ' يوم' : ins.dueIn === 0 ? 'يستحق اليوم' : 'خلال ' + this.fmt(ins.dueIn) + ' يوم',
+          paid: insPaid, dotColor: insPaid ? c.green : ins.dueIn < 0 ? c.red : c.border, dotFill: insPaid ? c.green : 'transparent', check: insPaid ? '✓' : '', opacity: insPaid ? 0.6 : 1,
+          pay: () => this.setState({ screen: 'settle', personId: d.personId, settleMode: 'partial', settleAmount: String(ins.amount), settleDone: false, settleDebtId: d.id }) };
+      });
+      const nextUnpaid = schedule.find(x => !x.paid);
+      dueIn = nextUnpaid ? nextUnpaid.dueIn : schedule[schedule.length - 1].dueIn;
+    }
+    const over = !paid && dueIn < 0;
+    const color = d.dir === 'me' ? c.green : c.red;
+    const badge = paid ? ['مسدد', c.greenBg, c.green] : over ? ['متأخر', c.redBg, c.red] : partial ? ['مسدد جزئياً', dark ? '#3d2f0f' : '#fff3d6', dark ? '#f2c66d' : '#8a5a00'] : ['معلق', c.cardHover, c.muted];
+    const dueLabel = paid ? 'مكتمل' : dueIn < 0 ? 'متأخر ' + this.fmt(-dueIn) + ' يوم' : dueIn === 0 ? 'يستحق اليوم' : 'خلال ' + this.fmt(dueIn) + ' يوم';
+    return { ...d, personName: p.name, initial: p.initial, avatarBg: p.avatarBg, avatarFg: p.avatarFg, rem, paid, over, color, dueIn,
+      badge: badge[0], badgeBg: badge[1], badgeFg: badge[2], border: over ? c.red + '66' : 'transparent',
+      dueLabel, dueColor: over ? c.red : c.muted, remainingLabel: this.fmt(rem), amountLabel: this.fmt(d.amount), pct: Math.round((1 - rem / d.amount) * 100) + '%',
+      dirLong: d.dir === 'me' ? 'يدين لي' : 'أدين له', heroBg: d.dir === 'me' ? c.greenBg : c.redBg, payBg: paid ? c.track : c.primary,
+      hasSchedule: !!schedule, schedule, scheduleFreqLabel: 'شهري',
+      open: () => this.setState({ screen: 'debt', debtId: d.id, from: this.state.screen, settleDone: false }) };
+  }
+  toast(msg) { this.setState({ toast: msg }); clearTimeout(this._tt); this._tt = setTimeout(() => this.setState({ toast: null }), 2200); }
+  keys(field) {
+    const press = l => () => this.setState(s => {
+      let v = s[field];
+      if (l === '⌫') v = v.slice(0, -1);
+      else if (l === '.') { if (!v.includes('.')) v = (v || '0') + '.'; }
+      else if (v.length < 7) v = v === '0' ? l : v + l;
+      return { [field]: v };
+    });
+    return ['1','2','3','4','5','6','7','8','9','.','0','⌫'].map(l => ({ label: l, press: press(l) }));
+  }
+  renderVals() {
+    const s = this.state;
+    const dark = s.dark ?? (this.props.darkMode ?? false);
+    const accent = this.props.accent ?? '#2f5fb0';
+    const c = dark ? {
+      bg: '#141318', card: '#1f1e25', cardHover: '#28272f', nav: '#1a191f', text: '#f2f0f7', muted: '#9a97a6', border: '#3a3945', divider: '#2c2b34',
+      primary: accent, primaryBg: accent + '33', green: '#6fd39a', greenBg: '#173324', red: '#ff8a8a', redBg: '#3a1d1d', toastBg: '#f2f0f7', toastFg: '#141318', track: '#3a3945',
+    } : {
+      bg: '#f6f5fa', card: '#ffffff', cardHover: '#f0eef5', nav: '#ffffff', text: '#1b1a22', muted: '#6f6d7a', border: '#dcdae4', divider: '#eeedf3',
+      primary: accent, primaryBg: accent + '1f', green: '#1e7a4c', greenBg: '#deefe4', red: '#b3261e', redBg: '#f9dedc', toastBg: '#1b1a22', toastFg: '#fff', track: '#cfcdd8',
+    };
+    const av = (hue, light) => light ? { bg: `oklch(0.9 0.05 ${hue})`, fg: `oklch(0.4 0.1 ${hue})` } : { bg: `oklch(0.35 0.06 ${hue})`, fg: `oklch(0.9 0.06 ${hue})` };
+    const people = s.people.map(p => {
+      const txp = s.tx.filter(t => t.personId === p.id && t.dir !== 'settle');
+      const iouAmt = txp.filter(t => t.dir === 'me').reduce((x, t) => x + this.remaining(t), 0);
+      const uomeAmt = txp.filter(t => t.dir === 'owe').reduce((x, t) => x + this.remaining(t), 0);
+      const b = iouAmt - uomeAmt, a = av(p.hue, !dark);
+      const color = b > 0 ? c.green : b < 0 ? c.red : c.muted;
+      return { ...p, initial: p.name[0], avatarBg: a.bg, avatarFg: a.fg, bal: b, color, iouAmt, uomeAmt, hasIou: iouAmt > 0, hasUome: uomeAmt > 0,
+        iouLabel: this.fmt(iouAmt), uomeLabel: this.fmt(uomeAmt), dirLong: b > 0 ? 'يدين لي بـ' : b < 0 ? 'أدين له بـ' : 'لا يوجد رصيد',
+        sub: s.tx.filter(t => t.personId === p.id).length + ' عمليات', heroBg: b > 0 ? c.greenBg : b < 0 ? c.redBg : c.card,
+        open: () => this.setState({ screen: 'person', personId: p.id, settleDone: false }) };
+    }).sort((a, b) => (b.iouAmt + b.uomeAmt) - (a.iouAmt + a.uomeAmt));
+    const owedMe = people.filter(p => p.bal > 0).reduce((x, p) => x + p.bal, 0);
+    const iOwe = people.filter(p => p.bal < 0).reduce((x, p) => x - p.bal, 0);
+    const net = owedMe - iOwe;
+    const person = people.find(p => p.id === s.personId) || people[0];
+    const amt = parseFloat(s.amount) || 0;
+    const sd = s.screen === 'settle' && s.settleDebtId ? debts.find(d => d.id === s.settleDebtId) : null;
+    const settleMax = sd ? sd.rem : Math.abs(person.bal);
+    const settleAmt = s.settleMode === 'full' ? settleMax : (parseFloat(s.settleAmount) || 0);
+    const seg = on => on ? { bg: c.primary, fg: '#fff' } : { bg: 'transparent', fg: c.muted };
+    const tog = on => ({ track: on ? c.primary : c.track, knob: on ? '3px' : '21px' });
+    const obs = [
+      { title: 'دفتر ديون خاص بك', body: 'سجّل من يدين لك ومن تدين له بالريال السعودي. كل شيء يبقى على جهازك.', cta: 'التالي' },
+      { title: 'كل شخص، كل عملية', body: 'رصيد لكل شخص مع سجل كامل، وتسوية كاملة أو جزئية بضغطة.', cta: 'التالي' },
+      { title: 'نسخ احتياطي إلى Google Drive', body: 'فعّل النسخ التلقائي حتى لا تفقد بياناتك عند تغيير الجهاز.', cta: 'ابدأ' },
+    ];
+    const tabsDef = [{ id: 'home', label: 'الرئيسية' }, { id: 'iou', label: 'لي' }, { id: 'uome', label: 'عليّ' }, { id: 'reminders', label: 'التذكيرات' }, { id: 'settings', label: 'الإعدادات' }];
+    const w = tog(s.weekly), au = tog(s.auto), dk = tog(dark);
+    const debts = s.tx.filter(t => t.dir !== 'settle').map(d => this.debtView(d, c, people, dark));
+    const listDir = s.tab === 'iou' ? 'me' : 'owe';
+    const sf = s.statusFilter || 'open';
+    const listAll = debts.filter(d => d.dir === listDir);
+    const listItems = listAll.filter(d => sf === 'all' || (sf === 'open' ? !d.paid : sf === 'over' ? d.over : d.paid)).sort((a, b) => a.dueIn - b.dueIn);
+    const debt = debts.find(d => d.id === s.debtId) || debts[0];
+    const debtPayments = s.tx.filter(t => t.debtId === debt.id).map(t => ({ ...t, amountLabel: this.fmt(t.amount) }));
+    const dueChipsDef = [{ id: 7, label: 'أسبوع' }, { id: 14, label: 'أسبوعان' }, { id: 30, label: 'شهر' }, { id: null, label: 'بدون' }];
+    return {
+      c, dark, today: 'الجمعة ٤ سبتمبر',
+      isOnboarding: s.screen === 'onboarding', isMain: s.screen === 'main', isPerson: s.screen === 'person', isAdd: s.screen === 'add', isSettle: s.screen === 'settle',
+      isHome: s.screen === 'main' && s.tab === 'home', isList: s.screen === 'main' && (s.tab === 'iou' || s.tab === 'uome'), isDebt: s.screen === 'debt',
+      darkOff: !dark,
+      goIou: () => this.setState({ tab: 'iou', statusFilter: 'open' }), goUome: () => this.setState({ tab: 'uome', statusFilter: 'open' }),
+      iouCount: this.fmt(debts.filter(d => d.dir === 'me' && !d.paid).length), uomeCount: this.fmt(debts.filter(d => d.dir === 'owe' && !d.paid).length),
+      dueSoon: debts.filter(d => !d.paid && d.dueIn <= 7).sort((a, b) => a.dueIn - b.dueIn), hasDue: debts.some(d => !d.paid && d.dueIn <= 7),
+      listTitle: listDir === 'me' ? 'يدينون لي' : 'أدين لهم', listSub: this.fmt(listAll.filter(d => !d.paid).length) + ' ديون مفتوحة', listColor: listDir === 'me' ? c.green : c.red,
+      listTotal: this.fmt(listAll.reduce((x, d) => x + d.rem, 0)), listItems, listEmpty: listItems.length === 0,
+      statusFilters: [{ id: 'open', label: 'مفتوح' }, { id: 'over', label: 'متأخر' }, { id: 'paid', label: 'مسدد' }, { id: 'all', label: 'الكل' }].map(f => { const on = sf === f.id; return { ...f, bg: on ? c.primary : c.card, fg: on ? '#fff' : c.text, border: on ? c.primary : c.border, pick: () => this.setState({ statusFilter: f.id }) }; }),
+      debt, debtPayments, debtNoPayments: debtPayments.length === 0,
+      backFromDebt: () => this.setState({ screen: s.from === 'person' ? 'person' : 'main' }),
+      payDebt: () => this.setState({ screen: 'settle', personId: debt.personId, settleMode: 'partial', settleAmount: '', settleDone: false, settleDebtId: debt.id }),
+      markPaid: () => { this.setState({ tx: [...s.tx, { id: Date.now(), personId: debt.personId, dir: 'settle', debtId: debt.id, amount: debt.rem, date: 'اليوم' }] }); this.toast('تم تحديد الدين كمسدد'); },
+      dueChips: dueChipsDef.map(ch => { const on = (s.dueIn === undefined ? 7 : s.dueIn) === ch.id; return { ...ch, bg: on ? c.primary : c.card, fg: on ? '#fff' : c.text, border: on ? c.primary : c.border, pick: () => this.setState({ dueIn: ch.id }) }; }), isReminders: s.screen === 'main' && s.tab === 'reminders', isSettings: s.screen === 'main' && s.tab === 'settings',
+      ob: obs[s.obStep], obDots: obs.map((_, i) => ({ w: i === s.obStep ? '24px' : '8px', bg: i === s.obStep ? c.primary : c.track })),
+      obNext: () => s.obStep < 2 ? this.setState({ obStep: s.obStep + 1 }) : this.setState({ screen: 'main' }),
+      resetOnboarding: () => this.setState({ screen: 'onboarding', obStep: 0 }),
+      totalOwedMe: this.fmt(owedMe), totalIOwe: this.fmt(iOwe), netLabel: (net < 0 ? '−' : '') + this.fmt(Math.abs(net)), netColor: net > 0 ? c.green : net < 0 ? c.red : c.muted,
+      people: people.filter(p => (s.filter || 'all') === 'all' || (s.filter === 'me' ? p.bal > 0 : p.bal < 0)),
+      filters: [{ id: 'all', label: 'الكل' }, { id: 'me', label: 'لي' }, { id: 'owe', label: 'عليّ' }].map(f => { const on = (s.filter || 'all') === f.id; return { ...f, bg: on ? c.primary : 'transparent', fg: on ? '#fff' : c.muted, pick: () => this.setState({ filter: f.id }) }; }),
+      tabs: tabsDef.map(t => { const on = s.tab === t.id; return { ...t, isHome: t.id === 'home', isIou: t.id === 'iou', isUome: t.id === 'uome', isReminders: t.id === 'reminders', isSettings: t.id === 'settings', pillBg: on ? c.primaryBg : 'transparent', fg: on ? (t.id === 'iou' ? c.green : t.id === 'uome' ? c.red : c.primary) : c.muted, weight: on ? 600 : 500, go: () => this.setState({ tab: t.id }) }; }),
+      reminders: s.reminders.map(r => { const t = tog(r.on); return { ...r, bg: c.primaryBg, fg: c.primary, trackBg: t.track, knobRight: t.knob, toggle: () => this.setState({ reminders: s.reminders.map(x => x.id === r.id ? { ...x, on: !x.on } : x) }) }; }),
+      weeklyTrack: w.track, weeklyKnob: w.knob, toggleWeekly: () => this.setState({ weekly: !s.weekly }),
+      autoTrack: au.track, autoKnob: au.knob, toggleAuto: () => this.setState({ auto: !s.auto }),
+      darkTrack: dk.track, darkKnob: dk.knob, toggleDark: () => this.setState({ dark: !dark }),
+      backupStatus: s.backing ? 'جارٍ النسخ…' : 'آخر نسخة: ' + s.lastBackup, backupDot: s.backing ? '#e0a400' : c.green, backupBtn: s.backing ? '…' : 'نسخ الآن',
+      backupNow: () => { this.setState({ backing: true }); setTimeout(() => { this.setState({ backing: false, lastBackup: 'الآن' }); this.toast('تم النسخ الاحتياطي إلى Google Drive'); }, 1400); },
+      person, personTx: s.tx.filter(t => t.personId === person.id).slice().reverse().map(t => {
+        const dv = t.dir === 'settle' ? null : debts.find(d => d.id === t.id);
+        const st = dv ? [dv.badge, dv.badgeBg, dv.badgeFg] : ['دفعة', c.primaryBg, c.primary];
+        return { ...t, note: t.note || 'دفعة', color: t.dir === 'me' ? c.green : t.dir === 'owe' ? c.red : c.muted, amountLabel: (t.dir === 'me' ? '+' : t.dir === 'owe' ? '−' : '') + this.fmt(t.amount), status: st[0], statusBg: st[1], statusFg: st[2], open: dv ? dv.open : () => {} };
+      }),
+      goHome: () => this.setState({ screen: 'main', tab: 'home' }),
+      openAdd: () => this.setState({ screen: 'add', amount: '', note: '', addPerson: null, dir: s.tab === 'uome' ? 'owe' : 'me' }),
+      openAddForPerson: () => this.setState({ screen: 'add', amount: '', note: '', addPerson: person.id, dir: 'me' }),
+      closeAdd: () => this.setState({ screen: s.personId && s.addPerson ? 'person' : 'main' }),
+      setOwedMe: () => this.setState({ dir: 'me' }), setIOwe: () => this.setState({ dir: 'owe' }),
+      segMe: seg(s.dir === 'me'), segOwe: seg(s.dir === 'owe'), addColor: s.dir === 'me' ? c.green : c.red,
+      addAmountLabel: s.amount ? this.fmt(parseFloat(s.amount)) + (s.amount.endsWith('.') ? '.' : '') : '٠',
+      personChips: s.people.map(p => { const on = s.addPerson === p.id; return { ...p, bg: on ? c.primary : c.card, fg: on ? '#fff' : c.text, border: on ? c.primary : c.border, pick: () => this.setState({ addPerson: p.id }) }; }),
+      addNote: s.note, setNote: e => this.setState({ note: e.target.value }),
+      isNewPerson: !!s.newPersonMode, newPersonName: s.newPersonName || '',
+      openNewPerson: () => this.setState({ newPersonMode: true, newPersonName: '' }),
+      setNewPersonName: e => this.setState({ newPersonName: e.target.value }),
+      newPersonDisabled: !(s.newPersonName || '').trim(), newPersonBtnBg: (s.newPersonName || '').trim() ? c.primary : c.track,
+      confirmNewPerson: () => {
+        const name = (s.newPersonName || '').trim(); if (!name) return;
+        const id = Math.max(0, ...s.people.map(p => p.id)) + 1;
+        this.setState({ people: [...s.people, { id, name, hue: Math.floor(Math.random() * 360) }], addPerson: id, newPersonMode: false, newPersonName: '' });
+      },
+      keys: this.keys('amount'), addDisabled: !(amt > 0 && s.addPerson), addBtnBg: amt > 0 && s.addPerson ? c.primary : c.track,
+      planMode: s.planMode || 'single', isInstallPlan: (s.planMode || 'single') === 'install', isSinglePlan: (s.planMode || 'single') === 'single',
+      setPlanSingle: () => this.setState({ planMode: 'single' }), setPlanInstall: () => this.setState({ planMode: 'install' }),
+      segSingle: seg((s.planMode || 'single') === 'single'), segInstall: seg((s.planMode || 'single') === 'install'),
+      installN: s.installN || 3, installNLabel: this.fmt(s.installN || 3),
+      decInstallN: () => this.setState({ installN: Math.max(2, (s.installN || 3) - 1) }),
+      incInstallN: () => this.setState({ installN: Math.min(36, (s.installN || 3) + 1) }),
+      installPreview: (() => { const n = s.installN || 3; const per = amt > 0 ? Math.round((amt / n) * 100) / 100 : 0; return `${this.fmt(n)} دفعات × ${this.fmt(per)} ر.س، كل شهر، تبدأ بعد شهر واحد`; })(),
+      saveAdd: () => {
+        const p = s.people.find(x => x.id === s.addPerson);
+        const plan = s.planMode || 'single';
+        if (plan === 'install') {
+          const n = s.installN || 3, step = 30;
+          const base = Math.floor((amt / n) * 100) / 100, rem0 = Math.round((amt - base * n) * 100) / 100;
+          const installments = Array.from({ length: n }, (_, i) => ({ amount: i === n - 1 ? Math.round((base + rem0) * 100) / 100 : base, due: `دفعة ${i + 1}`, dueIn: step * (i + 1) }));
+          this.setState({ tx: [...s.tx, { id: Date.now(), personId: s.addPerson, dir: s.dir, amount: amt, note: s.note || (s.dir === 'me' ? 'دين' : 'سلفة'), date: 'اليوم', dueIn: installments[0].dueIn, installments, freq: 'month' }], screen: 'main', tab: 'home', planMode: 'single' });
+          this.toast(`تم تسجيل ${this.fmt(amt)} ر.س مع ${p.name} على ${this.fmt(n)} دفعات`);
+        } else {
+          const di = s.dueIn === undefined ? 7 : s.dueIn;
+          this.setState({ tx: [...s.tx, { id: Date.now(), personId: s.addPerson, dir: s.dir, amount: amt, note: s.note || (s.dir === 'me' ? 'دين' : 'سلفة'), date: 'اليوم', due: di === null ? 'بدون' : 'خلال ' + this.fmt(di) + ' يوم', dueIn: di === null ? 999 : di }], screen: 'main', tab: 'home' });
+          this.toast(`تم تسجيل ${this.fmt(amt)} ر.س مع ${p.name}`);
+        }
+      },
+      openSettle: () => this.setState({ screen: 'settle', settleMode: 'full', settleAmount: '', settleDone: false, settleDebtId: null }),
+      backToPerson: () => this.setState({ screen: 'person' }),
+      setFull: () => this.setState({ settleMode: 'full' }), setPartial: () => this.setState({ settleMode: 'partial' }),
+      segFull: seg(s.settleMode === 'full'), segPartial: seg(s.settleMode === 'partial'), isPartial: s.settleMode === 'partial',
+      settleAmountLabel: this.fmt(s.settleDone ? (s.lastSettle || 0) : settleAmt), settleKeys: this.keys('settleAmount'),
+      settleDisabled: !(settleAmt > 0 && settleAmt <= settleMax), settleBtnBg: settleAmt > 0 && settleAmt <= settleMax ? c.primary : c.track,
+      settleDone: s.settleDone, settleNotDone: !s.settleDone,
+      confirmSettle: () => {
+        let left = settleAmt; const pays = [];
+        const targets = sd ? [sd] : debts.filter(d => d.personId === person.id && !d.paid && d.dir === (person.bal > 0 ? 'me' : 'owe')).sort((a, b) => a.id - b.id);
+        targets.forEach(d => { if (left <= 0) return; const a = Math.min(left, d.rem); left -= a; pays.push({ id: Date.now() + pays.length, personId: person.id, dir: 'settle', debtId: d.id, amount: a, date: 'اليوم' }); });
+        this.setState({ tx: [...s.tx, ...pays], settleDone: true, lastSettle: settleAmt });
+      },
+      hasToast: !!s.toast, toast: s.toast,
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,29 @@
+node_modules/
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+*.tsbuildinfo
+
+# Generated native projects — recreated by `expo prebuild`
+/app/android/
+/app/ios/
+
+# Signing material must never be committed
+*.jks
+*.keystore
+*.p8
+*.p12
+*.key
+*.pem
+*.mobileprovision
+
+# Local env
+.env
+.env.*
+!.env.example
+
+.DS_Store
+npm-debug.*
+yarn-debug.*
+yarn-error.*

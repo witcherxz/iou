@@ -1,0 +1,43 @@
+{
+  "expo": {
+    "name": "دفتر الديون",
+    "slug": "iou",
+    "scheme": "iou",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "backgroundColor": "#f6f5fa",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.example.iou"
+    },
+    "android": {
+      "package": "com.example.iou",
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-web-browser",
+      "expo-font",
+      "expo-secure-store",
+      "expo-notifications",
+      "expo-sharing"
+    ],
+    "extra": {
+      "google": {
+        "androidClientId": "YOUR_ANDROID_CLIENT_ID.apps.googleusercontent.com",
+        "iosClientId": "YOUR_IOS_CLIENT_ID.apps.googleusercontent.com",
+        "webClientId": "YOUR_WEB_CLIENT_ID.apps.googleusercontent.com"
+      }
+    }
+  }
+}

@@ -1,0 +1,63 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Logic checks
+        run: npm run check
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: android-actions/setup-android@v3
+
+      # android/ is generated, not committed — prebuild recreates it from app.json.
+      - name: Prebuild Android project
+        run: npx expo prebuild --platform android --no-install
+
+      - name: Gradle build
+        working-directory: app/android
+        run: ./gradlew assembleRelease --no-daemon
+
+      # The Expo template signs release builds with the checked-in debug keystore,
+      # so this APK installs on any device but is NOT suitable for the Play Store.
+      # To publish, add your own keystore and wire it into signingConfigs.release.
+      - name: Rename APK
+        run: mv android/app/build/outputs/apk/release/app-release.apk iou-debug-signed.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: iou-apk
+          path: app/iou-debug-signed.apk
+          if-no-files-found: error
