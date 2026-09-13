@@ -86,8 +86,14 @@ export function syncReminders(
       // Enabling private previews also removes previously delivered details.
       if (settings.privateNotifications) await Notifications.dismissAllNotificationsAsync();
       if (!hasPermission(permission)) {
+        // A promptable permission does not help while an existing channel is
+        // blocked. Inspect it without creating a channel on denied startup.
+        const channelBlocked = permission.canAskAgain && Platform.OS === 'android' && Number(Platform.Version) >= 26 &&
+          (await Notifications.getNotificationChannelAsync(CHANNEL_ID))?.importance === Notifications.AndroidImportance.NONE;
         await Notifications.cancelAllScheduledNotificationsAsync();
-        return permission.canAskAgain ? 'denied' : 'blocked';
+        // Already-granted permission with a denied overall status needs system
+        // settings too; another permission request cannot clear that block.
+        return permission.canAskAgain && !permission.granted && !channelBlocked ? 'denied' : 'blocked';
       }
       if (!await ensureChannel()) {
         await Notifications.cancelAllScheduledNotificationsAsync();

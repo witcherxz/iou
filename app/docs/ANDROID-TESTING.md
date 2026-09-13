@@ -101,3 +101,39 @@ An isolated Android 16 emulator reproduced clipped **إعفاء من الدين*
 | Default status | Default selector | Larger-font actions | Larger-font selector |
 |---|---|---|---|
 | ![Full status badge](screenshots/alpha11-default-debt-status.png) | ![Full forgiveness label](screenshots/alpha11-default-forgive-selector.png) | ![Actions at font scale 2](screenshots/alpha11-font2x-debt-actions.png) | ![Selector at font scale 2](screenshots/alpha11-font2x-forgive-selector.png) |
+
+## Alpha 11 preparation — file restore and Android reminders
+
+The SDK file picker now opens and its selected JSON survives the PIN gate for a fresh restore preview. A local candidate then delivered both a debt snooze and the weekly reminder while IoU stayed in the background. Android batched both inexact alarms for approximately 129 seconds after their target time; private titles/bodies included no person, amount or note.
+
+Disabling only the reminder channel produced the blocked message and **إعدادات الجهاز**, cancelled future alarms, and opened Android App info. Re-enabling it and returning rebuilt the queue. Force-stop removed all three future alarms; reopening rebuilt the same timestamps. After an emulator reboot, all three alarms returned through boot handling before IoU was opened. The original reminder preferences and denied/promptable app permission were restored, with automatic backup off and all 15 original backup files byte-identical. The newly created channel remains at DEFAULT importance; the app-level permission is off. [24-check native record](verification/alpha11-reminders.json).
+
+| Real notification delivery | Disabled channel | File preview after unlock |
+|---|---|---|
+| ![Delivered private reminders](screenshots/alpha11-notifications.png) | ![System settings action](screenshots/alpha11-notification-settings.png) | ![Restore preview](screenshots/alpha11-file-restore-preview.png) |
+
+## Alpha 11 candidate — interrupted backups and recovery
+
+Newest-copy selection passed with a deliberately older valid main file and a newer valid snapshot: the preview and confirmed restore selected the newer record. After installing the independently verified signed main-build APK, a separate local QA destination was made temporarily unavailable. Its failure preserved all existing good copies. Automatic backup remained paused after force-stop/PIN unlock and a non-financial edit, and cancelling the manual overwrite review preserved both the pause and exact files. Confirmed manual retry saved successfully and cleared the pause.
+
+The pre-test baseline was restored through the real file picker, PIN gate and confirmation preview, followed by a verified manual backup. The final portable ledger matches every pre-test field except `backedUpAt`; people, all four transactions and all audits also match Alpha 10 exactly. HTML and all four CSV companions regenerate byte-for-byte, six retained snapshots validate, and all 15 original backup files keep their original hashes. Automatic backup is off; the separate QA folder remains selected. [20 native checks and artifact hashes](verification/alpha11-backups.json).
+
+| Pause after restart | Explicit retry review | Completed baseline backup |
+|---|---|---|
+| ![Persistent automatic-backup pause](screenshots/alpha11-backup-paused.png) | ![Review before manual retry](screenshots/alpha11-backup-review.png) | ![Successful local backup](screenshots/alpha11-backup-complete.png) |
+
+## Beta 1 — combined notification blocks
+
+The user approved the beta transition during stabilization; Alpha 11 was an unpublished main-build candidate. On that signed candidate, a denied but promptable app permission combined with a disabled reminder channel produced an inactive enable action. The final pre-beta JavaScript candidate shows the blocked explanation and **إعدادات الجهاز** in the same OS state, and that action opens Android settings. Zero alarms remain while blocked. Original permission flags, complete channel/app notification settings, ledger and app preferences were preserved or restored exactly. All 12 comparison/restoration checks passed. [Native record](verification/beta1-notification-blocks.json).
+
+| Before | After |
+|---|---|
+| ![Inactive enable action with a disabled channel](screenshots/beta1-notification-blocks-before.png) | ![Working settings action for the combined block](screenshots/beta1-notification-blocks-after.png) |
+
+## Beta 1 — protected backup interoperability
+
+The signed main candidate passed actual native wrong-password rejection and correct original/Arabic+emoji+combining-password imports. Feedback/preview appeared in roughly 7.6–7.8 seconds including UI Automator lookup/dump overhead, compared with the old candidate still verifying after 78 seconds. These are observed UI timings, not isolated key-derivation benchmarks. Restore previews were cancelled without applying data.
+
+Actual Android export uncovered an SDK option mismatch: `ciphertext({encoding:'base64'})` returned a byte array, which JSON serialized as a numeric-key object. Independent normalization and authenticated decryption recovered the complete original data. The final candidate uses validated native combined base64 output and can recover the exact older byte-object shape. It passed a native preview/cancel using the actual affected file and generated a corrected 44,070-byte Unicode-password report. Earlier shared files stayed byte-identical; passwords, clipboard and temporary helpers were removed from the emulator.
+
+Independent Node decryption and an actual offline Chrome `file://` opening both passed for the corrected Android export. Chrome rejected a wrong password, then opened the Unicode password, showed all four readable tables and exposed all four exact CSV downloads. The complete portable ledger/preferences match the baseline except the expected backup timestamp; no network request or browser error occurred. [Combined native and interoperability record](verification/beta1-protected-backups.json) and [captured encoding-failure evidence](verification/alpha11-protected-export-before.json).

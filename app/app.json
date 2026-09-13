@@ -3,7 +3,7 @@
     "name": "دفتر الديون",
     "slug": "iou",
     "scheme": "iou",
-    "version": "0.1.0-alpha.11",
+    "version": "0.1.0-beta.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",

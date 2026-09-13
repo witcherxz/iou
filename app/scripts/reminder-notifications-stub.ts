@@ -21,6 +21,10 @@ export async function setNotificationChannelAsync() {
   notificationHarness.calls.push('channel');
   return notificationHarness.channelMissing ? null : { id: 'iou-reminders', importance: notificationHarness.channelImportance };
 }
+export async function getNotificationChannelAsync() {
+  notificationHarness.calls.push('getChannel');
+  return notificationHarness.channelMissing ? null : { id: 'iou-reminders', importance: notificationHarness.channelImportance };
+}
 export async function getAllScheduledNotificationsAsync() {
   notificationHarness.calls.push('getScheduled');
   return [...notificationHarness.scheduled.values()].map(item => ({ ...item, trigger: item.trigger.date instanceof Date ? { type: 'date', value: item.trigger.date.getTime(), channelId: item.trigger.channelId } : item.trigger }));

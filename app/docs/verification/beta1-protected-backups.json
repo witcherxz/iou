@@ -1,0 +1,134 @@
+{
+  "measuredAt": "2026-09-13",
+  "scope": "Pre-beta native compatibility and actual Android export interoperability; final published binary checked separately",
+  "native": {
+    "serial": "emulator-5580",
+    "credentialsLogged": false,
+    "financialWrites": false,
+    "checks": {
+      "pick-original": {
+        "protectedDialogAvailable": true
+      },
+      "password-wrong": {
+        "correctFeedback": true,
+        "firstObservedSeconds": 7.648,
+        "lastPendingSeconds": 5.024,
+        "previewAbsent": true
+      },
+      "password-original": {
+        "previewPresent": true,
+        "fixtureCountsMatch": true,
+        "firstObservedSeconds": 7.651,
+        "lastPendingSeconds": 4.992,
+        "previewCancelled": true,
+        "restored": false
+      },
+      "pick-unicode": {
+        "protectedDialogAvailable": true
+      },
+      "password-unicode": {
+        "previewPresent": true,
+        "fixtureCountsMatch": true,
+        "firstObservedSeconds": 7.808,
+        "lastPendingSeconds": 5.149,
+        "previewCancelled": true,
+        "restored": false
+      },
+      "export-baseline": {
+        "shareSheetOpened": true,
+        "shareSheetCancelled": true,
+        "firstObservedSeconds": 5.826,
+        "immutableDirectory": "ea8f8328-bd90-4fbd-9b5a-71ac97024c6b",
+        "cachedBytes": 30520
+      },
+      "export-protected": {
+        "shareSheetOpened": true,
+        "shareSheetCancelled": true,
+        "firstObservedSeconds": 8.104,
+        "immutableDirectory": "72133f40-3924-4f4c-bf11-648fbd4475a5",
+        "cachedBytes": 44070
+      },
+      "earlierExportStillImmutable": true,
+      "pick-legacy": {
+        "protectedDialogAvailable": true
+      },
+      "password-legacy": {
+        "previewPresent": true,
+        "fixtureCountsMatch": true,
+        "firstObservedSeconds": 7.76,
+        "lastPendingSeconds": 5.033,
+        "previewCancelled": true,
+        "restored": false
+      }
+    },
+    "clipboardShellSetterAvailable": false,
+    "clipboardHelperPrepared": true,
+    "releasedUnlocked": true,
+    "protectedDialogRemaining": false,
+    "clipboardClearedAndHelperRemoved": true,
+    "stableSettings": true,
+    "orphanClipboardHelpersRemoved": 0,
+    "adbdUid": "2000",
+    "buildScope": {
+      "signedMainAlpha11": {
+        "commit": "bc583a9",
+        "apkSha256": "2378c13bd7043a7cad27b56236841d839f466f7559436afcee565759dd7940ce",
+        "passedChecks": [
+          "password-wrong",
+          "password-original",
+          "password-unicode",
+          "export-baseline"
+        ],
+        "protectedExportBeforeFix": {
+          "artifact": "native-legacy-protected-export.html",
+          "malformedNumericByteObject": true
+        }
+      },
+      "localCandidate6": {
+        "passedChecks": [
+          "pick-legacy",
+          "password-legacy",
+          "export-protected",
+          "earlierExportStillImmutable"
+        ],
+        "independentExportEvidence": "export-evidence.json",
+        "apkSha256": "95657c5c02cb820ef06323d77f23557602f4aa4e0e0ac7b95997c57db74ac72a",
+        "bundleSha256": "28cd40e6bc005e77d5b698c9b998ec634b68dc647e58d65e1b95af14770356c2"
+      },
+      "publishedBeta1": {
+        "nativeAcceptancePerformed": false
+      }
+    }
+  },
+  "independentExport": {
+    "independentNodeDecryption": true,
+    "nativeUnicodeExport": true,
+    "exactPortableBaselineMatch": true,
+    "financialRecordsAndReminderPreferencesUnchanged": true,
+    "envelopeUnchanged": true,
+    "credentialsLogged": false,
+    "sha256": "5b0c206eae30296569fdf2031d7ff6630ec9f13f4cb599e0ac455e3a50071193",
+    "bytes": 44070
+  },
+  "legacyImporter": {
+    "capturedNativeLegacyFileOpensWithProductionImporter": true,
+    "completePortableBaselineMatches": true,
+    "credentialsLogged": false
+  },
+  "offlineBrowser": {
+    "measuredAt": "2026-09-13",
+    "scope": "Actual Android-exported protected report opened as a local file in desktop Chrome, offline context",
+    "checks": {
+      "noLedgerBeforeUnlock": true,
+      "wrongPasswordRejected": true,
+      "unicodePasswordOpened": true,
+      "exactPortableBaselineMatch": true,
+      "allFourCsvDownloadsExact": true,
+      "fourReadableTables": true,
+      "noNetworkRequests": true,
+      "noPageErrors": true
+    },
+    "credentialsLogged": false
+  },
+  "timingCaveat": "First-observed UI timings include UI lookup/dump overhead and are not isolated KDF benchmarks."
+}

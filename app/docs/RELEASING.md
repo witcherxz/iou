@@ -1,20 +1,22 @@
-# Android alpha releases
+# Android releases
 
-The application version is `0.1.0-alpha.11`, Android version code `11`, and production application ID `io.github.witcherxz.iou`. The same version is recorded in `app.json`, `package.json`, and the package-lock root. iOS uses the numeric marketing version `0.1.0` and build number `11` if built separately.
+The application version is `0.1.0-beta.1`, Android version code `11`, and production application ID `io.github.witcherxz.iou`. The same version is recorded in `app.json`, `package.json`, and the package-lock root. iOS uses the numeric marketing version `0.1.0` and build number `11` if built separately.
+
+The user approved entering beta on 2026-09-13. Use `0.1.0-beta.N` for testing and stabilization of the agreed core scope, then `0.1.0` after release acceptance. Android build codes increase independently of the prerelease counter; Beta 1 uses code 11 after published Alpha 10/code 10. The earlier Alpha 11 build was an unpublished test candidate, so no published tag is renamed.
 
 ## Build and publish
 
 1. Update the version in all three files, increase Android `versionCode`, and add `docs/releases/<version>.md`.
 2. Run `npm run typecheck` and `npm run check`. The release check traverses the production source graph and rejects test fixtures, mocks, sample ledger markers and seeding switches.
 3. Commit/push the reviewed changes. Main-branch Actions runs produce a signed APK artifact.
-4. Push a matching version tag, such as `v0.1.0-alpha.11`. Actions builds and verifies the APK, then publishes it and its `.apk.sha256` checksum to a GitHub prerelease. Tag/version mismatches fail.
+4. Push a matching version tag, such as `v0.1.0-beta.1`. Actions builds and verifies the APK, then publishes it and its `.apk.sha256` checksum to a GitHub prerelease. Tag/version mismatches fail.
 
 The workflow runs checks for pull requests without exposing signing credentials. Release builds use Node 22, JDK 17, Expo prebuild, and Gradle `:app:assembleRelease`. A Gradle init script assigns the dedicated release signing configuration and disables debugging; it does not silently fall back to the template debug key.
 
 Before upload, the APK verifier checks package ID, version name/code, non-debuggable manifest, signature certificate, embedded Hermes/JavaScript and absence of demo fixture content. Downloaded APK checksums can be verified using:
 
 ```bash
-sha256sum -c iou-0.1.0-alpha.11.apk.sha256
+sha256sum -c iou-0.1.0-beta.1.apk.sha256
 ```
 
 ## Signing key
@@ -33,11 +35,11 @@ The initial encrypted store and its private credential record are retained local
 
 Fresh installations create empty `دفتري` defaults only after all storage sources have been read successfully and found empty. Sample records live in `scripts/fixtures` and are excluded from runtime imports. The release verifier also scans the packaged JavaScript for fixture markers. Existing data is never removed by matching people's names or transaction contents.
 
-The old debug package was `com.example.iou` and used the Expo template signing key. The production package installs separately, preserving the old app for backup/export. Import real records into the alpha and verify them before removing the old app. Future releases retain the production ID and signing key and increment the version code.
+The old debug package was `com.example.iou` and used the Expo template signing key. The production package installs separately, preserving the old app for backup/export. Import real records into the production app and verify them before removing the old app. Future releases retain the production ID and signing key and increment the version code.
 
-Alpha release notes record remaining device verification, including biometrics, notification delivery, app-switcher privacy and folder-provider behavior. A successful production build establishes packaging and signing, not hardware behavior.
+Prerelease notes record remaining device verification, including biometrics, notification delivery, app-switcher privacy and folder-provider behavior. A successful production build establishes packaging and signing, not hardware behavior.
 
-## Verified alpha release
+## Verified releases
 
 ### Alpha 10
 
@@ -49,7 +51,7 @@ The independently verified APK is 72,420,418 bytes, version `0.1.0-alpha.10` / c
 a0a0652e412b801c3c25d5b19dcb1fe5bce5afd31e6ba7dc5ab122a267d974d2
 ```
 
-The published APK installed over Alpha 9 on the isolated Android 16 emulator. Native Cancel and hardware Back discard drafts; the system keyboard opens, the full Save label fits, and HOME/PIN unlock preserves the name before a single save. Home, person and debt details use the new name with four transactions and the unchanged 50.17 balance. A successful folder backup independently confirmed that only one person name and the backup timestamp changed: IDs, all transactions, audits, settings and installment allocations remained exact. The previous backup and seven old snapshots stayed intact, and HTML/CSV companions matched the new canonical data across all 15 files. [Native evidence](verification/alpha10-native.json) and [screenshots](ANDROID-TESTING.md#alpha-10--editing-a-persons-name). Search remains deferred, and alpha-to-beta promotion requires the user's confirmation that core scope is complete.
+The published APK installed over Alpha 9 on the isolated Android 16 emulator. Native Cancel and hardware Back discard drafts; the system keyboard opens, the full Save label fits, and HOME/PIN unlock preserves the name before a single save. Home, person and debt details use the new name with four transactions and the unchanged 50.17 balance. A successful folder backup independently confirmed that only one person name and the backup timestamp changed: IDs, all transactions, audits, settings and installment allocations remained exact. The previous backup and seven old snapshots stayed intact, and HTML/CSV companions matched the new canonical data across all 15 files. [Native evidence](verification/alpha10-native.json) and [screenshots](ANDROID-TESTING.md#alpha-10--editing-a-persons-name). Search remained deferred; at Alpha 10, promotion to beta was awaiting the user's confirmation of core scope. The user subsequently approved the beta transition on 2026-09-13.
 
 ### Alpha 9
 

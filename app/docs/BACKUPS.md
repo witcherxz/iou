@@ -43,6 +43,8 @@ Automatic backup never runs on startup or merely on choosing a destination. The 
 
 “Create protected backup” exports `iou-protected.html`. The user supplies and confirms a password of at least ten characters. The password is never retained by IoU. The import password dialog can be cancelled while verification is running; a cancelled or locked session cannot apply a later result. The entire report, including its embedded JSON and CSV links, is encrypted. The password is separate from the optional app PIN. Regular folder/report/CSV exports remain readable and unencrypted.
 
+Some earlier Android exports serialized encrypted bytes as a numeric-key object because the SDK native encoding option differed from its TypeScript API. IoU can recover this exact contiguous-byte form after the usual password authentication; sparse, nonbyte and unrelated object shapes are rejected. Import an affected file into IoU and create a fresh protected export to use its standalone browser form. New exports validate the native combined base64 data, nonce, tag and size before creating the file.
+
 The protected file has a small, self-contained unlock form using browser WebCrypto. It works offline in modern browsers that expose WebCrypto for local files, or it can be imported into IoU. A forgotten password cannot be recovered. Opening and downloading the decrypted tables creates ordinary, unencrypted files.
 
 The file includes exactly one JSON script element with ID `iou-encrypted-data` and MIME type `application/json`. Its interoperable envelope is:

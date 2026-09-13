@@ -50,11 +50,16 @@ async function run() {
   eq('permission not reprompted if system disallows', await ensurePermission(), false);
   eq('permission request skipped when unavailable', h.calls.includes('request'), false);
   h.permission = { granted: false, canAskAgain: true };
+  h.channelMissing = true;
+  h.calls = [];
+  eq('fresh installation with promptable permission remains denied', await syncReminders([debt], {}, true, settings), 'denied');
+  eq('denied startup does not create a notification channel or prompt', h.calls.includes('channel') || h.calls.includes('request'), false);
+  h.channelMissing = false;
   h.calls = [];
   eq('explicit enable requests notification permission', await ensurePermission(), true);
   eq('Android channel precedes permission request', h.calls.indexOf('channel') < h.calls.indexOf('request'), true);
   h.permission = { granted: true, canAskAgain: true, status: 'denied' };
-  eq('Android granted flag cannot override denied overall status', await syncReminders([debt], {}, false, settings), 'denied');
+  eq('Android granted permission with denied overall status opens settings', await syncReminders([debt], {}, false, settings), 'blocked');
   eq('denied overall status removes stale native alarms', h.scheduled.size, 0);
   h.permission = { granted: true, canAskAgain: true, status: 'granted' };
   h.channelImportance = AndroidImportance.NONE;
@@ -64,6 +69,20 @@ async function run() {
   h.calls = []; await openReminderSettings();
   eq('explicit settings action opens native settings', h.calls.includes('openSettings'), true);
   h.channelImportance = AndroidImportance.DEFAULT;
+  await syncReminders([debt], {}, true, settings);
+  // Revoking a previously granted permission in Settings can remain promptable
+  // in Expo's permission cache even while its existing channel is disabled.
+  h.permission = { granted: false, canAskAgain: true, status: 'denied' };
+  h.channelImportance = AndroidImportance.NONE;
+  h.calls = [];
+  eq('combined promptable denial and disabled channel opens settings', await syncReminders([debt], {}, true, settings), 'blocked');
+  eq('combined denial cancels previously installed reminders', h.scheduled.size, 0);
+  eq('combined denial does not request permission during passive sync', h.calls.includes('request'), false);
+  eq('combined denial only inspects the existing channel', [h.calls.includes('getChannel'), h.calls.includes('channel')], [true, false]);
+  h.channelImportance = AndroidImportance.DEFAULT;
+  eq('re-enabling the channel exposes the remaining permission prompt', await syncReminders([debt], {}, true, settings), 'denied');
+  eq('explicit enable works after the channel is re-enabled', await ensurePermission(), true);
+  eq('granting permission after channel recovery schedules normally', await syncReminders([debt], {}, true, settings), 'ready');
   h.channelMissing = true;
   eq('missing Android channel is reported unavailable', await syncReminders([debt], {}, false, settings), 'unavailable');
   Platform.Version = 25;

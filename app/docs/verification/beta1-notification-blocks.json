@@ -1,0 +1,49 @@
+{
+  "serial": "emulator-5580",
+  "scope": "Synthetic emulator only; OS notification settings, no ledger or app preference changes",
+  "originalPermission": {
+    "granted": false,
+    "flags": ", flags=[ USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED]"
+  },
+  "originalNotificationLines": [
+    "AppSettings: io.github.witcherxz.iou (10216) importance=NONE userSet=false",
+    "NotificationChannel{mId='iou-reminders', mName=التذكيرات, mDescription=, mImportance=3, mBypassDnd=false, mLockscreenVisibility=-1000, mSound=content://settings/system/notification_sound, mLights=false, mLightColor=0, mVibrationPattern=null, mVibrationEffect=null, mUserLockedFields=4, mUserVisibleTaskShown=false, mVibrationEnabled=false, mShowBadge=true, mDeleted=false, mDeletedTimeMs=-1, mGroup='null', mAudioAttributes=AudioAttributes: usage=USAGE_NOTIFICATION content=CONTENT_TYPE_SONIFICATION flags=0x800 tags= bundle=null, mBlockableSystem=false, mAllowBubbles=-1, mImportanceLockedDefaultApp=false, mOriginalImp=3, mParent=null, mConversationId=null, mDemoted=false, mImportantConvo=false, mLastNotificationUpdateTimeMs=0}"
+  ],
+  "baselineBuild": "Signed main Alpha11 before combined-denial fix",
+  "checks": {
+    "initialPermissionIsPromptable": true,
+    "oldBuildMisclassifiesDisabledChannelAsPromptable": true,
+    "oldEnableShowsNoNativePermissionPrompt": true,
+    "fixedCombinedDenialOffersSettings": true,
+    "fixedCombinedDenialLeavesNoAlarms": true,
+    "fixedActionOpensNativeSettings": true,
+    "channelRecoveryRestoresPromptablePermissionUI": true,
+    "originalPermissionFlagsRestored": true,
+    "originalChannelRestoredExactly": true,
+    "permissionOffLeavesNoAlarms": true,
+    "financialBaselineUnchanged": true,
+    "automaticBackupRemainsOff": true
+  },
+  "combinedPermission": {
+    "granted": false,
+    "flags": ", flags=[ USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED]"
+  },
+  "combinedChannel": [
+    "NotificationChannel{mId='iou-reminders', mName=التذكيرات, mDescription=, mImportance=0, mBypassDnd=false, mLockscreenVisibility=-1000, mSound=content://settings/system/notification_sound, mLights=false, mLightColor=0, mVibrationPattern=null, mVibrationEffect=null, mUserLockedFields=4, mUserVisibleTaskShown=false, mVibrationEnabled=false, mShowBadge=true, mDeleted=false, mDeletedTimeMs=-1, mGroup='null', mAudioAttributes=AudioAttributes: usage=USAGE_NOTIFICATION content=CONTENT_TYPE_SONIFICATION flags=0x800 tags= bundle=null, mBlockableSystem=false, mAllowBubbles=-1, mImportanceLockedDefaultApp=false, mOriginalImp=3, mParent=null, mConversationId=null, mDemoted=false, mImportantConvo=false, mLastNotificationUpdateTimeMs=0}"
+  ],
+  "fixedBuild": {
+    "scope": "Pre-beta local JS QA candidate6 on verified signed Alpha11 native base; not the final Beta1 release artifact",
+    "apkSha256": "95657c5c02cb820ef06323d77f23557602f4aa4e0e0ac7b95997c57db74ac72a",
+    "bundleSha256": "28cd40e6bc005e77d5b698c9b998ec634b68dc647e58d65e1b95af14770356c2"
+  },
+  "finalPermission": {
+    "granted": false,
+    "flags": ", flags=[ USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED]"
+  },
+  "finalNotificationLines": [
+    "AppSettings: io.github.witcherxz.iou (10216) importance=NONE userSet=false",
+    "NotificationChannel{mId='iou-reminders', mName=التذكيرات, mDescription=, mImportance=3, mBypassDnd=false, mLockscreenVisibility=-1000, mSound=content://settings/system/notification_sound, mLights=false, mLightColor=0, mVibrationPattern=null, mVibrationEffect=null, mUserLockedFields=4, mUserVisibleTaskShown=false, mVibrationEnabled=false, mShowBadge=true, mDeleted=false, mDeletedTimeMs=-1, mGroup='null', mAudioAttributes=AudioAttributes: usage=USAGE_NOTIFICATION content=CONTENT_TYPE_SONIFICATION flags=0x800 tags= bundle=null, mBlockableSystem=false, mAllowBubbles=-1, mImportanceLockedDefaultApp=false, mOriginalImp=3, mParent=null, mConversationId=null, mDemoted=false, mImportantConvo=false, mLastNotificationUpdateTimeMs=0}"
+  ],
+  "restoration": "Original OS permission flags and channel restored; no ledger, reminder preferences, clipboard or backup folder changes.",
+  "measuredAt": "2026-09-13"
+}

@@ -1,0 +1,106 @@
+{
+  "serial": "emulator-5580",
+  "candidate": "local QA candidate4",
+  "scope": "synthetic emulator only",
+  "checks": {
+    "fixtureChangesOnlyReminderPreferences": true,
+    "candidate4PickerReturnedToLock": true,
+    "candidate4RestorePreviewAfterUnlock": true,
+    "fixtureConfirmed": true,
+    "alarmsAfterFixture": 4,
+    "backgroundDuringDeliveryWait": true,
+    "debtAndWeeklyDeliveredNatively": true,
+    "privateBodiesNoNamesOrAmounts": true,
+    "alarmsAfterDelivery": 3,
+    "blockedChannelClearSettingsAction": true,
+    "blockedChannelAlarmsCancelled": true,
+    "settingsActionOpenedNativeSettings": true,
+    "channelReenabledClearsBlockedStatus": true,
+    "channelReturnRebuiltFutureAlarms": true,
+    "forceStopCancelsThenRelaunchRearms": true,
+    "bootRestoresWithoutAppLaunch": true,
+    "originalReminderBackupReimported": true,
+    "originalWeeklyAndPrivateEnabled": true,
+    "originalWeeklyTimeAndDayVisible": true,
+    "originalFolderByteIdentical": true,
+    "originalPermissionPromptRestored": true,
+    "permissionRevokeCancelsAllAlarms": true,
+    "automaticBackupStillOff": true,
+    "finalFinancialUIBaseline": true
+  },
+  "targetLocal": "2026-09-13T02:47:00+0300",
+  "targetEpoch": 1789256820,
+  "deliveries": [
+    {
+      "tag": "iou-weekly",
+      "when": 1789256949080,
+      "title": "تذكير أسبوعي",
+      "body": "راجع دفتر الديون",
+      "delayMs": 129080
+    },
+    {
+      "tag": "iou-mtyncyx4-2-vj720o6:snooze",
+      "when": 1789256949077,
+      "title": "تذكير من الدفتر",
+      "body": "افتح الدفتر لمراجعة التذكير.",
+      "delayMs": 129077
+    }
+  ],
+  "backgroundActivity": [
+    "topResumedActivity=ActivityRecord{20239943 u0 com.google.android.apps.nexuslauncher/.NexusLauncherActivity t6}"
+  ],
+  "forceStopCounts": {
+    "before": 3,
+    "stopped": 0,
+    "after": 3
+  },
+  "rebootCounts": {
+    "before": 3,
+    "afterBootBeforeAppLaunch": 3,
+    "initialCheckBeforeBootBroadcastSettled": 0
+  },
+  "originalFolderFileCount": 15,
+  "finalPermission": {
+    "granted": false,
+    "flags": ", flags=[ USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED]"
+  },
+  "restorationNotes": [
+    "Original reminder-only configuration restored by explicitly importing the original baseline JSON.",
+    "Original synthetic financial UI remains1 person / 4 transactions / balance 50.17; all 15 original backup-folder files remain byte-identical.",
+    "Automatic backup remains OFF; local lastBackup becomes null after the explicit file restores.",
+    "No reminder channel existed before initial enable; the newly created channel was returned to DEFAULT after its OFF/ON test, while original overall notification permission OFF/promptable was restored.",
+    "Only reminder test fixture files were removed from Download; original IoU-QA files were not written."
+  ],
+  "regressionsVerifiedFixed": [
+    "Candidate3 MIME array fix opens native picker.",
+    "Candidate4 selected-file restore preview survives privacy PIN unlock."
+  ],
+  "screenshots": [
+    "candidate4-notification-tray.png",
+    "candidate4-blocked-channel.png",
+    "candidate4-restore-preview.png",
+    "candidate4-restored-settings.png"
+  ],
+  "limitations": [
+    "Inexact native delivery arrived about 129 seconds after chosen time, inside the OS recorded window.",
+    "iOS runtime delivery was not tested; platform and adapter checks cover its API boundary."
+  ],
+  "originalPermission": {
+    "granted": false,
+    "userSet": false,
+    "userFixed": false
+  },
+  "restoredReminderConfiguration": {
+    "reminderSettings": {
+      "hour": 20,
+      "minute": 0,
+      "leadDays": 0,
+      "weeklyDay": 5,
+      "overdueRepeatDays": 0,
+      "privateNotifications": true,
+      "snoozedUntil": {}
+    },
+    "weekly": true,
+    "reminderPrefs": {}
+  }
+}

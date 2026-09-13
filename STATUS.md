@@ -4,44 +4,47 @@ Goal: Provide a private Arabic debt ledger with clear balances and recoverable r
 Phase: implement
 
 ## Now
-Production stabilization source passes TypeScript, 1,460 integrated checks, 17 backup lifecycle checks and independent review. Native selected-file/PIN handoff, normal/doubled-font Arabic labels, and real background debt/weekly notification delivery pass on local candidates. Protected-backup verification exceeded 78 seconds on the old JavaScript path; a native worker now passes 23 Java compatibility checks and awaits a full Android build. Preparing the untagged Alpha 11 build while emulator channel/restart and folder recovery acceptance continue. Alpha 10 remains published; account-backed cloud tests are deferred as requested.
+The user-approved Beta 1 stabilization candidate has completed emulator/offline acceptance. Final source passes TypeScript and 1,475 integrated checks; native recovery, notification delivery/settings/restart, Arabic labels and protected-file checks pass. Actual Android protected exports open in offline Chrome with exact ledger/CSV contents, and older affected files are recoverable. Preparing the signed 0.1.0-beta.1 release; account-backed cloud tests remain deferred as requested.
 
 Next:
-1. Build the signed Alpha 11 candidate and finish offline folder recovery plus notification settings/restart checks.
-2. Verify native protected-backup speed, Unicode compatibility and update preservation on the full APK.
-3. Publish the tested alpha and independently verify its released artifact; retain account-backed cloud tests as deferred.
+1. Build and publish the signed Beta 1 APK.
+2. Independently verify the released artifact and its update on the emulator.
+3. Record release evidence and remaining account/provider validation.
 
 ## Health
 
 | metric | current | measured | previous | threshold | goal | source |
 |---|---:|---|---:|---:|---:|---|
-| Latest completed integrated suite | 1460 count | 2026-09-13 | 1354 count | >= 1460 count | 1460 count | `cd app && npm run check`; `node scripts/release-workflow-checks.mjs`; native PIN and backup key Java checks; `app/docs/verification/alpha11-checks.json` |
-| Stabilized offline recovery | UNMEASURED | — | — | = PASS | PASS | New regression checks and native recovery comparison pending |
-| Android reminder delivery | UNMEASURED | — | — | = PASS | PASS | Scoped emulator delivery/permission/return validation pending |
+| Latest completed integrated suite | 1475 count | 2026-09-13 | 1354 count | >= 1475 count | 1475 count | `cd app && npm run check`; `node scripts/release-workflow-checks.mjs`; native PIN and backup key Java checks; `app/docs/verification/beta1-checks.json` |
+| Stabilized offline recovery | PASS | 2026-09-13 | — | = PASS | PASS | `app/docs/verification/alpha11-backups.json`; 20 native checks plus exact portable/HTML/CSV/history comparison |
+| Android reminder delivery | PASS | 2026-09-13 | — | = PASS | PASS | `app/docs/verification/alpha11-reminders.json`; 24 native checks including delivery/channel/relaunch/reboot |
 | Native compact Arabic labels | PASS | 2026-09-13 | FAIL | = PASS | PASS | `app/docs/verification/alpha11-labels.json`; native candidate at font scales 1.0 and 2.0 |
 
-## DoD — production stabilization, emulator/offline pass
+## DoD — Beta 1 stabilization, emulator/offline pass
 
-- [ ] Prefer the newest valid backup and preserve recovery copies after interrupted writes.
-- [ ] Keep automatic writes paused across cancellation, local recovery and restart until explicit resolution.
-- [ ] Preserve each shared export and cancel stale protected-restore work after privacy locking.
-- [ ] Detect blocked Android notifications/channels and provide a usable system-settings route.
-- [ ] Preserve valid delayed reminders and verify real Android delivery and rescheduling.
+- [x] Prefer the newest valid backup and preserve recovery copies after interrupted writes.
+- [x] Keep automatic writes paused across cancellation, local recovery and restart until explicit resolution.
+- [x] Preserve each shared export and cancel stale protected-restore work after privacy locking.
+- [x] Verify native protected-backup performance, password rejection and Unicode compatibility using the signed native build and final JavaScript candidate.
+- [x] Detect blocked Android notifications/channels and provide a usable system-settings route.
+- [x] Preserve valid delayed reminders and verify real Android delivery and rescheduling.
 - [x] Verify complete Arabic compact labels and usable controls with larger fonts.
-- [ ] Pass TypeScript, integrated checks and focused browser/native regressions.
+- [x] Pass TypeScript, integrated checks and focused browser/native regressions.
 - [ ] Publish and independently verify the signed stabilization APK.
-- [ ] Record remaining account/provider validation without claiming untested cloud uploads.
+- [x] Record remaining account/provider validation without claiming untested cloud uploads.
 
 ## Blockers / Risks
 
-- Protected-backup verification stayed loading past 78 seconds with the old JavaScript password derivation. The separate native worker preserves UTF-8/envelope compatibility in independent tests. Response: verify actual Android speed, wrong-password handling and Unicode recovery before publication. iOS remains uncompiled and untested in this Android pass.
+- Emulator/offline validation is complete for this beta. Full TalkBack navigation, iOS runtime behavior and account-backed provider uploads/restores remain separate validation before stable release. Protected export repair and Unicode interoperability now pass on Android and offline Chrome.
 
-- PIN performance, automatic biometric prompting, cancellation/PIN fallback and native share/Drive upload-screen navigation are confirmed on the connected S24 Ultra. Alpha 6 local emulator folder save/recovery and in-window confirmations pass. Completed Dropbox-specific provider writes remain unverified after the Alpha 5 confirmation blocker; validate that provider separately. Full app-switcher privacy, TalkBack/font scaling and notifications still need native validation. Response: test the updated folder flow and complete broader validation before a stable release.
+- PIN performance, automatic biometric prompting, cancellation/PIN fallback and native share/Drive upload-screen navigation were confirmed on the S24 Ultra in earlier sessions. This emulator pass confirms local folder recovery, the app-switcher privacy cover, targeted 1x/2x font layouts and Android reminders. Completed Dropbox-specific provider writes, full TalkBack navigation and iOS runtime behavior remain unverified. Response: retain these as separate validation before a stable release.
 - Direct Google Drive authorization is unfinished. Response: keep direct sync disabled and offer the tested manual share/download and file-restore flow. Drive upload-screen navigation is verified; upload completion remains unverified.
 - The app lock controls access; ordinary local/folder/CSV/report data remains readable. Protected manual exports use a separate password. Response: explain the distinction and keep off-device copies private.
 - Automatic backups run after foreground edits and are suspended after local recovery; reminders retain the nearest 60 alerts plus weekly and refresh on foreground. Response: explain these operating limits in the feature notes.
 
 ## Decisions
+
+- 2026-09-13: Facing the user’s explicit instruction to enter beta for testing and fixes, chose `0.1.0-beta.1` for this stabilization release, keeping Android code 11 above published Alpha 10/code 10. The unpublished Alpha 11 test candidate remains historical evidence; future beta counters are separate from Android build codes.
 
 - 2026-09-13: Facing the production-stabilization scope and an emulator without a cloud account, chose to finish emulator/offline tests first as the user requested, accepting that actual provider upload/restore verification remains for a later account-backed session.
 
@@ -62,7 +65,11 @@ Next:
 
 ## Log
 
-- 2026-09-13 [work]: Stabilization source passed 1,460 integrated checks, 17 hook/store/host scenarios and independent review. Native tests confirmed fixed file picker/PIN handoff, full Arabic labels at 1x/2x fonts and both background reminders (129-second Android inexact delay). A protected-backup spinner exceeding 78 seconds prompted a separate native key worker, preserving the file format in 23 Java/Node comparisons. Preparing a full signed build before publication.
+- 2026-09-13 [work]: User approved beta transition. Final source passes 1,475 checks, and emulator acceptance adds 12 combined-notification checks plus protected original/Unicode/legacy imports and actual Android export validation. The export SDK mismatch was fixed; independent Node and offline Chrome agree exactly on the ledger and four CSVs, with no financial changes. Preparing 0.1.0-beta.1/code 11 publication.
+
+- 2026-09-13 [review]: Reconciled older validation risks with measured emulator evidence: targeted font scaling, app-switcher cover, reminders and local recovery now pass; cloud providers, full TalkBack navigation and iOS runtime remain explicitly unverified.
+
+- 2026-09-13 [work]: Stabilization source passed 1,460 integrated checks, 17 hook/store/host scenarios and independent review. Native tests confirmed fixed file picker/PIN handoff, full Arabic labels at 1x/2x fonts and both background reminders (129-second Android inexact delay). A protected-backup spinner exceeding 78 seconds prompted a separate native key worker, preserving the file format in 23 Java/Node checks. Preparing a full signed build before publication.
 
 - 2026-09-13 [work]: Began authorized stabilization. Reproduced native compact-label clipping and confirmed the app-switcher privacy cover hides the ledger. Backup regressions exposed stale-canonical preference, shared-URI reuse, stale decryption after lock and automatic retry after partial failure. Reminder audit found blocked-channel/permission misreporting and cancellation of delayed alarms. Implementing bounded fixes and testing a local candidate before the normal signed release.
 

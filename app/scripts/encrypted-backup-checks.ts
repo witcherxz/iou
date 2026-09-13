@@ -8,6 +8,7 @@ import { seedState } from './fixtures/ledger';
 import { deriveBackupKey } from '../src/backup/passwordKey';
 import { bytesToHex } from '@noble/hashes/utils.js';
 import { backupKeyNativeState, nativeBackupCrypto } from './backup-password-native-stub';
+import { aesNativeState } from './backup-crypto-stub';
 
 let count = 0;
 const check = (name: string, run: () => void) => { run(); count++; console.log(`PASS ${name}`); };
@@ -20,6 +21,11 @@ async function main() {
   check('protected HTML reveals neither ledger nor password', () => {
     for (const secret of [state.profileName, state.people[0].name, password, state.backupFolderUri]) assert.ok(!protectedHtml.includes(secret));
     assert.equal(envelope.iterations, PASSWORD_ITERATIONS);
+  });
+  check('Android ciphertext encoding mismatch cannot serialize a byte object in a new export', () => {
+    const raw = JSON.parse(protectedHtml.match(/<script id="iou-encrypted-data" type="application\/json">([\s\S]*?)<\/script>/)![1]);
+    assert.equal(typeof raw.ciphertext, 'string');
+    assert.equal(Buffer.from(raw.ciphertext, 'base64').toString('base64'), raw.ciphertext);
   });
   const decrypted = await decryptBackup(protectedHtml, password);
   check('encrypted HTML restores the complete portable ledger', () => assert.deepEqual(parseBackup(decrypted), parseBackup(original)));
@@ -56,6 +62,39 @@ async function main() {
   const independentEnvelope = JSON.stringify({ ...envelope, nonce: independentIv.toString('hex'), ciphertext: encrypted.toString('base64') });
   const imported = await decryptBackup(independentEnvelope, password);
   check('app imports a backup produced with independent encryption', () => assert.deepEqual(parseBackup(imported), parseBackup(original)));
+  const legacyEnvelope = JSON.stringify({ ...envelope, nonce: independentIv.toString('hex'), ciphertext: { ...encrypted } });
+  const legacyClear = await decryptBackup(legacyEnvelope, password);
+  check('older Android numeric-byte exports recover the exact authenticated portable ledger', () => {
+    assert.deepEqual(parseBackup(legacyClear), parseBackup(original));
+    assert.equal(encryptedEnvelope(legacyEnvelope)!.ciphertext, encrypted.toString('base64'));
+  });
+  await assert.rejects(decryptBackup(legacyEnvelope, 'incorrect password'), BackupPasswordError);
+  const legacyDamaged = { ...encrypted }; legacyDamaged[10] ^= 1;
+  await assert.rejects(decryptBackup(JSON.stringify({ ...envelope, nonce: independentIv.toString('hex'), ciphertext: legacyDamaged }), password), BackupPasswordError);
+  check('legacy recovery still rejects wrong passwords and changed authenticated bytes', () => assert.ok(true));
+  check('legacy byte recovery preserves padding and crosses chunk boundaries exactly', () => {
+    for (const length of [16, 17, 18, 19, 12_287, 12_288, 12_289, 131_074]) {
+      const data = Uint8Array.from({ length }, (_, i) => i % 256);
+      assert.equal(encryptedEnvelope(JSON.stringify({ ...envelope, ciphertext: { ...data } }))!.ciphertext, Buffer.from(data).toString('base64'));
+    }
+  });
+  check('legacy recovery rejects sparse, extra-key, array and nonbyte shapes before derivation', () => {
+    const valid = { ...Uint8Array.from({ length: 17 }, (_, i) => i) };
+    const sparse: Record<string, unknown> = { ...valid }; delete sparse['4'];
+    const invalid = [sparse, { ...valid, extra: 0 }, { ...valid, '01': 1 }, { ...valid, '-1': 0 },
+      { ...valid, 2: 256 }, { ...valid, 2: -1 }, { ...valid, 2: 1.5 }, { ...valid, 2: '2' }, { ...valid, 2: null },
+      [...Object.values(valid)], {}, { ...new Uint8Array(15) }];
+    for (const ciphertext of invalid) assert.throws(() => encryptedEnvelope(JSON.stringify({ ...envelope, ciphertext })), InvalidBackupError);
+  });
+  for (const malformed of ['bytes', 'nonce', 'truncated', 'encoding'] as const) {
+    aesNativeState.malformedCombined = malformed;
+    await assert.rejects(encryptBackup(original, password), InvalidBackupError);
+  }
+  aesNativeState.malformedCombined = '';
+  aesNativeState.invalidSizes = true;
+  await assert.rejects(encryptBackup(original, password), InvalidBackupError);
+  aesNativeState.invalidSizes = false;
+  check('unexpected native encoding, nonce, length and IV sizes fail before sharing a backup', () => assert.ok(true));
   check('ordinary JSON and readable HTML remain unprotected formats', () => {
     assert.equal(encryptedEnvelope(original), null); assert.equal(encryptedEnvelope(readableFiles(original)[0].text), null);
   });

@@ -1,0 +1,104 @@
+{
+  "result": "passed",
+  "scope": "Synthetic local native recovery",
+  "allPortableFieldsExceptBackupTimestampUnchanged": true,
+  "allTransactionsAndAuditsExactlyUnchanged": true,
+  "allReadableCompanionsExactlyRegenerated": true,
+  "validatedHistoryCount": 6,
+  "originalBackupFilesUnchanged": true,
+  "nativeChecks": {
+    "newFolderManualBaselineSaved": true,
+    "newestSnapshotRecoveryPreview": true,
+    "newestSnapshotRestored": true,
+    "olderCanonicalProfileNotApplied": true,
+    "autoOffAtInstallCheckpoint": true,
+    "originalIoUQAFilesUnchanged": true,
+    "signedAlpha11Installed": true,
+    "fullApkManualBackupSucceeded": true,
+    "automaticEnabledForFailureTest": true,
+    "unavailableDestinationFailureVisible": true,
+    "pausedAfterRestart": true,
+    "failedBackupPreservedAllGoodFiles": true,
+    "noAutomaticWritesAfterRestartAndEdit": true,
+    "pausedManualSaveRequiresReview": true,
+    "decliningManualReviewKeepsPauseAndFiles": true,
+    "successfulExplicitRetryClearsPause": true,
+    "ordinaryFilePickerPinReturnShowsPreview": true,
+    "portableBaselineRestoredAfterExplicitConfirmation": true,
+    "automaticBackupOffAtEnd": true,
+    "finalBaselineManualBackupSucceeded": true
+  },
+  "artifacts": [
+    {
+      "name": "iou-backup.json",
+      "sha256": "95f92d2b43bfc885f5bc997ec9661fc6ee917bb9a436f3d92a3c32ef11e4efd3"
+    },
+    {
+      "name": "iou-backup.previous.json",
+      "sha256": "b9fbe0982391959136de8b0f5b5e6e8b9d44fc704843e69384a13da3473b412c"
+    },
+    {
+      "name": "iou-balances.csv",
+      "sha256": "6efe37a11513d260a7ecf1e13533b6850540aafceabe02a9dfd306a9906c58b0"
+    },
+    {
+      "name": "iou-history.csv",
+      "sha256": "fa3b9bc6feecd2d527523ae3f66f6e9c77e9d51fd6835a81155966356637740a"
+    },
+    {
+      "name": "iou-installments.csv",
+      "sha256": "9e357fbf9ea5fd3b5434a7c295de6489edf2707625ca76b9524c33b0f3182cc6"
+    },
+    {
+      "name": "iou-ledger.html",
+      "sha256": "cf01c7b4681f7a2f64987d8cbc59ea80714fc940300a2ba18d916fc85f473cf7"
+    },
+    {
+      "name": "iou-pretest-restore.json",
+      "sha256": "5eb470da2584ed10d6cd8f437dfb7d117fef6b67f9c1ac02d341d3831b081970"
+    },
+    {
+      "name": "iou-protected-qa.html",
+      "sha256": "2ca7cc0b3cdb9d668661af9aa22243cd92eb29d8bdae94804172ab93ecaeadb9"
+    },
+    {
+      "name": "iou-snapshot-2026-09-13T00-02-24-666Z-0.json",
+      "sha256": "5eb470da2584ed10d6cd8f437dfb7d117fef6b67f9c1ac02d341d3831b081970"
+    },
+    {
+      "name": "iou-snapshot-2026-09-13T00-02-25-645Z-0.json",
+      "sha256": "8dddadcde092e701a54abe2ba594d766c65de02a71348ff09e38b664fa6ba15e"
+    },
+    {
+      "name": "iou-snapshot-2026-09-13T00-07-43-389Z-0.json",
+      "sha256": "b3561717a9fe75e162a8a792f30fa0359691c1ff3a3b46689d77b9d4e1e44901"
+    },
+    {
+      "name": "iou-snapshot-2026-09-13T00-07-43-655Z-0.json",
+      "sha256": "89eec708f4b67ed526fcc5fb04019ebc089b728f14dd78cc6474cffd8054b00d"
+    },
+    {
+      "name": "iou-snapshot-2026-09-13T00-11-21-097Z-0.json",
+      "sha256": "b9fbe0982391959136de8b0f5b5e6e8b9d44fc704843e69384a13da3473b412c"
+    },
+    {
+      "name": "iou-snapshot-2026-09-13T00-14-48-111Z-0.json",
+      "sha256": "95f92d2b43bfc885f5bc997ec9661fc6ee917bb9a436f3d92a3c32ef11e4efd3"
+    },
+    {
+      "name": "iou-transactions.csv",
+      "sha256": "1a474b45b6d899686843873fe24548d226d8abf58ed80c99c1905b4ac0e07e6e"
+    }
+  ],
+  "measuredAt": "2026-09-13",
+  "buildScope": {
+    "newestSnapshotSelection": "local candidate4 with matching backup source",
+    "failureRestartRetryAndFinalFileRestore": "signed main CI Alpha11 APK, bc583a91e4743c6af0b493edc9e9748e9c1fe4b5",
+    "apkSha256": "2378c13bd7043a7cad27b56236841d839f466f7559436afcee565759dd7940ce"
+  },
+  "finalDeviceSettings": {
+    "autoBackup": false,
+    "destination": "Separate IoU-Recovery-QA-20260913 folder; original IoU-QA unchanged",
+    "profileAndReminderPreferences": "restored to captured baseline"
+  }
+}

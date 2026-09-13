@@ -1,0 +1,17 @@
+{
+  "independentNodeDecryptionAfterLegacyByteNormalization": true,
+  "nativeMalformedUnicodeExport": true,
+  "exactPortableBaselineMatch": true,
+  "financialRecordsAndReminderPreferencesUnchanged": true,
+  "legacyCiphertextObjectRecoverable": true,
+  "credentialsLogged": false,
+  "sha256": "533c47e5018563a41ba0c481064af1e3e19695a0c6e811fe51efc21589a19bc5",
+  "bytes": 345511,
+  "measuredAt": "2026-09-13",
+  "scope": "Signed main Alpha11 Android export before SDK ciphertext workaround",
+  "sourceCommit": "bc583a91e4743c6af0b493edc9e9748e9c1fe4b5",
+  "apkSha256": "2378c13bd7043a7cad27b56236841d839f466f7559436afcee565759dd7940ce",
+  "failure": "ciphertext serialized as a numeric byte object rather than standard base64",
+  "cause": "Installed SDK Android CiphertextOptions reads outputFormat; TypeScript API supplies encoding.",
+  "recovery": "Strictly validated contiguous numeric byte object; independent Node PBKDF2/AES-GCM decryption authenticated and matched the entire portable baseline."
+}
