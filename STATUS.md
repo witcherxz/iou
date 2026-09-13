@@ -4,16 +4,18 @@ Goal: Provide a private Arabic debt ledger with clear balances and recoverable r
 Phase: beta testing
 
 ## Now
+The user confirms that the empty-file problem no longer appears on their phone and accepts the emulator-only duplicate observation and unexercised network-error case as non-blocking for the current Android scope. Their possible OS/provider explanation remains a hypothesis. Clarified that a reported backup failure pauses automatic writes until a successful manual «نسخ الآن»; the next foreground edit does not automatically retry a paused destination. These accepted testing limits no longer hold up release acceptance. The latest published APK remains `0.1.0-beta.2`; this update does not publish a stable build.
+
 The authorized Beta 2 recovery and interruption drills are complete. Both fresh-install recoveries passed: a newly granted Dropbox folder restore and a password-protected file import, including cancellation/wrong-password checks, restart persistence and exact JSON/HTML/CSV comparisons. All 11 original cloud files remained byte-for-byte unchanged. [Folder recovery](app/docs/verification/beta2-fresh-dropbox.json) · [Protected recovery](app/docs/verification/beta2-fresh-protected.json).
 
 Stopping IoU 7.68 seconds into a visibly busy save left the old backup and success time unchanged plus a complete new recovery snapshot. Explicit retry passed exact comparisons. An automatic save also completed after Wi-Fi and mobile-data settings were disabled; its files matched after reconnection, but actual absence of a default network was not measured and no provider failure occurred. This attempt therefore does not establish failure-pause behavior under a real network error. [Interruption evidence](app/docs/verification/beta2-dropbox-interruptions.json).
 
-Two empty suffixed extra files were observed in the separate test folder, one before intentional interruption. The required backup files and all earlier snapshots remained valid; the extras' origin is unconfirmed. No production code changed, so the release remains `0.1.0-beta.2` (Android code 12), with the existing 1,489 automated checks retained as prior evidence. The emulator finished with local profile Q, automatic backup off and original network settings restored; the separate cloud test folder retains the last verified Q-NETWORK profile variant. Only the dummy account and synthetic records were used.
+Two empty suffixed extra files were observed in the separate test folder, one before intentional interruption. The required backup files and all earlier snapshots remained valid; the extras' origin is unconfirmed and the user has accepted this observation as non-blocking. No production code changed, so the release remains `0.1.0-beta.2` (Android code 12), with the existing 1,489 automated checks retained as prior evidence. The emulator finished with local profile Q, automatic backup off and original network settings restored; the separate cloud test folder retains the last verified Q-NETWORK profile variant. Only the dummy account and synthetic records were used.
 
 Next:
-1. Investigate the empty suffixed documents with scoped creation tracing before attributing or changing provider behavior; preserve good backups.
-2. Continue beta validation for other cloud providers, TalkBack navigation and iOS runtime behavior.
-3. Move to a stable release when the user accepts the core behavior and remaining release checks are met.
+1. Continue normal-use feedback on the published Beta 2 APK; revisit the empty extras if they recur on the user's phone or affect recovery.
+2. Prepare the first stable Android `0.1.0` release from the accepted core scope, preserving the documented backup behavior and limitations.
+3. Track other cloud-provider, full TalkBack and iOS validation separately from the completed Android/Dropbox checks.
 
 ## Health
 
@@ -25,7 +27,6 @@ Next:
 | Fresh-install Dropbox recovery | PASS | 2026-09-13 | UNMEASURED | = PASS | PASS | `app/docs/verification/beta2-fresh-dropbox.json`; exact re-export and all 11 original cloud files preserved |
 | Fresh-install protected-file recovery | PASS | 2026-09-13 | UNMEASURED | = PASS | PASS | `app/docs/verification/beta2-fresh-protected.json`; wrong/correct passwords, applied restore, restart and exact re-export |
 | Stopped-save recovery and retry | PASS | 2026-09-13 | UNMEASURED | = PASS | PASS | `app/docs/verification/beta2-dropbox-interruptions.json`; exact new snapshot, unchanged old backup/timestamp and exact successful retry |
-| Empty extra documents in test folder | 2 count | 2026-09-13 | 0 count | = 0 count | 0 count | Baseline and interrupted cloud copies; valid required backup files remain exact, origin unconfirmed |
 | Candidate Dropbox save and restore | PASS | 2026-09-13 | UNMEASURED | = PASS | PASS | `app/docs/verification/dropbox-candidate.json`; exact first cloud copy and restored local re-export |
 | Shorter cloud rewrite comparison | PASS | 2026-09-13 | UNMEASURED | = PASS | PASS | Ten nonempty files; exact shorter JSON/HTML/CSV, previous copy and preserved history |
 | Stabilized offline recovery | PASS | 2026-09-13 | — | = PASS | PASS | `app/docs/verification/alpha11-backups.json`; 20 native checks plus exact portable/HTML/CSV/history comparison |
@@ -43,18 +44,20 @@ Next:
 
 ## Blockers / Risks
 
-- Before intentional interruption, the separate test folder contained seven exact required files plus an empty `iou-balances (1).csv` after a single successful baseline save. An empty `iou-backup.previous (1).json` also appeared in the interrupted-save copy; the valid previous backup and new snapshot remained exact. This is a newly observed extra-file symptom; its origin is unconfirmed and differs from the user's earlier failed-save report. Both extras remained unchanged through retry and the network attempt. Preserve them and investigate with scoped creation tracing before attributing or changing behavior.
+- Accepted non-blocking observation (user, 2026-09-13): the user reports no further empty-file problem on their phone. The separate emulator folder contained an empty `iou-balances (1).csv` after the baseline save and an empty `iou-backup.previous (1).json` after the interrupted save. Both remained unchanged through retry and the network attempt; required files and history stayed exact. Their origin is unconfirmed. Preserve the evidence and investigate if the symptom recurs or affects recovery; do not label it proven OS behavior.
 
-- The network attempt disabled Wi-Fi/mobile settings but did not measure the absence of an active default network or provoke a provider error. Provider acceptance/readback is not independent proof of server synchronization. Actual network-error pause remains outside this measured result; existing simulated and local-unavailable-destination pause checks remain prior evidence.
+- Accepted non-blocking testing limit (user, 2026-09-13): the network attempt disabled Wi-Fi/mobile settings but did not measure the absence of an active default network or provoke a provider error. Provider acceptance/readback is not independent proof of server synchronization. Actual network-error pause remains outside this measured result; existing simulated and local-unavailable-destination pause checks remain prior evidence. A reported failure persists a pause until a successful manual save; automatic retry on the next edit is not the current behavior.
 
-- Emulator/offline validation is complete for this beta, and published Beta 2 passes Dropbox save/restore and both fresh-install recovery flows with a dummy account. Full TalkBack navigation, iOS runtime behavior and other cloud-provider uploads/restores remain separate validation before stable release. Protected export repair and Unicode interoperability now pass on Android and offline Chrome.
+- Emulator/offline validation is complete for this beta, and published Beta 2 passes Dropbox save/restore and both fresh-install recovery flows with a dummy account. Full TalkBack navigation, iOS runtime behavior and other cloud-provider uploads/restores remain separately unverified; Android/Dropbox results do not establish support across every platform or provider. Protected export repair and Unicode interoperability now pass on Android and offline Chrome.
 
-- PIN performance, automatic biometric prompting, cancellation/PIN fallback and native share/Drive upload-screen navigation were confirmed on the S24 Ultra in earlier sessions. Emulator tests confirm local recovery, Dropbox save/shorter rewrite/restore, the app-switcher privacy cover, targeted 1x/2x font layouts and Android reminders. Full TalkBack navigation and iOS runtime behavior remain pending. Response: retain these as separate validation before a stable release.
+- PIN performance, automatic biometric prompting, cancellation/PIN fallback and native share/Drive upload-screen navigation were confirmed on the S24 Ultra in earlier sessions. Emulator tests confirm local recovery, Dropbox save/shorter rewrite/restore, the app-switcher privacy cover, targeted 1x/2x font layouts and Android reminders. Full TalkBack navigation and iOS runtime behavior remain pending. Response: track these separately and keep release claims within the tested Android scope.
 - Direct Google Drive authorization is unfinished. Response: keep direct sync disabled and offer the tested manual share/download and file-restore flow. Drive upload-screen navigation is verified; upload completion remains unverified.
 - The app lock controls access; ordinary local/folder/CSV/report data remains readable. Protected manual exports use a separate password. Response: explain the distinction and keep off-device copies private.
 - Automatic backups run after foreground edits and are suspended after local recovery; reminders retain the nearest 60 alerts plus weekly and refresh on foreground. Response: explain these operating limits in the feature notes.
 
 ## Decisions
+
+- 2026-09-13: Facing the user's phone confirmation and acceptance of the remaining Dropbox observations, chose to treat empty extras and the unexercised real-network-error case as non-blocking for Android release acceptance, while retaining evidence and the existing manual-retry-after-failure behavior. Their cause and the occurrence rate of network failures are not established by this decision.
 
 - 2026-09-13: Facing a reproduced Dropbox snapshot that becomes readable after the first verification fails, chose bounded sequential read retries of the already-written URI. Keep exact verification and final READ/VERIFY failures; never retry creation or writing. The 25-second window bounds retries and does not cancel an already pending native read or launch overlapping I/O.
 
@@ -78,6 +81,8 @@ Next:
 - 2026-09-12: Facing potential overwrite of external backups during startup or recovery, chose explicit first save and suspended automatic backup after local recovery, to protect older/newer copies, accepting a manual review step.
 
 ## Log
+
+- 2026-09-13 [decision]: User reports the empty-file problem no longer appears on their phone and accepts both remaining backup testing limits as non-blocking. Recorded that acceptance without claiming an OS cause or automatic recovery after a reported failure; confirmed the persisted pause/manual-retry behavior from source. Published version remains Beta 2/code 12, and no new device tests or runtime changes were made.
 
 - 2026-09-13 [work]: Completed the user's two authorized native drills on isolated emulator 5584 with the published Beta 2 APK. Fresh Dropbox and protected-file recovery both passed exact re-export and restart checks; all 11 original cloud files stayed unchanged. A stopped save preserved old data/time and a complete new snapshot; retry passed. The network-settings interruption returned provider success, with exact files after reconnect and no caught-failure branch exercised. Two empty suffixed extras were retained as an unresolved observation. Restored local profile Q, automatic backup off and original network settings; no runtime or version change.
 
