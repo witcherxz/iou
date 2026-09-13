@@ -1,0 +1,113 @@
+{
+  "date": "2026-09-13",
+  "result": "passed",
+  "scope": "Fresh installation of published Beta 2, restoring via actual Dropbox Android provider on isolated emulator5584 with a dummy account. No personal phone/account access.",
+  "build": {
+    "versionName": "0.1.0-beta.2",
+    "versionCode": 12,
+    "sha256": "a212e313f360490fcf1fe446b462f6a9feaddee731a9466f321d0b6e732744df",
+    "certificateSha256": "9a191eff750459eb5a2508e7875c9bad4bf4062fa488de057f6b4cf491faf5a6",
+    "sourceCommit": "04b1bd04ffacd231345c8d36b7e2e5489d577728"
+  },
+  "installation": {
+    "uninstalledWithoutKeepingData": true,
+    "packageAbsentBeforeReinstall": true,
+    "verifiedPublishedBeta2Installed": true,
+    "previousPackage": "package:io.github.witcherxz.iou uid:10217",
+    "freshPackage": "package:io.github.witcherxz.iou uid:10219"
+  },
+  "nativeObservations": {
+    "onboardingWasShown": true,
+    "homeWasEmpty": true,
+    "freshProfileDefault": true,
+    "destinationUnset": true,
+    "freshFolderPermissionDialog": true,
+    "previewRecognizedPersonAnd4Transactions": true,
+    "cancelKeptEmptyLedger": true,
+    "preview": "تاريخ النسخة: 13‏/9‏/2026، 6:46:54 ص\n1 أشخاص · 4 عمليات\n\nسيتم استبدال بيانات الدفتر الحالي بهذه النسخة. لن يتم دمج الدفترين.",
+    "restoredAfterConfirmation": true,
+    "persistedAcrossProcessRestart": true,
+    "restoredProfile": "Q",
+    "autoCheckedAfterRestore": "true",
+    "lastBackupAfterRestore": "آخر نسخة: 13 سبتمبر 2026، 6:46 ص",
+    "autoSwitchWhileDestinationUnset": "false",
+    "autoSwitchNote": "UI is disabled/false with no configured destination; after folder restore the underlying default preference is visibly true.",
+    "original11CloudFilesUnchangedExactly": true,
+    "exactLocalReexportComparison": true,
+    "financialEntriesCreatedOrEditedOutsideRestore": false
+  },
+  "dataComparison": {
+    "result": "passed",
+    "scope": "Offline comparison of supplied synthetic artifacts; no provider upload or synchronization claim",
+    "ignoredFields": [
+      "backedUpAt"
+    ],
+    "personIdsNamesAndTransactionsAndAuditsExact": true,
+    "allOtherPortableFieldsExact": true,
+    "peopleCount": 1,
+    "transactionCount": 4,
+    "auditCount": 2,
+    "companionsChecked": true,
+    "readableHtmlAndFourCsvExactlyRegenerated": true,
+    "totals": [
+      {
+        "principal": 125.5,
+        "paidAmount": 41.83,
+        "forgivenAmount": 33.5,
+        "remainingAmount": 50.17
+      }
+    ],
+    "artifacts": [
+      {
+        "name": "iou-backup.json",
+        "sha256": "567f54a1e67dba8ec4d154011e3e1c916ca2b7e76db98173557b1b7faaf3a236"
+      },
+      {
+        "name": "iou-ledger.html",
+        "bytes": 30464,
+        "sha256": "cd39170d85d38bee9d0f7ed642bb95f23d40267beb843a7a4438967003504c47"
+      },
+      {
+        "name": "iou-balances.csv",
+        "bytes": 193,
+        "sha256": "d691be51a69ca25c83a57d7bf57a163cbd9f4248fdb4b9345328d9c2e868f52a"
+      },
+      {
+        "name": "iou-transactions.csv",
+        "bytes": 1166,
+        "sha256": "c24203ebb428334e565b95eb6c5c6ae85647d98030fc1492cd1e57d754870461"
+      },
+      {
+        "name": "iou-installments.csv",
+        "bytes": 599,
+        "sha256": "b2a92221fb688b12f4a05e288575a3f0270c41dcf484aad4cd93c1887dc51d45"
+      },
+      {
+        "name": "iou-history.csv",
+        "bytes": 2655,
+        "sha256": "882d33adca5894743f1cb338d6ec87767a279d5e709b9e5305083e6f6b2df250"
+      }
+    ]
+  },
+  "sourceCloudPreservation": {
+    "fileCount": 11,
+    "emptyFileCount": 0,
+    "everyFileByteIdenticalToBefore": true,
+    "referenceEvidence": "beta2-native.json",
+    "sourceFolder": "IoU-Dropbox-QA-20260913"
+  },
+  "protectedSourcePrepared": {
+    "actualAndroidExportSharedToDropbox": true,
+    "sourceFolder": "IoU-Recovery-Drill-20260913",
+    "file": "iou-protected.html",
+    "bytes": 43994,
+    "sha256": "a2e5e241b896a759f08570586459f817776788cd46d26a2ee43e556db98c9b16",
+    "independentNodeDecryptionMatchedWholeFixture": true,
+    "passwordLogged": false,
+    "freshProtectedRestoreEvidence": "Tracked separately in beta2-fresh-protected.json"
+  },
+  "limitations": [
+    "Same emulator and Android version; this covers an empty IoU installation with a new UID and new folder grant, while Dropbox remained signed into the dummy account.",
+    "No independent Dropbox server API audit or personal-device loss drill is claimed."
+  ]
+}

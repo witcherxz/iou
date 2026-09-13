@@ -1,0 +1,413 @@
+{
+  "date": "2026-09-13",
+  "result": "completed with stated limitations",
+  "scope": "One actual app-process interruption and one Wi-Fi/mobile-settings interruption during real Dropbox document-provider saves, using the published Beta 2 APK and synthetic data only",
+  "build": {
+    "version": "0.1.0-beta.2",
+    "versionCode": 12,
+    "sourceCommit": "04b1bd04ffacd231345c8d36b7e2e5489d577728",
+    "apkSha256": "a212e313f360490fcf1fe446b462f6a9feaddee731a9466f321d0b6e732744df"
+  },
+  "device": {
+    "emulator": "emulator-5584",
+    "provider": "Dropbox Android 488.2.2",
+    "account": "dummy test account",
+    "personalPhoneAccess": false,
+    "personalAccountAccess": false
+  },
+  "isolatedFolder": "IoU-Interrupt-QA-20260913",
+  "unchangedFinancialData": {
+    "people": 1,
+    "transactions": 4,
+    "audits": 2,
+    "principal": 125.5,
+    "cashPaid": 41.83,
+    "forgiven": 33.5,
+    "remaining": 50.17,
+    "changesDuringDrill": "Only the profile name changed between Q, Q-KILL and Q-NETWORK; no financial edits or restores"
+  },
+  "baseline": {
+    "profile": "Q",
+    "manualSaveInvocations": 1,
+    "automaticBackupObservedOff": true,
+    "saveReportedSuccess": true,
+    "copiedBeforeAnyIntentionalInterruption": true,
+    "count": 8,
+    "emptyFileCount": 1,
+    "originalsPreserved": true,
+    "canonicalEqualsSnapshot": true,
+    "canonicalJsonHtmlAndFourCsvExact": true,
+    "artifacts": [
+      {
+        "name": "iou-backup.json",
+        "bytes": 3225,
+        "sha256": "4bb3d80b7ffc215306b5de0a3d0c2e7b7fa903c1e06ce4a962c79a17adc4cca7"
+      },
+      {
+        "name": "iou-balances (1).csv",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "name": "iou-balances.csv",
+        "bytes": 193,
+        "sha256": "d691be51a69ca25c83a57d7bf57a163cbd9f4248fdb4b9345328d9c2e868f52a"
+      },
+      {
+        "name": "iou-history.csv",
+        "bytes": 2655,
+        "sha256": "882d33adca5894743f1cb338d6ec87767a279d5e709b9e5305083e6f6b2df250"
+      },
+      {
+        "name": "iou-installments.csv",
+        "bytes": 599,
+        "sha256": "b2a92221fb688b12f4a05e288575a3f0270c41dcf484aad4cd93c1887dc51d45"
+      },
+      {
+        "name": "iou-ledger.html",
+        "bytes": 30464,
+        "sha256": "0756ba64427f59c835d312f64f992477d936b0356d1f4d484f8b34ce141778df"
+      },
+      {
+        "name": "iou-snapshot-2026-09-13T14-55-55-205Z-0.json",
+        "bytes": 3225,
+        "sha256": "4bb3d80b7ffc215306b5de0a3d0c2e7b7fa903c1e06ce4a962c79a17adc4cca7"
+      },
+      {
+        "name": "iou-transactions.csv",
+        "bytes": 1166,
+        "sha256": "c24203ebb428334e565b95eb6c5c6ae85647d98030fc1492cd1e57d754870461"
+      }
+    ]
+  },
+  "appProcessInterruption": {
+    "profile": "Q-KILL",
+    "saveBusyBeforeKill": true,
+    "killedOnlyIou": true,
+    "secondsBeforeKill": 7.68,
+    "previousSuccessLabel": "آخر نسخة: 13 سبتمبر 2026، 5:56 م",
+    "restartSuccessLabel": "آخر نسخة: 13 سبتمبر 2026، 5:56 م",
+    "restartErrorVisible": false,
+    "restartAutoChecked": false,
+    "restartBusy": false,
+    "profileChangeOnly": true,
+    "cloudFilesCopiedBeforeRetry": true,
+    "count": 11,
+    "emptyFileCount": 2,
+    "originalsPreserved": true,
+    "everyBaselineFileUnchanged": true,
+    "previousMatchesBaselineCanonical": true,
+    "newSnapshotProvesWriteBegan": true,
+    "newSnapshotExactComparison": {
+      "result": "passed",
+      "scope": "Offline comparison of supplied synthetic artifacts; no provider upload or synchronization claim",
+      "ignoredFields": [
+        "backedUpAt"
+      ],
+      "personIdsNamesAndTransactionsAndAuditsExact": true,
+      "allOtherPortableFieldsExact": true,
+      "peopleCount": 1,
+      "transactionCount": 4,
+      "auditCount": 2,
+      "companionsChecked": false,
+      "readableHtmlAndFourCsvExactlyRegenerated": null,
+      "totals": [
+        {
+          "principal": 125.5,
+          "paidAmount": 41.83,
+          "forgivenAmount": 33.5,
+          "remainingAmount": 50.17
+        }
+      ]
+    },
+    "newArtifacts": [
+      {
+        "name": "iou-backup.previous (1).json",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "change": "new"
+      },
+      {
+        "name": "iou-backup.previous.json",
+        "bytes": 3225,
+        "sha256": "4bb3d80b7ffc215306b5de0a3d0c2e7b7fa903c1e06ce4a962c79a17adc4cca7",
+        "change": "new",
+        "profile": "Q",
+        "backedUpAt": "2026-09-13T14:55:55.032Z"
+      },
+      {
+        "name": "iou-snapshot-2026-09-13T15-00-45-610Z-0.json",
+        "bytes": 3230,
+        "sha256": "8e4cfe6ad81ad9d75959dbc7aa3df624506936202cbc4e70104fe62e201ae04f",
+        "change": "new",
+        "profile": "Q-KILL",
+        "backedUpAt": "2026-09-13T15:00:38.964Z"
+      }
+    ],
+    "interpretation": "An app process kill can bypass the error catch. The unchanged last-success timestamp and absence of a persisted failure notice are observed behavior, not evidence that the write completed."
+  },
+  "manualRetryAfterKill": {
+    "manualRetryPassed": true,
+    "seconds": 12.58,
+    "successLabel": "آخر نسخة: 13 سبتمبر 2026، 6:03 م",
+    "autoChecked": false,
+    "count": 12,
+    "emptyFileCount": 2,
+    "originalsPreserved": true,
+    "exactComparison": {
+      "result": "passed",
+      "scope": "Offline comparison of supplied synthetic artifacts; no provider upload or synchronization claim",
+      "ignoredFields": [
+        "backedUpAt"
+      ],
+      "personIdsNamesAndTransactionsAndAuditsExact": true,
+      "allOtherPortableFieldsExact": true,
+      "peopleCount": 1,
+      "transactionCount": 4,
+      "auditCount": 2,
+      "companionsChecked": true,
+      "readableHtmlAndFourCsvExactlyRegenerated": true,
+      "totals": [
+        {
+          "principal": 125.5,
+          "paidAmount": 41.83,
+          "forgivenAmount": 33.5,
+          "remainingAmount": 50.17
+        }
+      ]
+    },
+    "originalBaselineAndInterruptedSnapshotPreserved": true,
+    "sameTwoEmptyExtrasUnchanged": true
+  },
+  "networkSettingsInterruption": {
+    "profile": "Q-NETWORK",
+    "automaticSaveTriggeredByProfileChange": true,
+    "before": {
+      "busy": false,
+      "error": false,
+      "pauseNotice": false,
+      "successLabel": "آخر نسخة: 13 سبتمبر 2026، 6:03 م",
+      "autoChecked": false
+    },
+    "busyBeforeNetworkCut": {
+      "busy": true,
+      "error": false,
+      "pauseNotice": false,
+      "successLabel": null,
+      "autoChecked": true
+    },
+    "originalNetwork": {
+      "wifiOn": "1",
+      "mobileData": "1"
+    },
+    "disabledNetwork": {
+      "wifiOn": "0",
+      "mobileData": "0"
+    },
+    "restoredNetwork": {
+      "wifiOn": "1",
+      "mobileData": "1"
+    },
+    "afterReconnect": {
+      "busy": false,
+      "error": false,
+      "pauseNotice": false,
+      "successLabel": "آخر نسخة: 13 سبتمبر 2026، 6:06 م",
+      "autoChecked": true
+    },
+    "defaultNetworkAbsenceIndependentlyVerified": false,
+    "providerReturnedSuccessWhileSettingsDisabled": true,
+    "caughtProviderFailureInduced": false,
+    "durableFailurePauseExercised": false,
+    "independentServerUploadVerified": false,
+    "interpretation": "Both Wi-Fi and mobile-data settings were disabled after the automatic save was visibly busy. The provider accepted the save. This does not establish that the default network disappeared or that a cloud-server upload completed while offline. No caught failure occurred, so durable error pause and its retry clearing were not exercised by this case.",
+    "count": 13,
+    "emptyFileCount": 2,
+    "originalsPreserved": true,
+    "exactComparison": {
+      "result": "passed",
+      "scope": "Offline comparison of supplied synthetic artifacts; no provider upload or synchronization claim",
+      "ignoredFields": [
+        "backedUpAt"
+      ],
+      "personIdsNamesAndTransactionsAndAuditsExact": true,
+      "allOtherPortableFieldsExact": true,
+      "peopleCount": 1,
+      "transactionCount": 4,
+      "auditCount": 2,
+      "companionsChecked": true,
+      "readableHtmlAndFourCsvExactlyRegenerated": true,
+      "totals": [
+        {
+          "principal": 125.5,
+          "paidAmount": 41.83,
+          "forgivenAmount": 33.5,
+          "remainingAmount": 50.17
+        }
+      ]
+    },
+    "oldSnapshotsAllUnchanged": true,
+    "previousEqualsLastSuccessfulCanonical": true,
+    "sameTwoEmptyExtrasUnchanged": true,
+    "sanitizedObserver": {
+      "durationSeconds": 120,
+      "folderErrorCodes": [],
+      "errorCounts": {}
+    },
+    "whileSettingsDisabled": {
+      "busy": false,
+      "error": false,
+      "pauseNotice": false,
+      "successLabel": "آخر نسخة: 13 سبتمبر 2026، 6:06 م",
+      "autoChecked": true
+    },
+    "secondsUntilProviderSuccess": 6.09
+  },
+  "restartAfterNetworkCase": {
+    "automaticBackupWasOn": true,
+    "immediateBusy": false,
+    "busyAfterSixSeconds": false,
+    "successLabelUnchanged": true,
+    "errorVisible": false,
+    "pauseNoticeVisible": false,
+    "automaticStartupSaveObserved": false,
+    "limitation": "UI and timestamp observation over six seconds; no continuous provider write instrumentation"
+  },
+  "emptyDuplicateDocuments": {
+    "observed": true,
+    "causeDetermined": false,
+    "deleted": false,
+    "names": [
+      {
+        "name": "iou-balances (1).csv",
+        "bytes": 0,
+        "firstObserved": "Successful initial baseline save, before deliberate interruption"
+      },
+      {
+        "name": "iou-backup.previous (1).json",
+        "bytes": 0,
+        "firstObserved": "Copy after the app-process interruption, before retry"
+      }
+    ],
+    "canonicalFilesValid": true,
+    "laterRetryAndNetworkCopiesRetainedSameTwoEmptyExtras": true,
+    "relationshipToOriginalUserReport": "This proves empty duplicate documents can be observed in the dummy-provider folder. Their cause and relationship to the original user files remain unconfirmed."
+  },
+  "finalCloudCopy": {
+    "profile": "Q-NETWORK",
+    "count": 13,
+    "emptyFileCount": 2,
+    "originalsPreserved": true,
+    "artifacts": [
+      {
+        "name": "iou-backup.json",
+        "bytes": 3233,
+        "sha256": "dcafa3df332115437a56cc1d688718141b01fec411767dbec9e26f4d287201a3"
+      },
+      {
+        "name": "iou-backup.previous (1).json",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "name": "iou-backup.previous.json",
+        "bytes": 3230,
+        "sha256": "c9e74880ed774649ccc558c08ec11cb3402f3cdad5889f1526b97230340804c9"
+      },
+      {
+        "name": "iou-balances (1).csv",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "name": "iou-balances.csv",
+        "bytes": 193,
+        "sha256": "d691be51a69ca25c83a57d7bf57a163cbd9f4248fdb4b9345328d9c2e868f52a"
+      },
+      {
+        "name": "iou-history.csv",
+        "bytes": 2655,
+        "sha256": "882d33adca5894743f1cb338d6ec87767a279d5e709b9e5305083e6f6b2df250"
+      },
+      {
+        "name": "iou-installments.csv",
+        "bytes": 599,
+        "sha256": "b2a92221fb688b12f4a05e288575a3f0270c41dcf484aad4cd93c1887dc51d45"
+      },
+      {
+        "name": "iou-ledger.html",
+        "bytes": 30496,
+        "sha256": "5f6dd34c8467279890a044a1cb131e6bc856c8ca2cb4484bb109a631f8b121c4"
+      },
+      {
+        "name": "iou-snapshot-2026-09-13T14-55-55-205Z-0.json",
+        "bytes": 3225,
+        "sha256": "4bb3d80b7ffc215306b5de0a3d0c2e7b7fa903c1e06ce4a962c79a17adc4cca7"
+      },
+      {
+        "name": "iou-snapshot-2026-09-13T15-00-45-610Z-0.json",
+        "bytes": 3230,
+        "sha256": "8e4cfe6ad81ad9d75959dbc7aa3df624506936202cbc4e70104fe62e201ae04f"
+      },
+      {
+        "name": "iou-snapshot-2026-09-13T15-03-29-164Z-0.json",
+        "bytes": 3230,
+        "sha256": "c9e74880ed774649ccc558c08ec11cb3402f3cdad5889f1526b97230340804c9"
+      },
+      {
+        "name": "iou-snapshot-2026-09-13T15-06-15-155Z-0.json",
+        "bytes": 3233,
+        "sha256": "dcafa3df332115437a56cc1d688718141b01fec411767dbec9e26f4d287201a3"
+      },
+      {
+        "name": "iou-transactions.csv",
+        "bytes": 1166,
+        "sha256": "c24203ebb428334e565b95eb6c5c6ae85647d98030fc1492cd1e57d754870461"
+      }
+    ]
+  },
+  "finalDeviceState": {
+    "stableScreen": "IoU Settings",
+    "localProfile": "Q",
+    "cloudProfile": "Q-NETWORK",
+    "automaticBackup": false,
+    "busy": false,
+    "errorVisible": false,
+    "networkSettings": {
+      "wifiOn": "1",
+      "mobileData": "1"
+    },
+    "originalNetworkSettingsRestored": true,
+    "homeExpectedPerson": true,
+    "homeExpectedFourTransactions": true,
+    "homeExpectedBalance": true,
+    "noCloudSaveAfterRestoringLocalProfile": true,
+    "adbOwnershipReleased": true
+  },
+  "preservation": {
+    "originalElevenFileDropboxFolderNotModified": true,
+    "protectedRecoverySourceNotModified": true,
+    "existingGoodHistoryNotDeleted": true,
+    "onlyIouWasForceStopped": true,
+    "noAccountSettingsOrCredentialsInspected": true
+  },
+  "limitations": [
+    "The network-settings case did not induce a caught provider failure; durable pause remains covered by the existing code tests, not this native drill.",
+    "No independent Dropbox server API audit was performed.",
+    "The two empty duplicate documents are retained evidence; their creation cause is unresolved.",
+    "This is one process-kill timing, not exhaustive crash-point coverage."
+  ],
+  "localEvidenceDirectory": "/tmp/iou-beta2-recovery-drill",
+  "localEvidenceFiles": [
+    "interruption-baseline-copy.json",
+    "kill-observation.json",
+    "interruption-killed-copy.json",
+    "interruption-killed-audit.json",
+    "kill-retry-observation.json",
+    "interruption-kill-retry-copy.json",
+    "network-observation.json",
+    "interruption-network-copy.json",
+    "interruption-network-audit.json",
+    "interruption-final-state.json"
+  ]
+}

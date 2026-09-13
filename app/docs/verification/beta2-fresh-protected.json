@@ -1,0 +1,173 @@
+{
+  "date": "2026-09-13",
+  "result": "passed",
+  "scope": "Fresh-install protected recovery from the actual Dropbox document provider using the exact published Beta 2 APK and synthetic data",
+  "build": {
+    "version": "0.1.0-beta.2",
+    "versionCode": 12,
+    "sourceCommit": "04b1bd04ffacd231345c8d36b7e2e5489d577728",
+    "apkSha256": "a212e313f360490fcf1fe446b462f6a9feaddee731a9466f321d0b6e732744df"
+  },
+  "device": {
+    "emulator": "emulator-5584",
+    "provider": "Dropbox Android 488.2.2",
+    "account": "dummy test account",
+    "personalPhoneAccess": false,
+    "personalAccountAccess": false
+  },
+  "freshInstallation": {
+    "uninstalledWithoutKeepData": true,
+    "packageAbsenceVerified": true,
+    "freshInstallationSucceeded": true,
+    "onboardingCompleted": true,
+    "emptyHome": true,
+    "defaultProfile": true,
+    "noConfiguredDestination": true,
+    "fileImportAvailable": true
+  },
+  "protectedSource": {
+    "folder": "IoU-Recovery-Drill-20260913",
+    "file": "iou-protected.html",
+    "sha256": "a2e5e241b896a759f08570586459f817776788cd46d26a2ee43e556db98c9b16",
+    "origin": "Actual production-app protected export shared to Dropbox during this recovery drill",
+    "pickerSelectedActualDropboxFile": true,
+    "oldAppDataAndFileGrantsRemovedByUninstall": true,
+    "passwordLoggedOrScreenshotted": false,
+    "cloudSourceModified": false
+  },
+  "wrongPassword": {
+    "incorrectPasswordRejected": true,
+    "restorePreviewAbsent": true,
+    "elapsedSeconds": 6.63
+  },
+  "correctPassword": {
+    "correctPasswordAccepted": true,
+    "previewVisible": true,
+    "expectedPreviewCounts": true,
+    "elapsedSeconds": 6.37
+  },
+  "restoredAfterForceStopAndRelaunch": {
+    "restoreExplicitlyApplied": true,
+    "appForceStoppedAndRelaunched": true,
+    "homeExpectedPersonAndFourTransactions": true,
+    "homeExpectedBalance": true,
+    "profileQ": true,
+    "destinationStillUnset": true
+  },
+  "localReexport": {
+    "newFolder": "Download/IoU-Fresh-Protected-Restored",
+    "fileCount": 7,
+    "emptyFileCount": 0,
+    "snapshotEqualsCanonical": true,
+    "automaticBackupObservedOnAfterFolderSelection": true,
+    "automaticBackupExplicitlyDisabled": true,
+    "automaticBackupAfterSave": false,
+    "exactComparison": {
+      "result": "passed",
+      "scope": "Offline comparison of supplied synthetic artifacts; no provider upload or synchronization claim",
+      "ignoredFields": [
+        "backedUpAt"
+      ],
+      "personIdsNamesAndTransactionsAndAuditsExact": true,
+      "allOtherPortableFieldsExact": true,
+      "peopleCount": 1,
+      "transactionCount": 4,
+      "auditCount": 2,
+      "companionsChecked": true,
+      "readableHtmlAndFourCsvExactlyRegenerated": true,
+      "totals": [
+        {
+          "principal": 125.5,
+          "paidAmount": 41.83,
+          "forgivenAmount": 33.5,
+          "remainingAmount": 50.17
+        }
+      ],
+      "artifacts": [
+        {
+          "name": "iou-backup.json",
+          "sha256": "80ac811dec870553c9b049e97d6d78b5f9c7482cad0a018cc7788a45a896273a"
+        },
+        {
+          "name": "iou-ledger.html",
+          "bytes": 30464,
+          "sha256": "2b13b3086facfc0fb0d0b69629f2898b37ce1f5808fd50fd4c58ef32f31f522a"
+        },
+        {
+          "name": "iou-balances.csv",
+          "bytes": 193,
+          "sha256": "d691be51a69ca25c83a57d7bf57a163cbd9f4248fdb4b9345328d9c2e868f52a"
+        },
+        {
+          "name": "iou-transactions.csv",
+          "bytes": 1166,
+          "sha256": "c24203ebb428334e565b95eb6c5c6ae85647d98030fc1492cd1e57d754870461"
+        },
+        {
+          "name": "iou-installments.csv",
+          "bytes": 599,
+          "sha256": "b2a92221fb688b12f4a05e288575a3f0270c41dcf484aad4cd93c1887dc51d45"
+        },
+        {
+          "name": "iou-history.csv",
+          "bytes": 2655,
+          "sha256": "882d33adca5894743f1cb338d6ec87767a279d5e709b9e5305083e6f6b2df250"
+        }
+      ]
+    },
+    "artifacts": [
+      {
+        "name": "iou-backup.json",
+        "bytes": 3225,
+        "sha256": "80ac811dec870553c9b049e97d6d78b5f9c7482cad0a018cc7788a45a896273a"
+      },
+      {
+        "name": "iou-balances.csv",
+        "bytes": 193,
+        "sha256": "d691be51a69ca25c83a57d7bf57a163cbd9f4248fdb4b9345328d9c2e868f52a"
+      },
+      {
+        "name": "iou-history.csv",
+        "bytes": 2655,
+        "sha256": "882d33adca5894743f1cb338d6ec87767a279d5e709b9e5305083e6f6b2df250"
+      },
+      {
+        "name": "iou-installments.csv",
+        "bytes": 599,
+        "sha256": "b2a92221fb688b12f4a05e288575a3f0270c41dcf484aad4cd93c1887dc51d45"
+      },
+      {
+        "name": "iou-ledger.html",
+        "bytes": 30464,
+        "sha256": "2b13b3086facfc0fb0d0b69629f2898b37ce1f5808fd50fd4c58ef32f31f522a"
+      },
+      {
+        "name": "iou-snapshot-2026-09-13T14-47-38-361Z-0.json",
+        "bytes": 3225,
+        "sha256": "80ac811dec870553c9b049e97d6d78b5f9c7482cad0a018cc7788a45a896273a"
+      },
+      {
+        "name": "iou-transactions.csv",
+        "bytes": 1166,
+        "sha256": "c24203ebb428334e565b95eb6c5c6ae85647d98030fc1492cd1e57d754870461"
+      }
+    ]
+  },
+  "finalState": {
+    "screen": "IoU Settings",
+    "profileName": "Q",
+    "peopleCount": 1,
+    "transactionCount": 4,
+    "auditCount": 2,
+    "remainingAmount": 50.17,
+    "automaticBackup": false,
+    "backupDestination": "Fresh local export folder",
+    "financialEditsPerformed": false,
+    "temporaryUiXmlRemoved": true
+  },
+  "limitations": [
+    "Synthetic emulator/dummy-account test; no personal-phone or independent Dropbox server API audit is implied.",
+    "Fresh installation intentionally removed IoU data only; Dropbox authentication and original backup files were retained.",
+    "Network/write interruption behavior is a separate drill, not established by this recovery result."
+  ]
+}

@@ -4,12 +4,14 @@ Goal: Provide a private Arabic debt ledger with clear balances and recoverable r
 Phase: beta testing
 
 ## Now
-Published `v0.1.0-beta.2` from `04b1bd0` after both GitHub workflows passed. The downloaded production APK was independently verified and installed on the isolated Dropbox emulator with its ledger preserved. Its manual Dropbox save completed in 15.4 seconds; all 11 copied files were nonempty, current JSON/HTML/CSV contents matched exactly, the previous copy matched the earlier canonical and all three older snapshots remained unchanged. Automatic backup stayed off. [Production acceptance](app/docs/verification/beta2-native.json) · [APK verification](app/docs/verification/beta2-apk.json).
+The authorized Beta 2 recovery and interruption drills are complete. Both fresh-install recoveries passed: a newly granted Dropbox folder restore and a password-protected file import, including cancellation/wrong-password checks, restart persistence and exact JSON/HTML/CSV comparisons. All 11 original cloud files remained byte-for-byte unchanged. [Folder recovery](app/docs/verification/beta2-fresh-dropbox.json) · [Protected recovery](app/docs/verification/beta2-fresh-protected.json).
 
-The fix handles Dropbox's delayed read-back availability without creating or writing another copy, and treats final history cleanup as best effort after all required files are verified. Candidate tests also passed shorter rewrites and complete restore after restarting Dropbox. TypeScript and 1,489 automated checks pass. The user's additional zero-byte-file observation did not recur; the phone and personal accounts were excluded from testing.
+Stopping IoU 7.68 seconds into a visibly busy save left the old backup and success time unchanged plus a complete new recovery snapshot. Explicit retry passed exact comparisons. An automatic save also completed after Wi-Fi and mobile-data settings were disabled; its files matched after reconnection, but actual absence of a default network was not measured and no provider failure occurred. This attempt therefore does not establish failure-pause behavior under a real network error. [Interruption evidence](app/docs/verification/beta2-dropbox-interruptions.json).
+
+Two empty suffixed extra files were observed in the separate test folder, one before intentional interruption. The required backup files and all earlier snapshots remained valid; the extras' origin is unconfirmed. No production code changed, so the release remains `0.1.0-beta.2` (Android code 12), with the existing 1,489 automated checks retained as prior evidence. The emulator finished with local profile Q, automatic backup off and original network settings restored; the separate cloud test folder retains the last verified Q-NETWORK profile variant. Only the dummy account and synthetic records were used.
 
 Next:
-1. Collect Beta 2 feedback from normal use, including whether the additional zero-byte-file symptom recurs.
+1. Investigate the empty suffixed documents with scoped creation tracing before attributing or changing provider behavior; preserve good backups.
 2. Continue beta validation for other cloud providers, TalkBack navigation and iOS runtime behavior.
 3. Move to a stable release when the user accepts the core behavior and remaining release checks are met.
 
@@ -20,24 +22,32 @@ Next:
 | Latest completed integrated suite | 1489 count | 2026-09-13 | 1475 count | >= 1489 count | 1489 count | `cd app && npm run check`; release workflow and native Java checks; `app/docs/verification/dropbox-candidate.json` |
 | Focused folder backup checks | 91 count | 2026-09-13 | 81 count | >= 91 count | 91 count | `cd app && npm run check:backup`; transient/persistent readback, cleanup and empty-file regressions |
 | Published Beta 2 Dropbox save | PASS | 2026-09-13 | FAIL | = PASS | PASS | `app/docs/verification/beta2-native.json`; 11 exact nonempty files and preserved history |
+| Fresh-install Dropbox recovery | PASS | 2026-09-13 | UNMEASURED | = PASS | PASS | `app/docs/verification/beta2-fresh-dropbox.json`; exact re-export and all 11 original cloud files preserved |
+| Fresh-install protected-file recovery | PASS | 2026-09-13 | UNMEASURED | = PASS | PASS | `app/docs/verification/beta2-fresh-protected.json`; wrong/correct passwords, applied restore, restart and exact re-export |
+| Stopped-save recovery and retry | PASS | 2026-09-13 | UNMEASURED | = PASS | PASS | `app/docs/verification/beta2-dropbox-interruptions.json`; exact new snapshot, unchanged old backup/timestamp and exact successful retry |
+| Empty extra documents in test folder | 2 count | 2026-09-13 | 0 count | = 0 count | 0 count | Baseline and interrupted cloud copies; valid required backup files remain exact, origin unconfirmed |
 | Candidate Dropbox save and restore | PASS | 2026-09-13 | UNMEASURED | = PASS | PASS | `app/docs/verification/dropbox-candidate.json`; exact first cloud copy and restored local re-export |
 | Shorter cloud rewrite comparison | PASS | 2026-09-13 | UNMEASURED | = PASS | PASS | Ten nonempty files; exact shorter JSON/HTML/CSV, previous copy and preserved history |
 | Stabilized offline recovery | PASS | 2026-09-13 | — | = PASS | PASS | `app/docs/verification/alpha11-backups.json`; 20 native checks plus exact portable/HTML/CSV/history comparison |
 | Android reminder delivery | PASS | 2026-09-13 | — | = PASS | PASS | `app/docs/verification/alpha11-reminders.json`; 24 native checks including delivery/channel/relaunch/reboot |
 | Native compact Arabic labels | PASS | 2026-09-13 | FAIL | = PASS | PASS | `app/docs/verification/alpha11-labels.json`; native candidate at font scales 1.0 and 2.0 |
 
-## DoD — Dropbox folder save investigation
+## DoD — Fresh recovery and actual interruption drills
 
-- [x] Identify the actual failure stage and distinguish file creation from verified recovery.
-- [x] Reproduce and fix demonstrated defects with focused before/after checks.
-- [x] Verify a complete save and restore through the real Dropbox provider using synthetic records.
-- [x] Preserve existing ledgers and good backups; reject empty or incomplete files.
-- [x] Check status/error wording against the actual outcome without claiming cloud completion prematurely.
-- [x] Record evidence, remaining limitations and the next beta release state.
+- [x] Preserve baseline records and good backup files before resetting only the test app or interrupting operations.
+- [x] Restore Dropbox data into a fresh installation with a newly granted folder permission; cancellation and setup must not overwrite existing backups.
+- [x] Apply a protected export through its password and confirmation flow, then verify exact records, audits, balances and persistence after restart.
+- [x] Interrupt a save after writing begins, compare preserved recovery files and verify that a killed save does not advance the success timestamp; retain any incomplete files as evidence.
+- [x] Verify explicit retry and record actual network-settings interruption and restart behavior. No provider failure was reported, so the failure-pause branch was not exercised by this native drill.
+- [x] Record exact comparisons, measured limits and final test settings while preserving the already-passed Beta 2 evidence.
 
 ## Blockers / Risks
 
-- Emulator/offline validation is complete for this beta, and a local candidate now passes Dropbox save/restore with a dummy account. Full TalkBack navigation, iOS runtime behavior and other cloud-provider uploads/restores remain separate validation before stable release. Protected export repair and Unicode interoperability now pass on Android and offline Chrome.
+- Before intentional interruption, the separate test folder contained seven exact required files plus an empty `iou-balances (1).csv` after a single successful baseline save. An empty `iou-backup.previous (1).json` also appeared in the interrupted-save copy; the valid previous backup and new snapshot remained exact. This is a newly observed extra-file symptom; its origin is unconfirmed and differs from the user's earlier failed-save report. Both extras remained unchanged through retry and the network attempt. Preserve them and investigate with scoped creation tracing before attributing or changing behavior.
+
+- The network attempt disabled Wi-Fi/mobile settings but did not measure the absence of an active default network or provoke a provider error. Provider acceptance/readback is not independent proof of server synchronization. Actual network-error pause remains outside this measured result; existing simulated and local-unavailable-destination pause checks remain prior evidence.
+
+- Emulator/offline validation is complete for this beta, and published Beta 2 passes Dropbox save/restore and both fresh-install recovery flows with a dummy account. Full TalkBack navigation, iOS runtime behavior and other cloud-provider uploads/restores remain separate validation before stable release. Protected export repair and Unicode interoperability now pass on Android and offline Chrome.
 
 - PIN performance, automatic biometric prompting, cancellation/PIN fallback and native share/Drive upload-screen navigation were confirmed on the S24 Ultra in earlier sessions. Emulator tests confirm local recovery, Dropbox save/shorter rewrite/restore, the app-switcher privacy cover, targeted 1x/2x font layouts and Android reminders. Full TalkBack navigation and iOS runtime behavior remain pending. Response: retain these as separate validation before a stable release.
 - Direct Google Drive authorization is unfinished. Response: keep direct sync disabled and offer the tested manual share/download and file-restore flow. Drive upload-screen navigation is verified; upload completion remains unverified.
@@ -68,6 +78,8 @@ Next:
 - 2026-09-12: Facing potential overwrite of external backups during startup or recovery, chose explicit first save and suspended automatic backup after local recovery, to protect older/newer copies, accepting a manual review step.
 
 ## Log
+
+- 2026-09-13 [work]: Completed the user's two authorized native drills on isolated emulator 5584 with the published Beta 2 APK. Fresh Dropbox and protected-file recovery both passed exact re-export and restart checks; all 11 original cloud files stayed unchanged. A stopped save preserved old data/time and a complete new snapshot; retry passed. The network-settings interruption returned provider success, with exact files after reconnect and no caught-failure branch exercised. Two empty suffixed extras were retained as an unresolved observation. Restored local profile Q, automatic backup off and original network settings; no runtime or version change.
 
 - 2026-09-13 [release]: Published `v0.1.0-beta.2` from `04b1bd0`; both Actions workflows passed. Independently verified the 72,434,862-byte production APK (SHA-256 `a212e313f360490fcf1fe446b462f6a9feaddee731a9466f321d0b6e732744df`), signature, identity, fixture-free bundle and native workers. Installed over the local candidate, preserved the complete test ledger, and verified a 15.4-second Dropbox save with all 11 files exact/nonempty and older history intact. [Production evidence](app/docs/verification/beta2-native.json).
 
