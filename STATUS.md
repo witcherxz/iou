@@ -1,19 +1,17 @@
 # STATUS — IoU
 Updated: 2026-09-13 | State: ACTIVE
 Goal: Provide a private Arabic debt ledger with clear balances and recoverable records.
-Phase: release preparation
+Phase: beta testing
 
 ## Now
-Published Beta 1 reproduced a Dropbox read-after-write failure in the dummy account: the first save returned `FOLDER_SNAPSHOT_READ`, then the same snapshot became readable and matched the entire synthetic ledger exactly. No canonical JSON or readable companions were created. The user's additional zero-byte-file observation has not been reproduced.
+Published `v0.1.0-beta.2` from `04b1bd0` after both GitHub workflows passed. The downloaded production APK was independently verified and installed on the isolated Dropbox emulator with its ledger preserved. Its manual Dropbox save completed in 15.4 seconds; all 11 copied files were nonempty, current JSON/HTML/CSV contents matched exactly, the previous copy matched the earlier canonical and all three older snapshots remained unchanged. Automatic backup stayed off. [Production acceptance](app/docs/verification/beta2-native.json) · [APK verification](app/docs/verification/beta2-apk.json).
 
-The local candidate passes save, shorter rewrite and explicit restore through Dropbox 488.2.2 on emulator 5584 with the dummy account. The first save completed in 37.89 seconds with eight nonempty, verified files. The shorter second save produced ten nonempty files: JSON shrank from 3,234 to 3,225 bytes, HTML from 30,502 to 30,464 bytes, all companions match exactly, the previous copy equals the old canonical and both older snapshots are unchanged. Exactly one new snapshot appeared. After changing the local profile and stopping the Dropbox process, explicit restore recovered profile `Q`, all records and the 50.17 balance; a fresh local re-export matches the fixture and all HTML/CSV companions. Automatic backup was observed on after the first save, then explicitly switched off after the second save and remained off after restore; do not infer zero automatic writes. [Candidate evidence](app/docs/verification/dropbox-candidate.json).
-
-The fix writes each Android SAF document once, then retries sequential reads of that same URI within a 25-second retry window, requiring exact content before proceeding. It also retains the separate best-effort cleanup fix. Preparation is complete: 1,489 automated checks, including 91 focused backup checks, and TypeScript pass. Beta 2/code 12 is prepared; publication remains pending. Native acceptance covers a local JavaScript candidate on the unchanged Beta 1 native base. The phone and personal accounts remain outside this test; no independent Dropbox server API audit is claimed.
+The fix handles Dropbox's delayed read-back availability without creating or writing another copy, and treats final history cleanup as best effort after all required files are verified. Candidate tests also passed shorter rewrites and complete restore after restarting Dropbox. TypeScript and 1,489 automated checks pass. The user's additional zero-byte-file observation did not recur; the phone and personal accounts were excluded from testing.
 
 Next:
-1. Commit and publish the prepared Beta 2 fix after final source and evidence review.
-2. Verify both CI workflows and the published APK's identity, signature and checksum.
-3. Record the final release state and any remaining device/provider limitations.
+1. Collect Beta 2 feedback from normal use, including whether the additional zero-byte-file symptom recurs.
+2. Continue beta validation for other cloud providers, TalkBack navigation and iOS runtime behavior.
+3. Move to a stable release when the user accepts the core behavior and remaining release checks are met.
 
 ## Health
 
@@ -21,7 +19,7 @@ Next:
 |---|---:|---|---:|---:|---:|---|
 | Latest completed integrated suite | 1489 count | 2026-09-13 | 1475 count | >= 1489 count | 1489 count | `cd app && npm run check`; release workflow and native Java checks; `app/docs/verification/dropbox-candidate.json` |
 | Focused folder backup checks | 91 count | 2026-09-13 | 81 count | >= 91 count | 91 count | `cd app && npm run check:backup`; transient/persistent readback, cleanup and empty-file regressions |
-| Published Beta 1 Dropbox first save | FAIL | 2026-09-13 | UNMEASURED | = PASS | PASS | `app/docs/verification/dropbox-investigation.json`; same snapshot later validates and matches the synthetic ledger |
+| Published Beta 2 Dropbox save | PASS | 2026-09-13 | FAIL | = PASS | PASS | `app/docs/verification/beta2-native.json`; 11 exact nonempty files and preserved history |
 | Candidate Dropbox save and restore | PASS | 2026-09-13 | UNMEASURED | = PASS | PASS | `app/docs/verification/dropbox-candidate.json`; exact first cloud copy and restored local re-export |
 | Shorter cloud rewrite comparison | PASS | 2026-09-13 | UNMEASURED | = PASS | PASS | Ten nonempty files; exact shorter JSON/HTML/CSV, previous copy and preserved history |
 | Stabilized offline recovery | PASS | 2026-09-13 | — | = PASS | PASS | `app/docs/verification/alpha11-backups.json`; 20 native checks plus exact portable/HTML/CSV/history comparison |
@@ -70,6 +68,8 @@ Next:
 - 2026-09-12: Facing potential overwrite of external backups during startup or recovery, chose explicit first save and suspended automatic backup after local recovery, to protect older/newer copies, accepting a manual review step.
 
 ## Log
+
+- 2026-09-13 [release]: Published `v0.1.0-beta.2` from `04b1bd0`; both Actions workflows passed. Independently verified the 72,434,862-byte production APK (SHA-256 `a212e313f360490fcf1fe446b462f6a9feaddee731a9466f321d0b6e732744df`), signature, identity, fixture-free bundle and native workers. Installed over the local candidate, preserved the complete test ledger, and verified a 15.4-second Dropbox save with all 11 files exact/nonempty and older history intact. [Production evidence](app/docs/verification/beta2-native.json).
 
 - 2026-09-13 [work]: Candidate Dropbox acceptance is complete. The shorter second cloud copy has ten nonempty files, exact JSON/HTML/four CSVs, a previous copy matching the old canonical, both older snapshots unchanged and exactly one new snapshot. Explicit provider restore and its local re-export already passed. Integrated checks, release workflow checks and native Java checks total 1,489; TypeScript passes. Beta 2/code 12 is prepared and publication remains pending. [Candidate evidence](app/docs/verification/dropbox-candidate.json).
 

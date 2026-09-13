@@ -1,0 +1,46 @@
+{
+  "scope": "Independent verification of the downloaded production Beta 2 APK; no device acceptance implied",
+  "checkedAt": "2026-09-13T03:45:05.328Z",
+  "file": "iou-0.1.0-beta.2.apk",
+  "bytes": 72434862,
+  "sha256": "a212e313f360490fcf1fe446b462f6a9feaddee731a9466f321d0b6e732744df",
+  "applicationId": "io.github.witcherxz.iou",
+  "versionName": "0.1.0-beta.2",
+  "versionCode": 12,
+  "label": "دفتر الديون",
+  "debuggable": false,
+  "overlayPermission": false,
+  "certificateSha256": "9a191eff750459eb5a2508e7875c9bad4bf4062fa488de057f6b4cf491faf5a6",
+  "checksumMatches": true,
+  "bundleBytes": 1937608,
+  "fixtureFreeBundle": true,
+  "signingKeyPackaged": false,
+  "nativePinWorker": true,
+  "nativeBackupDocuments": true,
+  "nativeBackupKeyWorker": true,
+  "checks": [
+    "Exact artifact checksum",
+    "SDK 37 signature verification and pinned production certificate",
+    "Manifest identity, version, Arabic label, debug and permission flags",
+    "Offline bundle without fixture markers",
+    "No packaged signing-key files",
+    "Compiled PIN, backup documents and backup-key workers"
+  ],
+  "releaseTag": "v0.1.0-beta.2",
+  "sourceCommit": "04b1bd04ffacd231345c8d36b7e2e5489d577728",
+  "releaseUrl": "https://github.com/witcherxz/iou/releases/tag/v0.1.0-beta.2",
+  "workflows": [
+    {
+      "conclusion": "success",
+      "headSha": "04b1bd04ffacd231345c8d36b7e2e5489d577728",
+      "status": "completed",
+      "url": "https://github.com/witcherxz/iou/actions/runs/34735786947"
+    },
+    {
+      "conclusion": "success",
+      "headSha": "04b1bd04ffacd231345c8d36b7e2e5489d577728",
+      "status": "completed",
+      "url": "https://github.com/witcherxz/iou/actions/runs/34735786879"
+    }
+  ]
+}

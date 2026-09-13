@@ -1,7 +1,7 @@
 {
   "date": "2026-09-13",
   "baseHead": "36b8d90460e878b9caf8757498e3c14c3e2e9fdc",
-  "status": "preparation complete; publication pending",
+  "status": "fix published in Beta 2; production emulator save acceptance passed",
   "scope": "Published Beta 1 Dropbox reproduction using a dummy account, independent synthetic snapshot comparison, and focused provider-adapter regressions",
   "realDropboxProvider": "BETA 1 FAILURE REPRODUCED; LOCAL CANDIDATE SAVE, SHORTER REWRITE AND RESTORE PASSED",
   "reportedDropboxSymptomResolved": false,
@@ -61,7 +61,7 @@
     "shorterCloudRewriteComparison": "PASSED: exact current files, previous copy and preserved older snapshots",
     "preparation": "complete",
     "plannedRelease": "0.1.0-beta.2 / Android code 12",
-    "publicationStatus": "pending",
+    "publicationStatus": "published; see beta2-apk.json and beta2-native.json",
     "automaticBackupAfterRestore": false,
     "independentServerApiAudit": false,
     "evidence": "dropbox-candidate.json"

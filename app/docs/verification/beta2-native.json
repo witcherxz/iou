@@ -1,0 +1,156 @@
+{
+  "date": "2026-09-13",
+  "result": "passed",
+  "scope": "Final acceptance of the exact published Beta 2 APK with Dropbox Android 488.2.2 on an isolated emulator and a dummy account; synthetic ledger only",
+  "build": {
+    "sourceCommit": "04b1bd04ffacd231345c8d36b7e2e5489d577728",
+    "releaseVersion": "0.1.0-beta.2",
+    "versionCode": 12,
+    "apkSha256": "a212e313f360490fcf1fe446b462f6a9feaddee731a9466f321d0b6e732744df",
+    "apkBytes": 72434862,
+    "certificateSha256": "9a191eff750459eb5a2508e7875c9bad4bf4062fa488de057f6b4cf491faf5a6",
+    "releaseCi": 34735786947,
+    "mainCi": 34735786879,
+    "bothCi": "SUCCESS",
+    "installedWith": "install --no-incremental -r",
+    "installation": "SUCCESS"
+  },
+  "device": {
+    "serial": "emulator-5584",
+    "provider": "Dropbox Android 488.2.2",
+    "account": "isolated dummy account",
+    "personalPhoneAccess": false,
+    "personalAccountAccess": false
+  },
+  "preservedState": {
+    "homePersonAndFourTransactionsMatched": true,
+    "homeBalanceMatched": true,
+    "profileName": "Q",
+    "peopleCount": 1,
+    "transactionCount": 4,
+    "auditCount": 2,
+    "remainingAmount": 50.17,
+    "automaticBackupBeforeSave": false,
+    "financialEditsPerformed": false
+  },
+  "manualSave": {
+    "result": "passed",
+    "existingBackupConfirmation": "حفظ نسخة جديدة",
+    "confirmationAccepted": true,
+    "elapsedSeconds": 15.4,
+    "timingMethod": "Monotonic wall time from confirmation tap to first UI observation of enabled save control and updated backup timestamp; includes UI polling overhead",
+    "lastSuccessLabel": "آخر نسخة: 13 سبتمبر 2026، 6:47 ص",
+    "errorVisible": false,
+    "automaticBackupAfterSave": false
+  },
+  "appScopedObservation": {
+    "elapsedSeconds": 120.0,
+    "backupErrorCodes": [],
+    "errorCounts": {},
+    "rawLogsRetained": false
+  },
+  "providerCopy": {
+    "sourceFolder": "IoU-Dropbox-QA-20260913",
+    "method": "Standalone Android FilesActivity: select all 11 provider documents and Copy to a new local Downloads folder; originals retained",
+    "localFolder": "Download/IoU-Beta2-Final",
+    "pulledDirectory": "/tmp/iou-beta2-release/cloud-copy",
+    "fileCount": 11,
+    "bytes": 54445,
+    "emptyFileCount": 0,
+    "currentFileCount": 6,
+    "previousCopyCount": 1,
+    "snapshotCount": 4,
+    "artifacts": [
+      {
+        "name": "iou-backup.json",
+        "bytes": 3225,
+        "sha256": "58638da2756310b2ca9b196ea1a25c185e4b9cf4bd993a7fd8b7230f47c7865d"
+      },
+      {
+        "name": "iou-backup.previous.json",
+        "bytes": 3225,
+        "sha256": "274cd0bcdbdf95d83f4f2b4d04cf7cf9b3ad950f87c02d8b0aedbc6dec1e7e21"
+      },
+      {
+        "name": "iou-balances.csv",
+        "bytes": 193,
+        "sha256": "d691be51a69ca25c83a57d7bf57a163cbd9f4248fdb4b9345328d9c2e868f52a"
+      },
+      {
+        "name": "iou-history.csv",
+        "bytes": 2655,
+        "sha256": "882d33adca5894743f1cb338d6ec87767a279d5e709b9e5305083e6f6b2df250"
+      },
+      {
+        "name": "iou-installments.csv",
+        "bytes": 599,
+        "sha256": "b2a92221fb688b12f4a05e288575a3f0270c41dcf484aad4cd93c1887dc51d45"
+      },
+      {
+        "name": "iou-ledger.html",
+        "bytes": 30464,
+        "sha256": "44caf7c6d70a9f01f259d37fdce2b9380663b21f963140ff8e7a73a692562b03"
+      },
+      {
+        "name": "iou-snapshot-2026-09-13T03-07-43-372Z-0.json",
+        "bytes": 3234,
+        "sha256": "6a132cf1d76184a901d4a16468659da14397f6319310b74926a4e8182e351a02"
+      },
+      {
+        "name": "iou-snapshot-2026-09-13T03-20-47-941Z-0.json",
+        "bytes": 3234,
+        "sha256": "85b8ab7d7a06c113bf6a39d6f5204d58381b64077d5819d566a8234a0d0d811e"
+      },
+      {
+        "name": "iou-snapshot-2026-09-13T03-24-05-397Z-0.json",
+        "bytes": 3225,
+        "sha256": "274cd0bcdbdf95d83f4f2b4d04cf7cf9b3ad950f87c02d8b0aedbc6dec1e7e21"
+      },
+      {
+        "name": "iou-snapshot-2026-09-13T03-46-56-478Z-0.json",
+        "bytes": 3225,
+        "sha256": "58638da2756310b2ca9b196ea1a25c185e4b9cf4bd993a7fd8b7230f47c7865d"
+      },
+      {
+        "name": "iou-transactions.csv",
+        "bytes": 1166,
+        "sha256": "c24203ebb428334e565b95eb6c5c6ae85647d98030fc1492cd1e57d754870461"
+      }
+    ]
+  },
+  "independentComparison": {
+    "result": "passed",
+    "fixture": "dropbox-qa-short.json",
+    "ignoredFields": [
+      "backedUpAt"
+    ],
+    "personIdsNamesTransactionsAuditsAndOtherPortableFieldsExact": true,
+    "htmlAndFourCsvExactlyRegenerated": true,
+    "totals": [
+      {
+        "principal": 125.5,
+        "paidAmount": 41.83,
+        "forgivenAmount": 33.5,
+        "remainingAmount": 50.17
+      }
+    ],
+    "oldSnapshotsPreservedExactly": 3,
+    "newSnapshotCount": 1,
+    "newSnapshotEqualsCanonical": true,
+    "previousEqualsOldCanonical": true,
+    "evidence": "/tmp/iou-dropbox-provider-qa/fixture/beta2-final-cloud-comparison.json"
+  },
+  "finalState": {
+    "screen": "IoU Settings",
+    "profileName": "Q",
+    "automaticBackup": false,
+    "successfulBackupTimestampVisible": true,
+    "errorVisible": false,
+    "temporaryUiXmlRemoved": true
+  },
+  "limitations": [
+    "Final published acceptance covers update preservation and one manual Dropbox save with exact copied-file comparison. The earlier cold-provider restore and shorter-rewrite tests remain separately recorded in dropbox-candidate.json.",
+    "No independent Dropbox server API audit, personal-phone validation, or validation of other cloud providers is implied.",
+    "The separately reported zero-byte-file symptom was not reproduced."
+  ]
+}

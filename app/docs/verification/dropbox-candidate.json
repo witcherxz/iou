@@ -2,7 +2,7 @@
   "date": "2026-09-13",
   "status": "passed",
   "preparation": "complete",
-  "publication": "pending",
+  "publication": "Local QA only; subsequent production release verification is recorded in beta2-apk.json and beta2-native.json",
   "plannedRelease": { "version": "0.1.0-beta.2", "androidVersionCode": 12 },
   "scope": "Actual Dropbox provider tests with a dummy account and synthetic records; local QA candidate only",
   "candidate": {
