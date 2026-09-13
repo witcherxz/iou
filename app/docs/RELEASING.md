@@ -41,6 +41,18 @@ Prerelease notes record remaining device verification, including biometrics, not
 
 ## Verified releases
 
+### Beta 1
+
+On 2026-09-13, the user approved moving into beta for testing and stabilization. [v0.1.0-beta.1](https://github.com/witcherxz/iou/releases/tag/v0.1.0-beta.1) was published from `1a84d9cb811e2649e3a329474dfc6f8641dc4482`. The [release workflow](https://github.com/witcherxz/iou/actions/runs/34728942719) and [main workflow](https://github.com/witcherxz/iou/actions/runs/34728942770) passed the final 1,475 checks and signed production build. The Alpha 11 main build used earlier in testing was never published as a release.
+
+The independently downloaded APK is 72,433,454 bytes, version `0.1.0-beta.1` / code `11`, with the unchanged production ID and signing key. Signature, non-debuggable manifest, fixture-free offline bundle, native PIN worker, backup documents module and protected-backup worker all pass. [APK evidence](verification/beta1-apk.json).
+
+```text
+8f54cbc13d8e8721b0608f6cb5e642bbd8a573eca133a05a9370979d244c0daf
+```
+
+The published APK passed the final emulator update check with the existing PIN and ledger intact. Home/person/debt screens and the full forgiveness badge passed visual inspection. A protected Unicode-password export from the exact released binary independently matches all baseline data and opens in offline Chrome with four exact CSV downloads, no network requests and no browser errors. Earlier shared files remain unchanged. [Final acceptance evidence](verification/beta1-native.json) and [screenshots](ANDROID-TESTING.md#published-beta-1--final-apk-acceptance). Account-backed Drive/Dropbox upload and restore remain deferred; no cloud-account validation is claimed.
+
 ### Alpha 10
 
 On 2026-09-12, [v0.1.0-alpha.10](https://github.com/witcherxz/iou/releases/tag/v0.1.0-alpha.10) was published from `a6ea9180aa8e145905399312f6e4f38db11a045c` after the user approved the name editor and pencil entry point. The [release workflow](https://github.com/witcherxz/iou/actions/runs/34717292669) and [main workflow](https://github.com/witcherxz/iou/actions/runs/34717292797) passed 1,354 integrated checks and the signed production build. Nine full-App browser scenarios passed locally with no browser errors; [browser evidence](verification/alpha10-browser.json).

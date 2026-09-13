@@ -1,0 +1,98 @@
+{
+  "measuredAt": "2026-09-13",
+  "scope": "Independently verified published Beta1 APK installed over the existing synthetic emulator ledger",
+  "native": {
+    "serial": "emulator-5580",
+    "credentialsLogged": false,
+    "financialWrites": false,
+    "buildScope": {
+      "version": "0.1.0-beta.1",
+      "commit": "1a84d9cb811e2649e3a329474dfc6f8641dc4482",
+      "ciRun": "34728942719",
+      "apkSha256": "8f54cbc13d8e8721b0608f6cb5e642bbd8a573eca133a05a9370979d244c0daf",
+      "publishedBinaryAcceptance": true,
+      "apkBytes": 72433454,
+      "versionCode": 11,
+      "productionSigningCertificateVerifiedByRoot": true,
+      "mainCiRun": "34728942770"
+    },
+    "referenceBaseline": {
+      "sourceBuild": "signed mainAlpha11",
+      "immutableDirectory": "ea8f8328-bd90-4fbd-9b5a-71ac97024c6b",
+      "originalPortableFile": "Captured synthetic recovery baseline; see alpha11-backups.json"
+    },
+    "checks": {
+      "baseline-home": {
+        "existingPinUnlockPassed": true,
+        "personNameAndTransactionCountMatch": true,
+        "screenshot": "beta1-home.png"
+      },
+      "baseline-person": {
+        "expectedPersonOpened": true,
+        "screenshot": "beta1-person.png"
+      },
+      "baseline-debt": {
+        "debtOpened": true,
+        "completeBadgeTextPresent": true,
+        "badgeBounds": "[548,332][640,364]",
+        "screenshot": "beta1-debt.png"
+      },
+      "export-protected": {
+        "shareSheetOpened": true,
+        "shareSheetCancelled": true,
+        "firstObservedSeconds": 8.44,
+        "immutableDirectory": "0667d80f-ccda-4936-87c6-46a9e172b73a",
+        "cachedBytes": 44070
+      },
+      "earlierExportStillImmutable": true
+    },
+    "clipboardHelperPrepared": true,
+    "stableSettings": true,
+    "adbdUid": "2000",
+    "releasedUnlocked": true,
+    "protectedDialogRemaining": false,
+    "clipboardClearedAndHelperRemoved": true,
+    "orphanClipboardHelpersRemoved": 0,
+    "visualEvidence": "visual-evidence.json",
+    "independentExportEvidence": "export-evidence.json"
+  },
+  "visual": {
+    "version": "0.1.0-beta.1",
+    "apkSha256": "8f54cbc13d8e8721b0608f6cb5e642bbd8a573eca133a05a9370979d244c0daf",
+    "screenshotsVisuallyInspected": [
+      "beta1-home.png",
+      "beta1-person.png",
+      "beta1-debt.png"
+    ],
+    "expectedSyntheticPersonAndTransactionCount": true,
+    "expectedCashForgivenessRemainingBreakdown": true,
+    "completePartialForgivenessBadgeVisible": true,
+    "visibleControlsUnclipped": true,
+    "credentialScreenshotsTaken": false
+  },
+  "independentExport": {
+    "independentNodeDecryption": true,
+    "nativeUnicodeExport": true,
+    "exactPortableBaselineMatch": true,
+    "financialRecordsAndReminderPreferencesUnchanged": true,
+    "envelopeUnchanged": true,
+    "credentialsLogged": false,
+    "sha256": "92a05aa9578ffdc27a5bb604aee1f384eaae5b032fffb3cb171319a956d3996e",
+    "bytes": 44070
+  },
+  "offlineBrowser": {
+    "measuredAt": "2026-09-13",
+    "scope": "Actual Android-exported protected report opened as a local file in desktop Chrome, offline context",
+    "checks": {
+      "noLedgerBeforeUnlock": true,
+      "wrongPasswordRejected": true,
+      "unicodePasswordOpened": true,
+      "exactPortableBaselineMatch": true,
+      "allFourCsvDownloadsExact": true,
+      "fourReadableTables": true,
+      "noNetworkRequests": true,
+      "noPageErrors": true
+    },
+    "credentialsLogged": false
+  }
+}

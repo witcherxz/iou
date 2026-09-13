@@ -1,15 +1,16 @@
 # STATUS — IoU
-Updated: 2026-09-13 | State: ACTIVE
+Updated: 2026-09-13 | State: MAINTENANCE
+Reason: Beta 1 is published and verified; awaiting beta feedback.
 Goal: Provide a private Arabic debt ledger with clear balances and recoverable records.
-Phase: implement
+Phase: maintain
 
 ## Now
-The user-approved Beta 1 stabilization candidate has completed emulator/offline acceptance. Final source passes TypeScript and 1,475 integrated checks; native recovery, notification delivery/settings/restart, Arabic labels and protected-file checks pass. Actual Android protected exports open in offline Chrome with exact ledger/CSV contents, and older affected files are recoverable. Preparing the signed 0.1.0-beta.1 release; account-backed cloud tests remain deferred as requested.
+Published and independently verified 0.1.0-beta.1 after the user approved entering beta. Both GitHub workflows passed; the final source passes TypeScript and 1,475 checks. Emulator/offline acceptance covers recovery after failed backups, notification delivery/settings/restarts, Arabic layouts and protected original/Unicode/legacy files. The exact released APK preserves the PIN and ledger, and its protected export opens in offline Chrome with exact ledger/CSV contents. Account-backed cloud tests remain deferred as requested.
 
 Next:
-1. Build and publish the signed Beta 1 APK.
-2. Independently verify the released artifact and its update on the emulator.
-3. Record release evidence and remaining account/provider validation.
+1. Collect beta feedback and fix reported defects.
+2. Verify completed Drive/Dropbox upload and restore when an account-backed test session is available.
+3. Review remaining accessibility/provider validation before the stable 0.1.0 release; iOS runtime remains outside this Android pass.
 
 ## Health
 
@@ -30,7 +31,7 @@ Next:
 - [x] Preserve valid delayed reminders and verify real Android delivery and rescheduling.
 - [x] Verify complete Arabic compact labels and usable controls with larger fonts.
 - [x] Pass TypeScript, integrated checks and focused browser/native regressions.
-- [ ] Publish and independently verify the signed stabilization APK.
+- [x] Publish and independently verify the signed stabilization APK.
 - [x] Record remaining account/provider validation without claiming untested cloud uploads.
 
 ## Blockers / Risks
@@ -64,6 +65,8 @@ Next:
 - 2026-09-12: Facing potential overwrite of external backups during startup or recovery, chose explicit first save and suspended automatic backup after local recovery, to protect older/newer copies, accepting a manual review step.
 
 ## Log
+
+- 2026-09-13 [release]: Published `v0.1.0-beta.1` from `1a84d9c` after both Actions workflows passed. Independently verified the 72,433,454-byte APK, production certificate, manifest, fixture-free bundle and native workers. Final emulator PIN/data/UI checks passed; a Unicode protected export from the published binary matches the entire baseline and opens in offline Chrome with four exact CSVs and no network requests/errors. Clipboard/helpers were cleaned and no financial records changed. [Final acceptance](app/docs/verification/beta1-native.json).
 
 - 2026-09-13 [work]: User approved beta transition. Final source passes 1,475 checks, and emulator acceptance adds 12 combined-notification checks plus protected original/Unicode/legacy imports and actual Android export validation. The export SDK mismatch was fixed; independent Node and offline Chrome agree exactly on the ledger and four CSVs, with no financial changes. Preparing 0.1.0-beta.1/code 11 publication.
 

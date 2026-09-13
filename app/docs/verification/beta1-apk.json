@@ -1,0 +1,35 @@
+{
+  "scope": "Published Beta1 release APK",
+  "file": "iou-0.1.0-beta.1.apk",
+  "sha256": "8f54cbc13d8e8721b0608f6cb5e642bbd8a573eca133a05a9370979d244c0daf",
+  "certificateSha256": "9a191eff750459eb5a2508e7875c9bad4bf4062fa488de057f6b4cf491faf5a6",
+  "bytes": 72433454,
+  "bundleBytes": 1936204,
+  "nativePinWorker": true,
+  "nativeBackupDocuments": true,
+  "nativeBackupKeyWorker": true,
+  "checks": [
+    "Artifact SHA-256 matches downloaded APK",
+    "Offline bundle present without demo fixtures",
+    "No signing key packaged",
+    "Native PIN module and worker compiled in DEX",
+    "Native backup documents module compiled in DEX",
+    "Native protected-backup key worker compiled in DEX",
+    "SDK37 verifies signature with existing production certificate"
+  ],
+  "measuredAt": "2026-09-13",
+  "sourceCommit": "1a84d9cb811e2649e3a329474dfc6f8641dc4482",
+  "releaseWorkflow": "https://github.com/witcherxz/iou/actions/runs/34728942719",
+  "mainWorkflow": "https://github.com/witcherxz/iou/actions/runs/34728942770",
+  "bothWorkflows": "PASS",
+  "manifest": {
+    "apk": "/tmp/iou-beta1-release/download/iou-0.1.0-beta.1.apk",
+    "applicationId": "io.github.witcherxz.iou",
+    "versionCode": 11,
+    "versionName": "0.1.0-beta.1",
+    "label": "دفتر الديون",
+    "debuggable": false,
+    "overlayPermission": false,
+    "tool": "Android Asset Packaging Tool (aapt) 2.20-13193326"
+  }
+}
