@@ -1,49 +1,54 @@
 # STATUS — IoU
-Updated: 2026-09-13 | State: MAINTENANCE
-Reason: Beta 1 is published and verified; awaiting beta feedback.
+Updated: 2026-09-13 | State: ACTIVE
 Goal: Provide a private Arabic debt ledger with clear balances and recoverable records.
-Phase: maintain
+Phase: release preparation
 
 ## Now
-Published and independently verified 0.1.0-beta.1 after the user approved entering beta. Both GitHub workflows passed; the final source passes TypeScript and 1,475 checks. Emulator/offline acceptance covers recovery after failed backups, notification delivery/settings/restarts, Arabic layouts and protected original/Unicode/legacy files. The exact released APK preserves the PIN and ledger, and its protected export opens in offline Chrome with exact ledger/CSV contents. Account-backed cloud tests remain deferred as requested.
+Published Beta 1 reproduced a Dropbox read-after-write failure in the dummy account: the first save returned `FOLDER_SNAPSHOT_READ`, then the same snapshot became readable and matched the entire synthetic ledger exactly. No canonical JSON or readable companions were created. The user's additional zero-byte-file observation has not been reproduced.
+
+The local candidate passes save, shorter rewrite and explicit restore through Dropbox 488.2.2 on emulator 5584 with the dummy account. The first save completed in 37.89 seconds with eight nonempty, verified files. The shorter second save produced ten nonempty files: JSON shrank from 3,234 to 3,225 bytes, HTML from 30,502 to 30,464 bytes, all companions match exactly, the previous copy equals the old canonical and both older snapshots are unchanged. Exactly one new snapshot appeared. After changing the local profile and stopping the Dropbox process, explicit restore recovered profile `Q`, all records and the 50.17 balance; a fresh local re-export matches the fixture and all HTML/CSV companions. Automatic backup was observed on after the first save, then explicitly switched off after the second save and remained off after restore; do not infer zero automatic writes. [Candidate evidence](app/docs/verification/dropbox-candidate.json).
+
+The fix writes each Android SAF document once, then retries sequential reads of that same URI within a 25-second retry window, requiring exact content before proceeding. It also retains the separate best-effort cleanup fix. Preparation is complete: 1,489 automated checks, including 91 focused backup checks, and TypeScript pass. Beta 2/code 12 is prepared; publication remains pending. Native acceptance covers a local JavaScript candidate on the unchanged Beta 1 native base. The phone and personal accounts remain outside this test; no independent Dropbox server API audit is claimed.
 
 Next:
-1. Collect beta feedback and fix reported defects.
-2. Verify completed Drive/Dropbox upload and restore when an account-backed test session is available.
-3. Review remaining accessibility/provider validation before the stable 0.1.0 release; iOS runtime remains outside this Android pass.
+1. Commit and publish the prepared Beta 2 fix after final source and evidence review.
+2. Verify both CI workflows and the published APK's identity, signature and checksum.
+3. Record the final release state and any remaining device/provider limitations.
 
 ## Health
 
 | metric | current | measured | previous | threshold | goal | source |
 |---|---:|---|---:|---:|---:|---|
-| Latest completed integrated suite | 1475 count | 2026-09-13 | 1354 count | >= 1475 count | 1475 count | `cd app && npm run check`; `node scripts/release-workflow-checks.mjs`; native PIN and backup key Java checks; `app/docs/verification/beta1-checks.json` |
+| Latest completed integrated suite | 1489 count | 2026-09-13 | 1475 count | >= 1489 count | 1489 count | `cd app && npm run check`; release workflow and native Java checks; `app/docs/verification/dropbox-candidate.json` |
+| Focused folder backup checks | 91 count | 2026-09-13 | 81 count | >= 91 count | 91 count | `cd app && npm run check:backup`; transient/persistent readback, cleanup and empty-file regressions |
+| Published Beta 1 Dropbox first save | FAIL | 2026-09-13 | UNMEASURED | = PASS | PASS | `app/docs/verification/dropbox-investigation.json`; same snapshot later validates and matches the synthetic ledger |
+| Candidate Dropbox save and restore | PASS | 2026-09-13 | UNMEASURED | = PASS | PASS | `app/docs/verification/dropbox-candidate.json`; exact first cloud copy and restored local re-export |
+| Shorter cloud rewrite comparison | PASS | 2026-09-13 | UNMEASURED | = PASS | PASS | Ten nonempty files; exact shorter JSON/HTML/CSV, previous copy and preserved history |
 | Stabilized offline recovery | PASS | 2026-09-13 | — | = PASS | PASS | `app/docs/verification/alpha11-backups.json`; 20 native checks plus exact portable/HTML/CSV/history comparison |
 | Android reminder delivery | PASS | 2026-09-13 | — | = PASS | PASS | `app/docs/verification/alpha11-reminders.json`; 24 native checks including delivery/channel/relaunch/reboot |
 | Native compact Arabic labels | PASS | 2026-09-13 | FAIL | = PASS | PASS | `app/docs/verification/alpha11-labels.json`; native candidate at font scales 1.0 and 2.0 |
 
-## DoD — Beta 1 stabilization, emulator/offline pass
+## DoD — Dropbox folder save investigation
 
-- [x] Prefer the newest valid backup and preserve recovery copies after interrupted writes.
-- [x] Keep automatic writes paused across cancellation, local recovery and restart until explicit resolution.
-- [x] Preserve each shared export and cancel stale protected-restore work after privacy locking.
-- [x] Verify native protected-backup performance, password rejection and Unicode compatibility using the signed native build and final JavaScript candidate.
-- [x] Detect blocked Android notifications/channels and provide a usable system-settings route.
-- [x] Preserve valid delayed reminders and verify real Android delivery and rescheduling.
-- [x] Verify complete Arabic compact labels and usable controls with larger fonts.
-- [x] Pass TypeScript, integrated checks and focused browser/native regressions.
-- [x] Publish and independently verify the signed stabilization APK.
-- [x] Record remaining account/provider validation without claiming untested cloud uploads.
+- [x] Identify the actual failure stage and distinguish file creation from verified recovery.
+- [x] Reproduce and fix demonstrated defects with focused before/after checks.
+- [x] Verify a complete save and restore through the real Dropbox provider using synthetic records.
+- [x] Preserve existing ledgers and good backups; reject empty or incomplete files.
+- [x] Check status/error wording against the actual outcome without claiming cloud completion prematurely.
+- [x] Record evidence, remaining limitations and the next beta release state.
 
 ## Blockers / Risks
 
-- Emulator/offline validation is complete for this beta. Full TalkBack navigation, iOS runtime behavior and account-backed provider uploads/restores remain separate validation before stable release. Protected export repair and Unicode interoperability now pass on Android and offline Chrome.
+- Emulator/offline validation is complete for this beta, and a local candidate now passes Dropbox save/restore with a dummy account. Full TalkBack navigation, iOS runtime behavior and other cloud-provider uploads/restores remain separate validation before stable release. Protected export repair and Unicode interoperability now pass on Android and offline Chrome.
 
-- PIN performance, automatic biometric prompting, cancellation/PIN fallback and native share/Drive upload-screen navigation were confirmed on the S24 Ultra in earlier sessions. This emulator pass confirms local folder recovery, the app-switcher privacy cover, targeted 1x/2x font layouts and Android reminders. Completed Dropbox-specific provider writes, full TalkBack navigation and iOS runtime behavior remain unverified. Response: retain these as separate validation before a stable release.
+- PIN performance, automatic biometric prompting, cancellation/PIN fallback and native share/Drive upload-screen navigation were confirmed on the S24 Ultra in earlier sessions. Emulator tests confirm local recovery, Dropbox save/shorter rewrite/restore, the app-switcher privacy cover, targeted 1x/2x font layouts and Android reminders. Full TalkBack navigation and iOS runtime behavior remain pending. Response: retain these as separate validation before a stable release.
 - Direct Google Drive authorization is unfinished. Response: keep direct sync disabled and offer the tested manual share/download and file-restore flow. Drive upload-screen navigation is verified; upload completion remains unverified.
 - The app lock controls access; ordinary local/folder/CSV/report data remains readable. Protected manual exports use a separate password. Response: explain the distinction and keep off-device copies private.
 - Automatic backups run after foreground edits and are suspended after local recovery; reminders retain the nearest 60 alerts plus weekly and refresh on foreground. Response: explain these operating limits in the feature notes.
 
 ## Decisions
+
+- 2026-09-13: Facing a reproduced Dropbox snapshot that becomes readable after the first verification fails, chose bounded sequential read retries of the already-written URI. Keep exact verification and final READ/VERIFY failures; never retry creation or writing. The 25-second window bounds retries and does not cancel an already pending native read or launch overlapping I/O.
 
 - 2026-09-13: Facing the user’s explicit instruction to enter beta for testing and fixes, chose `0.1.0-beta.1` for this stabilization release, keeping Android code 11 above published Alpha 10/code 10. The unpublished Alpha 11 test candidate remains historical evidence; future beta counters are separate from Android build codes.
 
@@ -65,6 +70,24 @@ Next:
 - 2026-09-12: Facing potential overwrite of external backups during startup or recovery, chose explicit first save and suspended automatic backup after local recovery, to protect older/newer copies, accepting a manual review step.
 
 ## Log
+
+- 2026-09-13 [work]: Candidate Dropbox acceptance is complete. The shorter second cloud copy has ten nonempty files, exact JSON/HTML/four CSVs, a previous copy matching the old canonical, both older snapshots unchanged and exactly one new snapshot. Explicit provider restore and its local re-export already passed. Integrated checks, release workflow checks and native Java checks total 1,489; TypeScript passes. Beta 2/code 12 is prepared and publication remains pending. [Candidate evidence](app/docs/verification/dropbox-candidate.json).
+
+- 2026-09-13 [work]: Local Dropbox candidate completed a real provider save in 37.89 seconds with eight nonempty files, six exact current files and preservation of the original failed-save snapshot. A second shorter-profile save showed success. Root explicitly turned automatic backup off, changed the local profile to `RESTORE-CHECK`, stopped only the Dropbox process and confirmed restore from the provider. The restored profile is `Q`; a fresh local backup verifies exact people, transactions, audits, 50.17 remaining and all readable companions. Automatic backup remained off after restore. Direct shorter cloud-file comparison remains pending; no independent server API audit or fixed release is claimed. [Candidate evidence](app/docs/verification/dropbox-candidate.json).
+
+- 2026-09-13 [work]: Published Beta 1 on emulator 5584 with Dropbox 488.2.2 and the dummy account returned `FOLDER_SNAPSHOT_READ` from an initially empty folder. Later history recognized the same valid snapshot; its downloaded JSON matched the prepared 1-person/4-transaction/2-audit fixture, ignoring only the backup timestamp, with paid 41.83, forgiven 33.50 and remaining 50.17. No canonical/HTML/CSV companions were present. The new readback regression fails before the fix with the same code; 91 focused checks and TypeScript pass afterward. Final candidate save/restore remains unmeasured. [Investigation record](app/docs/verification/dropbox-investigation.json).
+
+- 2026-09-13 [work]: Downloaded Dropbox488.2.2 XAPK from APKCombo via normal public access. Independently verified all12 APK signatures against Dropbox's production certificate from its official SDK, checked consistent package/version and non-debuggable status, and installed on emulator5584. Android confirms488.2.2/code48820200 and the login activity is open. Dismissed an automatic credential chooser without reading or selecting accounts. No phone/personal-account access, no mirror installer, and no cloud test yet. [Setup evidence](app/docs/verification/dropbox-provider-setup.json).
+
+- 2026-09-13 [work]: User expressed concern about APK transfer from their phone and asked about reputable mirrors. Phone transfer is not being pursued. Found independent Dropbox production certificate in its official SDK, corroborated by domain assetlinks; the latter also includes a debug certificate, which is excluded from release trust. Checking a mirror download statically before emulator installation. No personal device or account access.
+
+- 2026-09-13 [work]: User requested an official Android installation outside Google Play to avoid using a personal Google account. Current Dropbox mobile page links only to Play; the genuine historical support APK URL returned HTTP404 on HEAD and GET, and bounded primary-source searches found no current replacement. Emulator5584 reports x86_64 and arm64-v8a support. Proposed brief APK-only phone transfer; no phone/account access or installation performed. Evidence: `/tmp/iou-dropbox-provider-qa/official-apk-research.json`.
+
+- 2026-09-13 [work]: User chose emulator testing with a new dummy Dropbox account. Separate official Play API36 emulator5584 is ready in a desktop window at Sign in; the published Beta1 APK was checksum-verified and installed into empty app storage. Handed account setup to the user; no credentials requested, accounts accessed or cloud writes performed. Existing emulator5580 and phone were untouched.
+
+- 2026-09-13 [work]: Reproduced and fixed a separate final-cleanup failure after all output files were verified. Added a stream-open fault case proving a created empty snapshot cannot count as a saved or restorable backup. Focused checks increased from 77 to 81 and TypeScript passes. Preparing emulator5584 with the official Play image and published Beta1; real Dropbox diagnosis remains pending filenames and account access. No release/version change or phone actions.
+
+- 2026-09-13 [work]: Began user-reported Dropbox investigation: manual save reports failure while one populated and one empty file appear in Dropbox. Gathering filenames and preparing an official Play-enabled test emulator. Reviewing staged writes, read-back and metadata loading before attributing the cause; no account/phone access or cloud writes performed yet.
 
 - 2026-09-13 [release]: Published `v0.1.0-beta.1` from `1a84d9c` after both Actions workflows passed. Independently verified the 72,433,454-byte APK, production certificate, manifest, fixture-free bundle and native workers. Final emulator PIN/data/UI checks passed; a Unicode protected export from the published binary matches the entire baseline and opens in offline Chrome with four exact CSVs and no network requests/errors. Clipboard/helpers were cleaned and no financial records changed. [Final acceptance](app/docs/verification/beta1-native.json).
 

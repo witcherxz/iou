@@ -1,0 +1,133 @@
+{
+  "date": "2026-09-13",
+  "baseHead": "36b8d90460e878b9caf8757498e3c14c3e2e9fdc",
+  "status": "preparation complete; publication pending",
+  "scope": "Published Beta 1 Dropbox reproduction using a dummy account, independent synthetic snapshot comparison, and focused provider-adapter regressions",
+  "realDropboxProvider": "BETA 1 FAILURE REPRODUCED; LOCAL CANDIDATE SAVE, SHORTER REWRITE AND RESTORE PASSED",
+  "reportedDropboxSymptomResolved": false,
+  "userPhoneVerification": "NOT TESTED; additional zero-byte-file observation was not reproduced",
+  "reproducedReadbackFailureResolvedInLocalCandidate": true,
+  "actualBeta1Provider": {
+    "version": "0.1.0-beta.1",
+    "versionCode": 11,
+    "apkSha256": "8f54cbc13d8e8721b0608f6cb5e642bbd8a573eca133a05a9370979d244c0daf",
+    "provider": "Dropbox Android 488.2.2",
+    "emulator": "emulator-5584",
+    "dummyAccountLoginComplete": true,
+    "initialFolder": "empty synthetic QA folder",
+    "firstSaveCode": "FOLDER_SNAPSHOT_READ",
+    "lastSuccessfulBackupSet": false,
+    "laterValidSnapshotCount": 1,
+    "snapshotFilename": "iou-snapshot-2026-09-13T03-07-43-372Z-0.json",
+    "displayedSize": "3.23 kB",
+    "canonicalAndReadableCompanionsCreated": false,
+    "snapshotComparison": {
+      "result": "passed",
+      "ignoredFields": ["backedUpAt"],
+      "personIdsNamesTransactionsAuditsAndOtherPortableFieldsExact": true,
+      "peopleCount": 1,
+      "transactionCount": 4,
+      "auditCount": 2,
+      "paidAmount": 41.83,
+      "forgivenAmount": 33.50,
+      "remainingAmount": 50.17,
+      "sha256": "6a132cf1d76184a901d4a16468659da14397f6319310b74926a4e8182e351a02",
+      "companionsChecked": false
+    },
+    "sourceEvidence": [
+      "/tmp/iou-dropbox-provider-qa/beta1-first-save-evidence.json",
+      "/tmp/iou-dropbox-provider-qa/fixture/beta1-cloud-snapshot-comparison.json"
+    ],
+    "limitation": "Reproduces delayed snapshot readability, not the user's additional observation of a zero-byte file. This failed save did not establish a complete backup."
+  },
+  "readbackFix": {
+    "scope": "Android content:// document verification only",
+    "writesPerDocument": 1,
+    "verification": "Retry sequential reads of the exact already-written URI after READ failures or unequal content; require an exact match before proceeding.",
+    "retryWindowMs": 25000,
+    "initialDelayMs": 250,
+    "maximumDelayMs": 2000,
+    "pendingRead": "Await the pending native read. The window bounds retries, not cancellation of an in-flight read; no overlapping read retries.",
+    "persistentFailure": "Final unreadable content reports READ; final unequal content reports VERIFY. Later files are not created and existing snapshotSaved semantics remain intact.",
+    "beforeRegression": "FAILED as expected with FOLDER_SNAPSHOT_READ",
+    "afterRegression": "PASSED",
+    "nonSafBehavior": "Immediate verification remains unchanged"
+  },
+  "finalCandidate": {
+    "publication": "LOCAL QA ONLY",
+    "providerSave": "PASSED",
+    "providerRestore": "PASSED",
+    "canonicalHtmlAndFourCsvComparison": "PASSED for first cloud save and restored local re-export",
+    "shorterCloudRewriteComparison": "PASSED: exact current files, previous copy and preserved older snapshots",
+    "preparation": "complete",
+    "plannedRelease": "0.1.0-beta.2 / Android code 12",
+    "publicationStatus": "pending",
+    "automaticBackupAfterRestore": false,
+    "independentServerApiAudit": false,
+    "evidence": "dropbox-candidate.json"
+  },
+  "confirmedCleanupBug": {
+    "before": "A final history-cleanup listing failure rejected the save even after the snapshot, canonical JSON and all five readable companions had passed read-back verification.",
+    "after": "Cleanup failure retains extra history and does not invalidate the already verified save.",
+    "regression": "Inject a listing failure immediately after the final companion read-back; verify successful completion, exact current files, preservation of all 11 older archives and a restorable current backup.",
+    "beforeResult": "FAILED as expected: FolderBackupWriteError was returned where successful completion was required.",
+    "afterResult": "PASSED",
+    "relationshipToUserReport": "Incidental confirmed bug. It does not establish the cause of the reported failure before a verified current snapshot."
+  },
+  "streamOpenFailureRegression": {
+    "result": "PASSED before and after the cleanup fix",
+    "behavior": "Creating a document and then failing to open its output stream leaves exactly one empty snapshot, reports FOLDER_SNAPSHOT_WRITE with snapshotSaved=false, and leaves no open handle.",
+    "restoreSafety": "Both history and default restore reject the empty snapshot.",
+    "limitation": "Synthetic failure injection demonstrates possible app behavior; it does not prove Dropbox failed to open a stream."
+  },
+  "validation": [
+    {
+      "command": "npm run check:backup",
+      "workingDirectory": "app",
+      "phase": "new regression before production fix",
+      "exitCode": 1,
+      "result": "Expected cleanup regression failure"
+    },
+    {
+      "command": "npm run check:backup",
+      "workingDirectory": "app",
+      "phase": "after cleanup fix",
+      "exitCode": 0,
+      "result": "81 BACKUP CHECKS PASSED"
+    },
+    {
+      "command": "npm run check:backup",
+      "workingDirectory": "app",
+      "phase": "readback regression before retry fix",
+      "exitCode": 1,
+      "result": "Expected transient-read regression failure: FOLDER_SNAPSHOT_READ"
+    },
+    {
+      "command": "npm run check:backup",
+      "workingDirectory": "app",
+      "phase": "after readback retry fix",
+      "exitCode": 0,
+      "result": "91 BACKUP CHECKS PASSED"
+    },
+    {
+      "command": "npm run typecheck",
+      "workingDirectory": "app",
+      "exitCode": 0,
+      "result": "tsc --noEmit passed"
+    },
+    {
+      "command": "git diff --check",
+      "workingDirectory": "repository root",
+      "exitCode": 0,
+      "result": "passed"
+    }
+  ],
+  "runOutputLocation": "Execution transcript only; no standalone log file was saved.",
+  "review": {
+    "blockingFindings": [],
+    "faultInjectionIsolation": "Faults exist only in test stubs. Stream-open failure is consumed before throwing; the temporary read override is restored in finally. Subsequent restore exercises confirm the one-shot listing fault was consumed.",
+    "productionScope": "The final pruneSnapshots call gained a best-effort error boundary. Android SAF verification now retries reads of each once-written file within a bounded window. Writes and final verification still reject failures; backup pause safeguards are unchanged.",
+    "testsRerunDuringReview": false,
+    "deviceActions": false
+  }
+}

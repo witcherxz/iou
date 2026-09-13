@@ -9,7 +9,8 @@ import { PersistedState } from '../src/types';
 import { validateState } from '../src/validation';
 import { listAndroidDocuments, validateAndroidDocumentEntries, writeAndroidDocument } from '../src/backup/androidDocuments';
 import { URL as ExpoURL } from 'whatwg-url-minimum';
-import { failNextWrite, failNextWriteMatching, failNextCreate, failNextRead, failNextClose, mismatchNextRead, failNextListing, hangNextListing, files, folders, nonTruncatingFolders, openHandles, opaqueFolders, reorderedFolders, metadata, readCalls, addDocument, documentUriNamed, freshSafWriteAttempts, expoSafOpenAttempts, nativeWriteCalls } from './backup-filesystem-stub';
+import { runReadbackChecks } from './backup-readback-checks';
+import { File as StubFile, failNextWrite, failNextWriteMatching, failNextCreate, failNextRead, failNextClose, failNextOpen, mismatchNextRead, failNextListing, hangNextListing, files, folders, nonTruncatingFolders, openHandles, opaqueFolders, reorderedFolders, metadata, readCalls, addDocument, documentUriNamed, freshSafWriteAttempts, expoSafOpenAttempts, nativeWriteCalls } from './backup-filesystem-stub';
 
 // Keep these checks dependency-free, like the existing ledger checks.
 const assert = {
@@ -456,7 +457,9 @@ async function main() {
       assert.equal(openHandles, 0);
     });
   } finally { globalThis.setTimeout = originalSetTimeout; }
-  const diagnosticUri = 'content://provider/tree/diagnostics';
+  checks += await runReadbackChecks(text);
+  // Non-SAF read failures and mismatches remain immediate.
+  const diagnosticUri = 'memory://diagnostics';
   folders.add(diagnosticUri);
   failNextCreate(BACKUP_FILENAME);
   let createFailure: unknown;
@@ -479,6 +482,59 @@ async function main() {
     assert.equal((verifyFailure as FolderBackupWriteError).code, 'FOLDER_REPORT_VERIFY');
     assert.equal(openHandles, 0);
   });
+
+  const openFailureUri = 'content://provider/tree/stream-open-failure';
+  folders.add(openFailureUri);
+  const writesBeforeOpenFailure = nativeWriteCalls.length;
+  failNextOpen();
+  let openFailure: unknown;
+  try { await writeToFolder(openFailureUri, text); } catch (error) { openFailure = error; }
+  const emptyDocuments = [...metadata.values()].filter(entry => entry.folder === openFailureUri);
+  check('creation followed by stream-open failure leaves an empty file without claiming success', () => {
+    assert.ok(openFailure instanceof FolderBackupWriteError);
+    assert.equal((openFailure as FolderBackupWriteError).code, 'FOLDER_SNAPSHOT_WRITE');
+    assert.equal((openFailure as FolderBackupWriteError).snapshotSaved, false);
+    assert.equal(nativeWriteCalls.length, writesBeforeOpenFailure + 1);
+    assert.equal(emptyDocuments.length, 1);
+    assert.ok(emptyDocuments[0].name.startsWith('iou-snapshot-'));
+    assert.equal(files.get(emptyDocuments[0].uri), '');
+    assert.equal(openHandles, 0);
+    assert.ok(!(openFailure as Error).message.includes('private'));
+  });
+  await assert.rejects(listFolderVersions(openFailureUri), InvalidBackupError);
+  await assert.rejects(readFolderBackup(openFailureUri), InvalidBackupError);
+  check('an empty file left by failed stream opening is never offered for restore', () => assert.ok(true));
+
+  const cleanupUri = 'content://provider/tree/cleanup-list-failure';
+  folders.add(cleanupUri);
+  const oldCleanupText = JSON.stringify({ ...payload, profileName: 'older recovery', backedUpAt: '2020-01-01T00:00:00Z' });
+  const retainedArchives = Array.from({ length: SNAPSHOT_LIMIT + 1 }, (_, index) =>
+    addDocument(cleanupUri, `iou-snapshot-2020-01-01T00-00-00-000Z-${index}.json`, oldCleanupText));
+  const companions = readableFiles(text);
+  const lastCompanion = companions[companions.length - 1].name;
+  const originalRead = StubFile.prototype.text;
+  let cleanupFaultArmed = false;
+  let cleanupFailure: unknown;
+  StubFile.prototype.text = async function () {
+    const result = await originalRead.call(this);
+    const entry = metadata.get(this.uri);
+    if (entry?.folder === cleanupUri && entry.name === lastCompanion) {
+      cleanupFaultArmed = true;
+      failNextListing();
+    }
+    return result;
+  };
+  try { await writeToFolder(cleanupUri, text); } catch (error) { cleanupFailure = error; }
+  finally { StubFile.prototype.text = originalRead; }
+  check('cleanup listing failure cannot invalidate a fully verified backup or prune older recovery', () => {
+    assert.equal(cleanupFaultArmed, true);
+    assert.equal(cleanupFailure, undefined);
+    assert.equal(files.get(documentUriNamed(cleanupUri, BACKUP_FILENAME)), text);
+    for (const companion of companions) assert.equal(files.get(documentUriNamed(cleanupUri, companion.name)), companion.text);
+    for (const archive of retainedArchives) assert.equal(files.get(archive), oldCleanupText);
+  });
+  const cleanupRestored = await readFolderBackup(cleanupUri);
+  check('the backup remains restorable when best-effort cleanup is unavailable', () => assert.equal(cleanupRestored?.text, text));
   const corruptUri = 'memory://corrupt-only';
   folders.add(corruptUri);
   files.set(`${corruptUri}/iou-snapshot-2026-09-12T12-00-00-000Z-0.json`, '{bad');

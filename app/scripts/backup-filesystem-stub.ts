@@ -23,6 +23,7 @@ let mismatchingRead: string | null = null;
 let failingListing = false;
 let hangingListing = false;
 let failingClose: string | null = null;
+let failingOpen = false;
 export const failNextWrite = (name: string) => { failingName = name; };
 export const failNextWriteMatching = (pattern: RegExp) => { failingPattern = pattern; };
 export const failNextCreate = (name: string) => { failingCreate = name; };
@@ -31,6 +32,7 @@ export const mismatchNextRead = (name: string) => { mismatchingRead = name; };
 export const failNextListing = () => { failingListing = true; };
 export const hangNextListing = () => { hangingListing = true; };
 export const failNextClose = (name: string) => { failingClose = name; };
+export const failNextOpen = () => { failingOpen = true; };
 const normalize = (uri: string) => uri.replace(/\/$/, '');
 
 export function addDocument(folder: string, name: string, text: string, id?: string, isDirectory = false): string {
@@ -65,6 +67,10 @@ export async function listDocumentMetadata(folder: string) {
 export async function writeDocumentText(uri: string, text: string): Promise<void> {
   if (!uri.startsWith('content://') || !files.has(uri)) throw new Error('Missing provider document');
   nativeWriteCalls.push(uri);
+  if (failingOpen) {
+    failingOpen = false;
+    throw new Error('private provider stream-open failure');
+  }
   nativeOpenDocuments.add(uri);
   openHandles++;
   files.set(uri, ''); // resolver.openOutputStream(uri, "wt") truncates on open.

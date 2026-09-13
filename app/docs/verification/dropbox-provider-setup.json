@@ -1,0 +1,358 @@
+{
+  "date": "2026-09-13",
+  "purpose": "Install authentic Dropbox in an isolated emulator without personal phone or Google-account access",
+  "providerTestStatus": "At installation: not tested; dummy-account login and subsequent results are recorded in dropbox-investigation.json and dropbox-candidate.json",
+  "source": {
+    "mirror": "APKCombo",
+    "page": "https://apkcombo.com/dropbox/com.dropbox.android/download/apk",
+    "archiveBytes": 150258183,
+    "archiveSha256": "fc68fb82c9b5c36ac48752cda462436b49e226cbd75a1f814f8ffbdd53d4ead2"
+  },
+  "authenticity": {
+    "officialSdkSource": "https://raw.githubusercontent.com/dropbox/dropbox-sdk-java/6d53d1140ec0e46811b581753af47573e38a96ea/android/src/main/java/com/dropbox/core/android/DbxOfficialAppConnector.kt",
+    "officialAssetlinks": "https://www.dropbox.com/.well-known/assetlinks.json",
+    "productionCertificateSha256": "3467b909be2a577043bb77406388320df882276c937d09689c4d894193984c01",
+    "verifier": "Google Android build-tools37 apksigner, supported SDK range29\u201336",
+    "verifiedApks": 12,
+    "allVerified": true,
+    "scheme": "APK Signature Scheme v3",
+    "package": "com.dropbox.android",
+    "versionName": "488.2.2",
+    "versionCode": 48820200,
+    "debuggable": false,
+    "notes": "The app signer matches the release certificate embedded in Dropbox\u2019s own SDK. Source-stamp signatures are checked separately by apksigner and are not substituted for the app signer. Debug certificates are excluded."
+  },
+  "emulator": {
+    "serial": "emulator-5584",
+    "avd": "IOU_DROPBOX_PLAY_API36",
+    "supportedAbis": [
+      "x86_64",
+      "arm64-v8a"
+    ],
+    "installation": "SUCCESS",
+    "installedVersionName": "488.2.2",
+    "installedVersionCode": 48820200,
+    "resumedDropboxActivities": [
+      "com.dropbox.android/com.dropbox.dbapp.auth.login.DbappLoginActivity",
+      "com.dropbox.android/com.dropbox.dbapp.auth.login.DbappLoginActivity"
+    ],
+    "initialLaunchNote": "Implicit launcher intent succeeded; automatically opened credential chooser was dismissed without reading or selecting accounts."
+  },
+  "personalPhoneAccess": false,
+  "personalAccountAccess": false,
+  "mirrorInstallerInstalled": false,
+  "apks": [
+    {
+      "file": "com.dropbox.android.apk",
+      "sha256": "1fbc36e4800fb715271d1df3ce8b052ec2a7747a92e2130f7a70b2f00cac5467",
+      "signatureExit": 0,
+      "certificateSha256": [
+        "3467b909be2a577043bb77406388320df882276c937d09689c4d894193984c01"
+      ],
+      "schemes": [
+        "Verified using v1 scheme (JAR signing): false",
+        "Verified using v2 scheme (APK Signature Scheme v2): false",
+        "Verified using v3 scheme (APK Signature Scheme v3): true",
+        "Verified using v3.1 scheme (APK Signature Scheme v3.1): false",
+        "Verified using v3.2 scheme (APK Signature Scheme v3.2): false",
+        "Verified using v4 scheme (APK Signature Scheme v4): false"
+      ],
+      "package": [
+        "com.dropbox.android",
+        "48820200",
+        "488.2.2"
+      ],
+      "debuggable": false,
+      "passed": true,
+      "sourceStampCertificateSha256": [
+        "3257d599a49d2c961a471ca9843f59d341a405884583fc087df4237b733bbd6d"
+      ]
+    },
+    {
+      "file": "config.arm64_v8a.apk",
+      "sha256": "029d8a6a0b6a32ab8b3fea3128edaef30446201a9ccd1731a873de47369ab20d",
+      "signatureExit": 0,
+      "certificateSha256": [
+        "3467b909be2a577043bb77406388320df882276c937d09689c4d894193984c01"
+      ],
+      "schemes": [
+        "Verified using v1 scheme (JAR signing): false",
+        "Verified using v2 scheme (APK Signature Scheme v2): false",
+        "Verified using v3 scheme (APK Signature Scheme v3): true",
+        "Verified using v3.1 scheme (APK Signature Scheme v3.1): false",
+        "Verified using v3.2 scheme (APK Signature Scheme v3.2): false",
+        "Verified using v4 scheme (APK Signature Scheme v4): false"
+      ],
+      "package": [
+        "com.dropbox.android",
+        "48820200",
+        ""
+      ],
+      "debuggable": false,
+      "passed": true,
+      "sourceStampCertificateSha256": [
+        "3257d599a49d2c961a471ca9843f59d341a405884583fc087df4237b733bbd6d"
+      ]
+    },
+    {
+      "file": "config.ja.apk",
+      "sha256": "d53d6e5753d395534ec297ed40bd85091446b89ec1f15db532079c04a2c7a491",
+      "signatureExit": 0,
+      "certificateSha256": [
+        "3467b909be2a577043bb77406388320df882276c937d09689c4d894193984c01"
+      ],
+      "schemes": [
+        "Verified using v1 scheme (JAR signing): false",
+        "Verified using v2 scheme (APK Signature Scheme v2): false",
+        "Verified using v3 scheme (APK Signature Scheme v3): true",
+        "Verified using v3.1 scheme (APK Signature Scheme v3.1): false",
+        "Verified using v3.2 scheme (APK Signature Scheme v3.2): false",
+        "Verified using v4 scheme (APK Signature Scheme v4): false"
+      ],
+      "package": [
+        "com.dropbox.android",
+        "48820200",
+        ""
+      ],
+      "debuggable": false,
+      "passed": true,
+      "sourceStampCertificateSha256": [
+        "3257d599a49d2c961a471ca9843f59d341a405884583fc087df4237b733bbd6d"
+      ]
+    },
+    {
+      "file": "config.ms.apk",
+      "sha256": "1cdb627e25a52c86cdfddc18cb36704cac83f14da37f52889dd6a0d0b31c6c64",
+      "signatureExit": 0,
+      "certificateSha256": [
+        "3467b909be2a577043bb77406388320df882276c937d09689c4d894193984c01"
+      ],
+      "schemes": [
+        "Verified using v1 scheme (JAR signing): false",
+        "Verified using v2 scheme (APK Signature Scheme v2): false",
+        "Verified using v3 scheme (APK Signature Scheme v3): true",
+        "Verified using v3.1 scheme (APK Signature Scheme v3.1): false",
+        "Verified using v3.2 scheme (APK Signature Scheme v3.2): false",
+        "Verified using v4 scheme (APK Signature Scheme v4): false"
+      ],
+      "package": [
+        "com.dropbox.android",
+        "48820200",
+        ""
+      ],
+      "debuggable": false,
+      "passed": true,
+      "sourceStampCertificateSha256": [
+        "3257d599a49d2c961a471ca9843f59d341a405884583fc087df4237b733bbd6d"
+      ]
+    },
+    {
+      "file": "config.nl.apk",
+      "sha256": "31268fb4349d01c427f190855c996058af9adb340488cef95a8fce43a4325121",
+      "signatureExit": 0,
+      "certificateSha256": [
+        "3467b909be2a577043bb77406388320df882276c937d09689c4d894193984c01"
+      ],
+      "schemes": [
+        "Verified using v1 scheme (JAR signing): false",
+        "Verified using v2 scheme (APK Signature Scheme v2): false",
+        "Verified using v3 scheme (APK Signature Scheme v3): true",
+        "Verified using v3.1 scheme (APK Signature Scheme v3.1): false",
+        "Verified using v3.2 scheme (APK Signature Scheme v3.2): false",
+        "Verified using v4 scheme (APK Signature Scheme v4): false"
+      ],
+      "package": [
+        "com.dropbox.android",
+        "48820200",
+        ""
+      ],
+      "debuggable": false,
+      "passed": true,
+      "sourceStampCertificateSha256": [
+        "3257d599a49d2c961a471ca9843f59d341a405884583fc087df4237b733bbd6d"
+      ]
+    },
+    {
+      "file": "config.pl.apk",
+      "sha256": "c73a91fb657b77fc2484d437771c075080fa0ee6127425e560f0b5bb6c29bca7",
+      "signatureExit": 0,
+      "certificateSha256": [
+        "3467b909be2a577043bb77406388320df882276c937d09689c4d894193984c01"
+      ],
+      "schemes": [
+        "Verified using v1 scheme (JAR signing): false",
+        "Verified using v2 scheme (APK Signature Scheme v2): false",
+        "Verified using v3 scheme (APK Signature Scheme v3): true",
+        "Verified using v3.1 scheme (APK Signature Scheme v3.1): false",
+        "Verified using v3.2 scheme (APK Signature Scheme v3.2): false",
+        "Verified using v4 scheme (APK Signature Scheme v4): false"
+      ],
+      "package": [
+        "com.dropbox.android",
+        "48820200",
+        ""
+      ],
+      "debuggable": false,
+      "passed": true,
+      "sourceStampCertificateSha256": [
+        "3257d599a49d2c961a471ca9843f59d341a405884583fc087df4237b733bbd6d"
+      ]
+    },
+    {
+      "file": "config.pt.apk",
+      "sha256": "bb613acd55427d5f368202f22c2c08482ef2939c89a57adb0fc7939b4594a6c1",
+      "signatureExit": 0,
+      "certificateSha256": [
+        "3467b909be2a577043bb77406388320df882276c937d09689c4d894193984c01"
+      ],
+      "schemes": [
+        "Verified using v1 scheme (JAR signing): false",
+        "Verified using v2 scheme (APK Signature Scheme v2): false",
+        "Verified using v3 scheme (APK Signature Scheme v3): true",
+        "Verified using v3.1 scheme (APK Signature Scheme v3.1): false",
+        "Verified using v3.2 scheme (APK Signature Scheme v3.2): false",
+        "Verified using v4 scheme (APK Signature Scheme v4): false"
+      ],
+      "package": [
+        "com.dropbox.android",
+        "48820200",
+        ""
+      ],
+      "debuggable": false,
+      "passed": true,
+      "sourceStampCertificateSha256": [
+        "3257d599a49d2c961a471ca9843f59d341a405884583fc087df4237b733bbd6d"
+      ]
+    },
+    {
+      "file": "config.ru.apk",
+      "sha256": "ae5e2478bb7db18817562fe50d46c28025cf350a8eafa8da932bdd72ca721df1",
+      "signatureExit": 0,
+      "certificateSha256": [
+        "3467b909be2a577043bb77406388320df882276c937d09689c4d894193984c01"
+      ],
+      "schemes": [
+        "Verified using v1 scheme (JAR signing): false",
+        "Verified using v2 scheme (APK Signature Scheme v2): false",
+        "Verified using v3 scheme (APK Signature Scheme v3): true",
+        "Verified using v3.1 scheme (APK Signature Scheme v3.1): false",
+        "Verified using v3.2 scheme (APK Signature Scheme v3.2): false",
+        "Verified using v4 scheme (APK Signature Scheme v4): false"
+      ],
+      "package": [
+        "com.dropbox.android",
+        "48820200",
+        ""
+      ],
+      "debuggable": false,
+      "passed": true,
+      "sourceStampCertificateSha256": [
+        "3257d599a49d2c961a471ca9843f59d341a405884583fc087df4237b733bbd6d"
+      ]
+    },
+    {
+      "file": "config.th.apk",
+      "sha256": "cdf70cd0065f979d2b6fbbd78b8a86a6d47b8bbfc9beec4cdd45f2dfaa05e001",
+      "signatureExit": 0,
+      "certificateSha256": [
+        "3467b909be2a577043bb77406388320df882276c937d09689c4d894193984c01"
+      ],
+      "schemes": [
+        "Verified using v1 scheme (JAR signing): false",
+        "Verified using v2 scheme (APK Signature Scheme v2): false",
+        "Verified using v3 scheme (APK Signature Scheme v3): true",
+        "Verified using v3.1 scheme (APK Signature Scheme v3.1): false",
+        "Verified using v3.2 scheme (APK Signature Scheme v3.2): false",
+        "Verified using v4 scheme (APK Signature Scheme v4): false"
+      ],
+      "package": [
+        "com.dropbox.android",
+        "48820200",
+        ""
+      ],
+      "debuggable": false,
+      "passed": true,
+      "sourceStampCertificateSha256": [
+        "3257d599a49d2c961a471ca9843f59d341a405884583fc087df4237b733bbd6d"
+      ]
+    },
+    {
+      "file": "config.vi.apk",
+      "sha256": "c3232bf727e6e6eabc3ade0c1454282ea19576a6c78f12f56df2b8f433dcb85a",
+      "signatureExit": 0,
+      "certificateSha256": [
+        "3467b909be2a577043bb77406388320df882276c937d09689c4d894193984c01"
+      ],
+      "schemes": [
+        "Verified using v1 scheme (JAR signing): false",
+        "Verified using v2 scheme (APK Signature Scheme v2): false",
+        "Verified using v3 scheme (APK Signature Scheme v3): true",
+        "Verified using v3.1 scheme (APK Signature Scheme v3.1): false",
+        "Verified using v3.2 scheme (APK Signature Scheme v3.2): false",
+        "Verified using v4 scheme (APK Signature Scheme v4): false"
+      ],
+      "package": [
+        "com.dropbox.android",
+        "48820200",
+        ""
+      ],
+      "debuggable": false,
+      "passed": true,
+      "sourceStampCertificateSha256": [
+        "3257d599a49d2c961a471ca9843f59d341a405884583fc087df4237b733bbd6d"
+      ]
+    },
+    {
+      "file": "config.xxhdpi.apk",
+      "sha256": "9177a73a1b9a2e83d0564847dc27e06da2a4ebf1b8bdd96cb090607e901378d5",
+      "signatureExit": 0,
+      "certificateSha256": [
+        "3467b909be2a577043bb77406388320df882276c937d09689c4d894193984c01"
+      ],
+      "schemes": [
+        "Verified using v1 scheme (JAR signing): false",
+        "Verified using v2 scheme (APK Signature Scheme v2): false",
+        "Verified using v3 scheme (APK Signature Scheme v3): true",
+        "Verified using v3.1 scheme (APK Signature Scheme v3.1): false",
+        "Verified using v3.2 scheme (APK Signature Scheme v3.2): false",
+        "Verified using v4 scheme (APK Signature Scheme v4): false"
+      ],
+      "package": [
+        "com.dropbox.android",
+        "48820200",
+        ""
+      ],
+      "debuggable": false,
+      "passed": true,
+      "sourceStampCertificateSha256": [
+        "3257d599a49d2c961a471ca9843f59d341a405884583fc087df4237b733bbd6d"
+      ]
+    },
+    {
+      "file": "config.zh.apk",
+      "sha256": "9eb561596733cc1a4239973d68af3e0c23d53420822df85390a5fa8737afb0f4",
+      "signatureExit": 0,
+      "certificateSha256": [
+        "3467b909be2a577043bb77406388320df882276c937d09689c4d894193984c01"
+      ],
+      "schemes": [
+        "Verified using v1 scheme (JAR signing): false",
+        "Verified using v2 scheme (APK Signature Scheme v2): false",
+        "Verified using v3 scheme (APK Signature Scheme v3): true",
+        "Verified using v3.1 scheme (APK Signature Scheme v3.1): false",
+        "Verified using v3.2 scheme (APK Signature Scheme v3.2): false",
+        "Verified using v4 scheme (APK Signature Scheme v4): false"
+      ],
+      "package": [
+        "com.dropbox.android",
+        "48820200",
+        ""
+      ],
+      "debuggable": false,
+      "passed": true,
+      "sourceStampCertificateSha256": [
+        "3257d599a49d2c961a471ca9843f59d341a405884583fc087df4237b733bbd6d"
+      ]
+    }
+  ]
+}

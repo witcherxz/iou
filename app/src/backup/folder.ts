@@ -10,6 +10,7 @@ import { readableFiles } from './readable';
 export const folderSupported = Platform.OS === 'android' || Platform.OS === 'ios';
 export const PREVIOUS_BACKUP_FILENAME = 'iou-backup.previous.json';
 export const SNAPSHOT_LIMIT = 10;
+const SAF_VERIFY_WINDOW_MS = 25_000;
 const snapshotPattern = /^iou-snapshot-\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}Z-\d+\.json$/;
 export interface FolderBackupVersion {
   /** Ephemeral identity from a directory listing, never displayed to the user. */
@@ -124,8 +125,9 @@ function createFile(dir: Directory, name: string, mime: string): File {
 }
 
 async function writeFileVerified(file: File, text: string): Promise<void> {
+  const androidDocument = Platform.OS === 'android' && file.uri.startsWith('content://');
   try {
-    if (Platform.OS === 'android' && file.uri.startsWith('content://')) {
+    if (androidDocument) {
       // The native writer owns and closes the provider stream before resolving.
       // This commits fresh SAF documents and truncates shorter rewrites without
       // Expo's existence check or non-owning File.open descriptor lifecycle.
@@ -136,7 +138,33 @@ async function writeFileVerified(file: File, text: string): Promise<void> {
   } catch {
     throw new FolderOperationError('WRITE');
   }
-  if (await readText(file) !== text) throw new FolderOperationError('VERIFY');
+  if (!androidDocument) {
+    if (await readText(file) !== text) throw new FolderOperationError('VERIFY');
+    return;
+  }
+  // Cloud providers can close a write before the same document becomes readable.
+  // Retry only reads of this exact URI, never creation or writing. This window
+  // bounds retries; an already pending native read is awaited, not abandoned
+  // for overlapping I/O. Expo File.text does not expose read cancellation.
+  const deadline = Date.now() + SAF_VERIFY_WINDOW_MS;
+  let waited = 0;
+  let delay = 250;
+  for (;;) {
+    let failure: FolderOperationError;
+    try {
+      if (await readText(file) === text) return;
+      failure = new FolderOperationError('VERIFY');
+    } catch {
+      failure = new FolderOperationError('READ');
+    }
+    // Also cap scheduled waits if the system clock moves backwards.
+    const remaining = Math.min(deadline - Date.now(), SAF_VERIFY_WINDOW_MS - waited);
+    if (remaining <= 0) throw failure;
+    const wait = Math.min(delay, remaining);
+    await new Promise<void>(resolve => setTimeout(resolve, wait));
+    waited += wait;
+    delay = Math.min(delay * 2, 2000);
+  }
 }
 
 async function writeVerified(dir: Directory, name: string, text: string, mime = 'application/json'): Promise<void> {
@@ -236,7 +264,10 @@ export async function writeToFolder(folderUri: string, text: string): Promise<vo
     stage = 'report';
     for (const report of readableFiles(text)) await writeVerified(dir, report.name, report.text, report.mime);
     stage = 'cleanup';
-    await pruneSnapshots(dir);
+    try { await pruneSnapshots(dir); } catch {
+      // Every backup file is already verified. Unavailable cleanup metadata
+      // may retain extra history, but cannot invalidate the completed save.
+    }
   } catch (error) {
     throw new FolderBackupWriteError(stage, snapshotSaved, error instanceof FolderOperationError ? error.operation : 'IO');
   }
