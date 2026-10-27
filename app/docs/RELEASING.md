@@ -4,7 +4,7 @@ The application version is `0.1.0-beta.3`, Android version code `13`, and produc
 
 The user approved entering beta on 2026-09-13. Use `0.1.0-beta.N` for testing and stabilization of the agreed core scope, then `0.1.0` after release acceptance. Android build codes increase independently of the prerelease counter; Beta 1 uses code 11 after published Alpha 10/code 10. The earlier Alpha 11 build was an unpublished test candidate, so no published tag is renamed.
 
-On 2026-09-13, the user confirmed that the empty-file problem no longer appears on their phone and accepted the emulator's empty extras and unexercised network-error case as non-blocking for Android release acceptance. Their cause remains unconfirmed; the observations are retained in [the interruption evidence](verification/beta2-dropbox-interruptions.json). A reported backup failure pauses automatic writes until a successful manual «نسخ الآن»; later edits do not automatically retry the paused destination. The latest published build remains [Beta 2](https://github.com/witcherxz/iou/releases/tag/v0.1.0-beta.2); a stable `0.1.0` build has not yet been published.
+On 2026-09-13, the user confirmed that the empty-file problem no longer appears on their phone and accepted the emulator's empty extras and unexercised network-error case as non-blocking for Android release acceptance. Their cause remains unconfirmed; the observations are retained in [the interruption evidence](verification/beta2-dropbox-interruptions.json). A reported backup failure pauses automatic writes until a successful manual «نسخ الآن»; later edits do not automatically retry the paused destination. The latest published build is [Beta 3](https://github.com/witcherxz/iou/releases/tag/v0.1.0-beta.3); a stable `0.1.0` build has not yet been published.
 
 ## Build and publish
 
@@ -42,6 +42,18 @@ The old debug package was `com.example.iou` and used the Expo template signing k
 Prerelease notes record remaining device verification, including biometrics, notification delivery, app-switcher privacy and folder-provider behavior. A successful production build establishes packaging and signing, not hardware behavior.
 
 ## Verified releases
+
+### Beta 3
+
+On 2026-10-28, [v0.1.0-beta.3](https://github.com/witcherxz/iou/releases/tag/v0.1.0-beta.3) was published from `f3d981c`, adding custom payment schedules. The first tag build failed before compiling because `android-actions/setup-android@v3` requested the removed SDK package `tools`; the workflow now installs only `platform-tools`, and the unpublished tag was moved to that fix. The [release workflow](https://github.com/witcherxz/iou/actions/runs/40596033645) passed checks, signed build and publication.
+
+The independently downloaded APK is 72,441,326 bytes, version `0.1.0-beta.3` / code `13`, signed by the unchanged production certificate. The checksum matches:
+
+```text
+41c7ecb70406d895552cb50ad0004f420414c911ae2e1b1eaef2cc9bca5fc35e
+```
+
+The published APK itself has not yet been installed on the emulator or phone; feature behavior was verified on a local debug-signed QA build.
 
 ### Beta 1
 
