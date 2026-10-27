@@ -1,9 +1,11 @@
 # STATUS — IoU
-Updated: 2026-09-13 | State: ACTIVE
+Updated: 2026-10-27 | State: ACTIVE
 Goal: Provide a private Arabic debt ledger with clear balances and recoverable records.
 Phase: beta testing
 
 ## Now
+Added a custom payment schedule (2026-10-27, unreleased): New debt → «مخصص» lets the user enter each payment's own amount and date instead of equal monthly installments. Saved rows use the existing installment format, so backups, editing, reminders and payment allocation are unchanged; non-monthly schedules show «مخصص» in debt detail. Full `npm run check` and typecheck pass with 23 new checks. Native check on emulator-5580 used a locally built, debug-signed QA APK (`io.github.witcherxz.iou.qa`, x86_64) installed beside Beta 2 without touching its data: three rows entered out of order saved sorted with «مخصص» label, excess/balanced totals behaved, and a 1,500 payment completed row 1 and left 2,000 on row 2; data survived reinstall. Font scale 2.0 and the user's phone are not checked; not in a published APK.
+
 The user confirms that the empty-file problem no longer appears on their phone and accepts the emulator-only duplicate observation and unexercised network-error case as non-blocking for the current Android scope. Their possible OS/provider explanation remains a hypothesis. Clarified that a reported backup failure pauses automatic writes until a successful manual «نسخ الآن»; the next foreground edit does not automatically retry a paused destination. These accepted testing limits no longer hold up release acceptance. The latest published APK remains `0.1.0-beta.2`; this update does not publish a stable build.
 
 The authorized Beta 2 recovery and interruption drills are complete. Both fresh-install recoveries passed: a newly granted Dropbox folder restore and a password-protected file import, including cancellation/wrong-password checks, restart persistence and exact JSON/HTML/CSV comparisons. All 11 original cloud files remained byte-for-byte unchanged. [Folder recovery](app/docs/verification/beta2-fresh-dropbox.json) · [Protected recovery](app/docs/verification/beta2-fresh-protected.json).
@@ -13,6 +15,7 @@ Stopping IoU 7.68 seconds into a visibly busy save left the old backup and succe
 Two empty suffixed extra files were observed in the separate test folder, one before intentional interruption. The required backup files and all earlier snapshots remained valid; the extras' origin is unconfirmed and the user has accepted this observation as non-blocking. No production code changed, so the release remains `0.1.0-beta.2` (Android code 12), with the existing 1,489 automated checks retained as prior evidence. The emulator finished with local profile Q, automatic backup off and original network settings restored; the separate cloud test folder retains the last verified Q-NETWORK profile variant. Only the dummy account and synthetic records were used.
 
 Next:
+0. Try the custom schedule on the phone (and font scale 2.0), then include it in the next published build.
 1. Continue normal-use feedback on the published Beta 2 APK; revisit the empty extras if they recur on the user's phone or affect recovery.
 2. Prepare the first stable Android `0.1.0` release from the accepted core scope, preserving the documented backup behavior and limitations.
 3. Track other cloud-provider, full TalkBack and iOS validation separately from the completed Android/Dropbox checks.

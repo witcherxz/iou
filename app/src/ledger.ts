@@ -13,6 +13,8 @@ export interface AddDebtInput {
   /** Explicit calendar date overrides dueInDays. First due date for installments. */
   dueAt?: string | null;
   installmentCount?: number;
+  /** Hand-written schedule; overrides installmentCount and due presets. */
+  schedule?: { amount: number; dueAt: string }[];
   transactionDate?: string;
 }
 
@@ -79,7 +81,15 @@ export function createDebt(state: PersistedState, input: AddDebtInput, id: strin
     note: input.note.trim() || (input.dir === 'me' ? 'دين' : 'سلفة'), createdAt: happened, recordedAt: new Date().toISOString(),
     dueAt: input.dueAt !== undefined ? input.dueAt : input.dueInDays === null ? null : addDays(happened, input.dueInDays),
   };
-  if (count > 1) {
+  if (input.schedule) {
+    const rows = input.schedule;
+    if (rows.length < 2 || rows.length > 120 || rows.some(row => !isMoneyAmount(row.amount) || !isCalendarDate(row.dueAt)) ||
+      rows.some((row, i) => i > 0 && row.dueAt <= rows[i - 1].dueAt) ||
+      rows.reduce((sum, row) => sum + toCents(row.amount), 0) !== cents) return null;
+    debt.installments = rows.map((row, i) => ({ amount: fromCents(toCents(row.amount)), label: `دفعة ${i + 1}`, dueAt: row.dueAt }));
+    debt.dueAt = rows[0].dueAt;
+    debt.freq = 'month';
+  } else if (count > 1) {
     const base = Math.floor(cents / count);
     const explicitFirst = input.dueAt !== undefined ? input.dueAt : input.dueInDays !== null ? addDays(happened, input.dueInDays) : null;
     const firstDue = explicitFirst ?? addMonths(happened, 1);

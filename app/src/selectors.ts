@@ -1,4 +1,4 @@
-import { arDate, daysUntil, dueLabelFor, fmt } from './format';
+import { arDate, daysUntil, dueLabelFor, fmt, localDate } from './format';
 import { avatarColors, Colors } from './theme';
 import { Installment, Person, Tx } from './types';
 import { installmentAllocations, isDebt, reductionAmounts, remainingCents } from './ledger';
@@ -193,8 +193,14 @@ export function debtView(debt: Tx, tx: Tx[], people: PersonView[], c: Colors): D
     payBg: closed ? c.track : c.primary,
     hasSchedule: !!schedule,
     schedule,
-    scheduleFreqLabel: 'شهري',
+    scheduleFreqLabel: debt.installments && !isMonthlySchedule(debt.installments) ? 'مخصص' : 'شهري',
   };
+}
+
+/** Consecutive calendar months, as produced by the monthly plan or its due-day changes. */
+export function isMonthlySchedule(installments: Installment[]): boolean {
+  const month = (iso: string) => { const d = localDate(iso); return d.getFullYear() * 12 + d.getMonth(); };
+  return installments.every((row, i) => i === 0 || month(row.dueAt) === month(installments[i - 1].dueAt) + 1);
 }
 
 /** People sorted by total exposure, richest context first — as in the design. */

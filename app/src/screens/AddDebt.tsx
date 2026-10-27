@@ -5,11 +5,12 @@ import { AmountInput, isValidAmountInput, normalizeAmountInput } from '../compon
 import { TransactionDateField } from '../components/TransactionDateField';
 import { Chip, MaterialPressable, OutlineButton, OutlinedField, PrimaryButton, ScreenHeader, Segment, T } from '../components/ui';
 import { addDays, addMonths, arDate, fmt, isCalendarDate, todayISO } from '../format';
+import { buildCustomSchedule, customScheduleIssue, CustomScheduleRow } from '../installmentSchedule';
 import { Colors } from '../theme';
 import { Person } from '../types';
 
 type Dir = 'me' | 'owe';
-type Plan = 'single' | 'install';
+type Plan = 'single' | 'install' | 'custom';
 
 export interface AddDebtDraft {
   dir: Dir;
@@ -19,6 +20,7 @@ export interface AddDebtDraft {
   plan: Plan;
   dueDays: number | null;
   installN: number;
+  customRows: CustomScheduleRow[];
   newPersonMode: boolean;
   newPersonName: string;
   customDate: boolean;
@@ -29,6 +31,7 @@ export interface AddDebtDraft {
 export function createAddDebtDraft(dir: Dir = 'me', personId: string | null = null): AddDebtDraft {
   return {
     dir, personId, amount: '', note: '', plan: 'single', dueDays: 7, installN: 3,
+    customRows: [{ amount: '', dueAt: addMonths(todayISO(), 1) }, { amount: '', dueAt: addMonths(todayISO(), 2) }],
     newPersonMode: false, newPersonName: '', customDate: false, dateText: '', transactionDate: todayISO(),
   };
 }
@@ -56,12 +59,13 @@ interface Props {
     dueInDays: number | null;
     dueAt?: string | null;
     installmentCount?: number;
+    schedule?: { amount: number; dueAt: string }[];
     transactionDate?: string;
   }) => boolean | Promise<boolean>;
 }
 
 export function AddDebt({ c, people, draft, onDraftChange, onClose, onAddPerson, onSave }: Props) {
-  const { dir, amount, note, personId, plan, dueDays, installN, newPersonMode, newPersonName, customDate, dateText, transactionDate } = draft;
+  const { dir, amount, note, personId, plan, dueDays, installN, customRows, newPersonMode, newPersonName, customDate, dateText, transactionDate } = draft;
   const updateDraft = (patch: Partial<AddDebtDraft>) => onDraftChange(current => ({ ...current, ...patch }));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -71,15 +75,31 @@ export function AddDebt({ c, people, draft, onDraftChange, onClose, onAddPerson,
   const amt = validAmount ? Number(amount) : 0;
   const color = dir === 'me' ? c.green : c.red;
   const dateIsValid = isCalendarDate(dateText);
-  const installmentAmountIsValid = plan === 'single' || Math.round(amt * 100) >= installN;
+  const installmentAmountIsValid = plan !== 'install' || Math.round(amt * 100) >= installN;
   const transactionDateValid = isCalendarDate(transactionDate) && transactionDate <= todayISO();
   const baseDate = transactionDateValid ? transactionDate : todayISO();
   const dueDateValid = dateIsValid && dateText >= transactionDate;
-  const canSave = validAmount && people.some(person => person.id === personId) && !newPersonMode && transactionDateValid && installmentAmountIsValid && (!customDate || dueDateValid);
-  const selectedDueAt = customDate ? dateText : dueDays === null ? null : dueDays === 30 ? addMonths(baseDate, 1) : addDays(baseDate, dueDays);
   const totalCents = Math.round(amt * 100);
+  const scheduleIssue = plan === 'custom' ? customScheduleIssue(customRows, totalCents, transactionDate) : '';
+  const allocatedCents = customRows.reduce((sum, row) => sum + (isValidAmountInput(row.amount) ? Math.round(Number(row.amount) * 100) : 0), 0);
+  const canSave = validAmount && people.some(person => person.id === personId) && !newPersonMode && transactionDateValid && installmentAmountIsValid &&
+    (plan === 'custom' ? !scheduleIssue : !customDate || dueDateValid);
+  const selectedDueAt = customDate ? dateText : dueDays === null ? null : dueDays === 30 ? addMonths(baseDate, 1) : addDays(baseDate, dueDays);
   const perInstallment = Math.floor(totalCents / installN) / 100;
   const lastInstallment = (totalCents - Math.floor(totalCents / installN) * (installN - 1)) / 100;
+
+  const updateRow = (index: number, patch: Partial<CustomScheduleRow>) => onDraftChange(current => ({
+    ...current, customRows: current.customRows.map((row, i) => i === index ? { ...row, ...patch } : row),
+  }));
+  const addRow = () => onDraftChange(current => {
+    const last = current.customRows[current.customRows.length - 1]?.dueAt;
+    const left = totalCents - current.customRows.reduce((sum, row) => sum + (isValidAmountInput(row.amount) ? Math.round(Number(row.amount) * 100) : 0), 0);
+    return { ...current, customRows: [...current.customRows, {
+      amount: left > 0 ? String(left / 100) : '',
+      dueAt: last && isCalendarDate(last) ? addMonths(last, 1) : '',
+    }] };
+  });
+  const removeRow = (index: number) => onDraftChange(current => ({ ...current, customRows: current.customRows.filter((_, i) => i !== index) }));
 
   const confirmNewPerson = () => {
     const name = newPersonName.trim();
@@ -163,9 +183,52 @@ export function AddDebt({ c, people, draft, onDraftChange, onClose, onAddPerson,
             c={c}
             value={plan}
             onChange={plan => updateDraft({ plan, dueDays: plan === 'install' && dueDays === null ? 30 : dueDays })}
-            options={[{ value: 'single', label: 'دفعة واحدة' }, { value: 'install', label: 'دفعات مقسّطة' }]}
+            options={[{ value: 'single', label: 'دفعة واحدة' }, { value: 'install', label: 'أقساط شهرية' }, { value: 'custom', label: 'مخصص' }]}
           />
         </View>
+
+        {plan === 'custom' && (
+          <View style={{ gap: 12 }}>
+            <T style={{ fontSize: 14, lineHeight: 20, color: c.onSurfaceVariant }}>
+              حدد مبلغ وتاريخ كل دفعة. يمكن أن تختلف المبالغ والفترات بين الدفعات، وتُرتب حسب التاريخ عند الحفظ.
+            </T>
+            {customRows.map((row, index) => (
+              <View key={index} style={{ padding: 12, gap: 8, borderRadius: 12, backgroundColor: c.surfaceContainerLow }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <T style={{ fontSize: 16, lineHeight: 24, fontWeight: '500', color: c.onSurface }}>دفعة {fmt(index + 1, 0)}</T>
+                  {customRows.length > 2 && (
+                    <MaterialPressable c={c} onPress={() => removeRow(index)} accessibilityRole="button"
+                      accessibilityLabel={`حذف الدفعة ${index + 1}`}
+                      style={{ minHeight: 48, paddingHorizontal: 12, borderRadius: 24, alignItems: 'center', justifyContent: 'center' }}>
+                      <T style={{ fontSize: 14, lineHeight: 20, fontWeight: '500', color: c.red }}>حذف</T>
+                    </MaterialPressable>
+                  )}
+                </View>
+                <OutlinedField
+                  c={c} label="المبلغ" value={row.amount} keyboardType="decimal-pad" inputMode="decimal"
+                  accessibilityLabel={`مبلغ الدفعة ${index + 1}`}
+                  onChangeText={value => updateRow(index, { amount: normalizeAmountInput(value) })}
+                  error={!!row.amount && !isValidAmountInput(row.amount)}
+                />
+                <OutlinedField
+                  c={c} label="التاريخ" value={row.dueAt} placeholder="YYYY-MM-DD" maxLength={10} autoCapitalize="none"
+                  accessibilityLabel={`تاريخ الدفعة ${index + 1}، سنة ثم شهر ثم يوم`}
+                  style={{ textAlign: 'left', writingDirection: 'ltr' }}
+                  onChangeText={value => updateRow(index, { dueAt: normalizeAmountInput(value) })}
+                  error={!!row.dueAt && (!isCalendarDate(row.dueAt) || row.dueAt < transactionDate)}
+                  helperText={isCalendarDate(row.dueAt) ? arDate(row.dueAt) : 'السنة-الشهر-اليوم، مثل \u20662026-09-25\u2069.'}
+                />
+              </View>
+            ))}
+            {customRows.length < 120 && <OutlineButton label="+ إضافة دفعة" c={c} onPress={addRow} />}
+            <View style={{ backgroundColor: c.surfaceContainerLow, borderRadius: 12, padding: 16, gap: 4 }}>
+              <T style={{ fontSize: 14, lineHeight: 20, color: c.onSurfaceVariant }}>
+                الموزع {fmt(allocatedCents / 100)} من {fmt(amt)} ر.س على {fmt(customRows.length, 0)} دفعات.
+              </T>
+              {!!scheduleIssue && validAmount && <T style={{ color: c.red, fontSize: 14, lineHeight: 20 }}>{scheduleIssue}</T>}
+            </View>
+          </View>
+        )}
 
         {plan === 'install' && (
           <>
@@ -189,6 +252,7 @@ export function AddDebt({ c, people, draft, onDraftChange, onClose, onAddPerson,
           </>
         )}
 
+        {plan !== 'custom' && (
           <View>
             <T style={{ fontSize: 14, lineHeight: 20, fontWeight: '500', color: c.onSurfaceVariant, marginBottom: 8 }}>{plan === 'install' ? 'تاريخ أول دفعة' : 'تاريخ الاستحقاق'}</T>
             <T style={{ fontSize: 12, lineHeight: 20, color: c.onSurfaceVariant, marginBottom: 8 }}>تُحسب المدة من تاريخ الدين الفعلي.</T>
@@ -225,6 +289,7 @@ export function AddDebt({ c, people, draft, onDraftChange, onClose, onAddPerson,
               </T>
             )}
           </View>
+        )}
 
         <OutlinedField
           c={c}
@@ -249,11 +314,14 @@ export function AddDebt({ c, people, draft, onDraftChange, onClose, onAddPerson,
             setSaving(true);
             setError('');
             try {
+              const schedule = plan === 'custom' ? buildCustomSchedule(customRows, totalCents, transactionDate)?.map(({ amount, dueAt }) => ({ amount, dueAt })) : undefined;
+              if (plan === 'custom' && !schedule) return;
               const saved = await onSave({
                 personId: personId!, dir, amount: amt, note: note.trim(),
                 dueInDays: plan === 'install' && dueDays === null ? 30 : dueDays,
                 dueAt: selectedDueAt,
-                installmentCount: plan === 'install' ? installN : undefined,
+                installmentCount: plan === 'install' ? installN : schedule?.length,
+                schedule,
                 transactionDate,
               });
               if (!saved) setError('تعذر حفظ الدين. تحقق من البيانات وحاول مرة أخرى.');

@@ -9,6 +9,7 @@ Implemented locally on 2026-09-12. The Arabic Material 3 interface continues to 
 | Edit and undo | Open a debt → **تعديل الدين أو إلغاؤه**; tap a payment in the person/debt history | Edit amount, actual date, person, direction, note, due date or existing installment schedule. Undo the latest edit, cancel a mistaken entry, or restore a cancellation. |
 | Debt forgiveness | Recording an entry → **إعفاء من الدين**, or open the debt's forgiveness action | Waive all or part of a debt with an actual date and optional reason. Cash paid and forgiven amounts remain separate in history, installments, and readable exports. |
 | Recovery and spreadsheets | Settings → **النسخ السابقة والتصدير للجداول** | Open local/folder history; export a readable report or individual CSV tables; optionally protect an export with a separate password. |
+| Custom payment schedule | New debt → **طريقة السداد** → **مخصص** | Enter each payment's own amount and date, e.g. 1,000 in November and 2,500 in April. Add or delete rows (2–120). A running total shows the unallocated or excess amount; **+ إضافة دفعة** prefills the remainder and the following month. Rows are sorted by date on save and the debt shows **جدول السداد · مخصص**. |
 | Actual transaction dates | Debt/payment forms → **تاريخ الدين / تاريخ الدفعة** | Choose the date money changed hands; today/yesterday shortcuts are available. The original recording timestamp is retained separately. |
 | Optional privacy lock | Settings → **قفل التطبيق** | Confirm a 4–6 digit PIN; supported strong biometrics default on and prompt automatically on entry. Cancellation leaves PIN fallback available. Lock on leaving the app, or use **قفل الآن**. |
 | Flexible reminders | **التذكيرات** tab | Set a local time, advance notice, overdue cadence, weekly day, notification privacy and individual snoozes. |
@@ -71,6 +72,14 @@ Before a stable release, test native biometric success/cancellation, background/
 Alpha 2 adds native PIN derivation and bounded errors, manual Google Drive sharing/restoration, and distinct forgiveness. See [Alpha 2 release notes](releases/0.1.0-alpha.2.md) for changes and device-validation limits.
 
 Alpha 3 adds automatic biometric prompting on entry while preserving PIN fallback and existing biometric preferences. See [Alpha 3 release notes](releases/0.1.0-alpha.3.md).
+
+### Custom payment schedule
+
+Android QA build on the API 36 emulator, 2026-10-27: three rows entered out of date order, saved sorted, then a 1,500 payment completed the first row and reduced the second.
+
+| Form | Debt detail after a payment |
+|---|---|
+| ![Custom schedule form with three rows fully allocated](screenshots/features-custom-schedule-form.png) | ![Custom schedule detail with first row paid](screenshots/features-custom-schedule-detail.png) |
 
 ### Bulk installment due day
 

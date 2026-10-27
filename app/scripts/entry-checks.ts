@@ -10,7 +10,7 @@ import { validateState } from '../src/validation';
 import { STORAGE_KEY, STORAGE_RECOVERY_KEY } from '../src/config/app';
 import { availableLocalHistory, keepLocalSnapshot, LOCAL_HISTORY_KEY, LOCAL_HISTORY_LIMIT, LOCAL_HISTORY_QUARANTINE_KEY, readLocalHistory } from '../src/store/history';
 import { createWriteQueue, readStoredLedger } from '../src/store/persistence';
-import { preserveUnchangedDate, rescheduleRemainingInstallments } from '../src/installmentSchedule';
+import { buildCustomSchedule, customScheduleIssue, preserveUnchangedDate, rescheduleRemainingInstallments } from '../src/installmentSchedule';
 
 declare const process: { exit(code: number): never };
 let checks = 0, sequence = 0;
@@ -215,6 +215,33 @@ async function main() {
   const monthly = createDebt(original, { ...input, dueInDays: null, installmentCount: 3 }, 'monthly', '2026-09-12')!;
   eq('backdated installments retain month-end anchor', monthly.installments!.map(row => row.dueAt), ['2026-02-28', '2026-03-31', '2026-04-30']);
   eq('backdated installments preserve cents', monthly.installments!.map(row => row.amount), [3.33, 3.33, 3.35]);
+
+  // Hand-written schedules keep each chosen amount and date, in any spacing.
+  const rows = [{ amount: '6', dueAt: '2026-07-01' }, { amount: '1.5', dueAt: '2026-02-15' }, { amount: '2.51', dueAt: '2026-03-20' }];
+  eq('custom schedule valid when sum matches', customScheduleIssue(rows, 1001, '2026-01-31'), '');
+  const built = buildCustomSchedule(rows, 1001, '2026-01-31')!;
+  eq('custom schedule sorted by date', built.map(row => [row.dueAt, row.amount]), [['2026-02-15', 1.5], ['2026-03-20', 2.51], ['2026-07-01', 6]]);
+  eq('custom schedule relabelled in date order', built.map(row => row.label), ['دفعة 1', 'دفعة 2', 'دفعة 3']);
+  eq('custom schedule reports unallocated amount', customScheduleIssue(rows.slice(0, 2), 1001, '2026-01-31').includes('متبقٍ'), true);
+  eq('custom schedule reports excess amount', customScheduleIssue([...rows, { amount: '1', dueAt: '2026-08-01' }], 1001, '2026-01-31').includes('يزيد'), true);
+  eq('custom schedule rejects duplicate dates', customScheduleIssue([rows[0], { ...rows[1], dueAt: '2026-07-01' }, rows[2]], 1001, '2026-01-31').includes('تاريخ مختلف'), true);
+  eq('custom schedule rejects dates before debt', customScheduleIssue(rows, 1001, '2026-03-01').includes('يسبق'), true);
+  eq('custom schedule rejects invalid date', customScheduleIssue([rows[0], { ...rows[1], dueAt: '2026-02-30' }, rows[2]], 1001, '2026-01-31') !== '', true);
+  eq('custom schedule rejects zero amount', customScheduleIssue([rows[0], { ...rows[1], amount: '0' }, rows[2]], 1001, '2026-01-31') !== '', true);
+  eq('custom schedule needs two rows', buildCustomSchedule([{ amount: '10.01', dueAt: '2026-02-01' }], 1001, '2026-01-31'), null);
+  const schedule = built.map(({ amount, dueAt }) => ({ amount, dueAt }));
+  const custom = createDebt(original, { ...input, schedule, installmentCount: 3 }, 'custom', '2026-09-12')!;
+  eq('custom schedule debt stores exact rows', custom.installments!.map(row => [row.dueAt, row.amount]), [['2026-02-15', 1.5], ['2026-03-20', 2.51], ['2026-07-01', 6]]);
+  eq('custom schedule debt due date is first row', custom.dueAt, '2026-02-15');
+  eq('custom schedule debt survives validation', validateState({ ...original, tx: [...original.tx, custom] }).tx.find(t => t.id === 'custom')!.installments, custom.installments);
+  eq('custom schedule debt rejects mismatched sum', createDebt(original, { ...input, schedule: schedule.slice(0, 2) }, 'bad', '2026-09-12'), null);
+  eq('custom schedule debt rejects unsorted rows', createDebt(original, { ...input, schedule: [schedule[1], schedule[0], schedule[2]] }, 'bad', '2026-09-12'), null);
+  eq('custom schedule debt rejects row before debt', createDebt(original, { ...input, transactionDate: '2026-03-01', schedule }, 'bad', '2026-09-12'), null);
+  eq('custom schedule debt rejects fractional halalas', createDebt(original, { ...input, schedule: [{ amount: 1.505, dueAt: '2026-02-15' }, { amount: 8.505, dueAt: '2026-03-20' }] }, 'bad', '2026-09-12'), null);
+  eq('custom schedule labelled custom', debtView(custom, [custom], [], makeColors(false)).scheduleFreqLabel, 'مخصص');
+  eq('month-end monthly schedule labelled monthly', debtView(monthly, [monthly], [], makeColors(false)).scheduleFreqLabel, 'شهري');
+  const customPaid = installmentAllocations([custom, payment({ debtId: 'custom', amount: 2, createdAt: '2026-02-20' })], custom);
+  eq('custom schedule allocates payments oldest first', customPaid.map(row => row.remainingAmount), [0, 2.01, 6]);
   const payDate = createSettlements([debt()], 'p1', 25.25, id, 'd1', 'me', '2026-01-11', '  تحويل  ');
   eq('backdated payment stores actual date', payDate[0].createdAt, '2026-01-11');
   eq('payment note trimmed', payDate[0].note, 'تحويل');

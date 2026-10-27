@@ -1,6 +1,6 @@
 # Android releases
 
-The application version is `0.1.0-beta.2`, Android version code `12`, and production application ID `io.github.witcherxz.iou`. The same version is recorded in `app.json`, `package.json`, and the package-lock root. iOS uses the numeric marketing version `0.1.0` and build number `12` if built separately.
+The application version is `0.1.0-beta.3`, Android version code `13`, and production application ID `io.github.witcherxz.iou`. The same version is recorded in `app.json`, `package.json`, and the package-lock root. iOS uses the numeric marketing version `0.1.0` and build number `13` if built separately.
 
 The user approved entering beta on 2026-09-13. Use `0.1.0-beta.N` for testing and stabilization of the agreed core scope, then `0.1.0` after release acceptance. Android build codes increase independently of the prerelease counter; Beta 1 uses code 11 after published Alpha 10/code 10. The earlier Alpha 11 build was an unpublished test candidate, so no published tag is renamed.
 
@@ -11,14 +11,14 @@ On 2026-09-13, the user confirmed that the empty-file problem no longer appears 
 1. Update the version in all three files, increase Android `versionCode`, and add `docs/releases/<version>.md`.
 2. Run `npm run typecheck` and `npm run check`. The release check traverses the production source graph and rejects test fixtures, mocks, sample ledger markers and seeding switches.
 3. Commit/push the reviewed changes. Main-branch Actions runs produce a signed APK artifact.
-4. Push a matching version tag, such as `v0.1.0-beta.2`. Actions builds and verifies the APK, then publishes it and its `.apk.sha256` checksum to a GitHub prerelease. Tag/version mismatches fail.
+4. Push a matching version tag, such as `v0.1.0-beta.3`. Actions builds and verifies the APK, then publishes it and its `.apk.sha256` checksum to a GitHub prerelease. Tag/version mismatches fail.
 
 The workflow runs checks for pull requests without exposing signing credentials. Release builds use Node 22, JDK 17, Expo prebuild, and Gradle `:app:assembleRelease`. A Gradle init script assigns the dedicated release signing configuration and disables debugging; it does not silently fall back to the template debug key.
 
 Before upload, the APK verifier checks package ID, version name/code, non-debuggable manifest, signature certificate, embedded Hermes/JavaScript and absence of demo fixture content. Downloaded APK checksums can be verified using:
 
 ```bash
-sha256sum -c iou-0.1.0-beta.2.apk.sha256
+sha256sum -c iou-0.1.0-beta.3.apk.sha256
 ```
 
 ## Signing key
