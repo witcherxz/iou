@@ -69,7 +69,10 @@ jobs:
         with:
           distribution: temurin
           java-version: 17
+      # The legacy 'tools' default package no longer exists in the SDK repository.
       - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
       - name: Native PIN compatibility checks
         run: node scripts/native-pin-checks.mjs
       - name: Native protected-backup compatibility checks
