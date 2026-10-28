@@ -23,11 +23,10 @@ Stopping IoU 7.68 seconds into a visibly busy save left the old backup and succe
 Two empty suffixed extra files were observed in the separate test folder, one before intentional interruption. The required backup files and all earlier snapshots remained valid; the extras' origin is unconfirmed and the user has accepted this observation as non-blocking. No production code changed, so the release remains `0.1.0-beta.2` (Android code 12), with the existing 1,489 automated checks retained as prior evidence. The emulator finished with local profile Q, automatic backup off and original network settings restored; the separate cloud test folder retains the last verified Q-NETWORK profile variant. Only the dummy account and synthetic records were used.
 
 Next:
-0. Publish the date picker in the next beta after review.
-0. Install Beta 3 on the phone and try the custom schedule (also at font scale 2.0).
-1. Continue normal-use feedback on the published Beta 2 APK; revisit the empty extras if they recur on the user's phone or affect recovery.
-2. Prepare the first stable Android `0.1.0` release from the accepted core scope, preserving the documented backup behavior and limitations.
-3. Track other cloud-provider, full TalkBack and iOS validation separately from the completed Android/Dropbox checks.
+1. User installs Beta 4 on the Samsung phone, grants the battery exemption, removes IoU from sleeping lists, and reports whether due-date reminders arrive; if not, inspect the phone read-only over ADB (alarms present, standby bucket, stopped state).
+2. Confirm on the phone: «كل يوم»/«كل أسبوع» labels, the calendar picker, the custom schedule, and font scale 2.0.
+3. Prepare the first stable Android `0.1.0` release from the accepted core scope once the reminder fix is confirmed.
+4. Track TalkBack, iOS runtime, other cloud providers and direct Google Drive sync separately.
 
 ## Health
 
@@ -65,7 +64,7 @@ Next:
 - PIN performance, automatic biometric prompting, cancellation/PIN fallback and native share/Drive upload-screen navigation were confirmed on the S24 Ultra in earlier sessions. Emulator tests confirm local recovery, Dropbox save/shorter rewrite/restore, the app-switcher privacy cover, targeted 1x/2x font layouts and Android reminders. Full TalkBack navigation and iOS runtime behavior remain pending. Response: track these separately and keep release claims within the tested Android scope.
 - Direct Google Drive authorization is unfinished. Response: keep direct sync disabled and offer the tested manual share/download and file-restore flow. Drive upload-screen navigation is verified; upload completion remains unverified.
 - The app lock controls access; ordinary local/folder/CSV/report data remains readable. Protected manual exports use a separate password. Response: explain the distinction and keep off-device copies private.
-- Automatic backups run after foreground edits and are suspended after local recovery; reminders retain the nearest 60 alerts plus weekly and refresh on foreground. Response: explain these operating limits in the feature notes.
+- Automatic backups run after foreground edits and are suspended after local recovery; Android reminders retain the nearest 200 alerts (iOS 60) plus weekly and an end-of-queue notice, and refresh on foreground; force-stop cancels them until the app is reopened. Response: explain these operating limits in the feature notes.
 
 ## Decisions
 
