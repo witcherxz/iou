@@ -4,7 +4,7 @@ The application version is `0.1.0-beta.4`, Android version code `14`, and produc
 
 The user approved entering beta on 2026-09-13. Use `0.1.0-beta.N` for testing and stabilization of the agreed core scope, then `0.1.0` after release acceptance. Android build codes increase independently of the prerelease counter; Beta 1 uses code 11 after published Alpha 10/code 10. The earlier Alpha 11 build was an unpublished test candidate, so no published tag is renamed.
 
-On 2026-09-13, the user confirmed that the empty-file problem no longer appears on their phone and accepted the emulator's empty extras and unexercised network-error case as non-blocking for Android release acceptance. Their cause remains unconfirmed; the observations are retained in [the interruption evidence](verification/beta2-dropbox-interruptions.json). A reported backup failure pauses automatic writes until a successful manual «نسخ الآن»; later edits do not automatically retry the paused destination. The latest published build is [Beta 3](https://github.com/witcherxz/iou/releases/tag/v0.1.0-beta.3); a stable `0.1.0` build has not yet been published.
+On 2026-09-13, the user confirmed that the empty-file problem no longer appears on their phone and accepted the emulator's empty extras and unexercised network-error case as non-blocking for Android release acceptance. Their cause remains unconfirmed; the observations are retained in [the interruption evidence](verification/beta2-dropbox-interruptions.json). A reported backup failure pauses automatic writes until a successful manual «نسخ الآن»; later edits do not automatically retry the paused destination. The latest published build is [Beta 4](https://github.com/witcherxz/iou/releases/tag/v0.1.0-beta.4); a stable `0.1.0` build has not yet been published.
 
 ## Build and publish
 
@@ -42,6 +42,18 @@ The old debug package was `com.example.iou` and used the Expo template signing k
 Prerelease notes record remaining device verification, including biometrics, notification delivery, app-switcher privacy and folder-provider behavior. A successful production build establishes packaging and signing, not hardware behavior.
 
 ## Verified releases
+
+### Beta 4
+
+On 2026-10-28, [v0.1.0-beta.4](https://github.com/witcherxz/iou/releases/tag/v0.1.0-beta.4) was published from `f3d36c6` with exact-alarm reminders, the reminder delivery card, a 200-reminder Android queue, the calendar date picker and the Samsung label fix. The [release workflow](https://github.com/witcherxz/iou/actions/runs/40614477545) passed checks, signed build, the extended verifier (reminder health module and exact-alarm permissions) and publication.
+
+The independently downloaded APK is 72,456,346 bytes, version `0.1.0-beta.4` / code `14`, signed by the unchanged production certificate, and declares `USE_EXACT_ALARM`, `SCHEDULE_EXACT_ALARM` (max SDK 32) and `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`. The checksum matches:
+
+```text
+7527636af90d9d652562be877af24ddbba7862bc5549d7ed64ae9129469bb777
+```
+
+Feature behavior was verified on a local debug-signed QA build; the published APK has not yet been installed on the emulator or the user's Samsung phone.
 
 ### Beta 3
 
