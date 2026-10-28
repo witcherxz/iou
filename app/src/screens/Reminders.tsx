@@ -5,7 +5,8 @@ import { BellIcon } from '../components/icons';
 import { normalizeAmountInput } from '../components/Keypad';
 import { Chip, MaterialPressable, OutlinedField, PrimaryButton, SectionHeading, T, Toggle } from '../components/ui';
 import { arDate, AR_WEEKDAYS, fmt, localDate } from '../format';
-import { MAX_DEBT_REMINDERS, planReminders } from '../reminderPlan';
+import type { ReminderHealth } from '../reminderHealth';
+import { ANDROID_MAX_DEBT_REMINDERS, MAX_DEBT_REMINDERS, planReminders } from '../reminderPlan';
 import { clearSnooze, defaultReminderSettings, parseReminderTime, ReminderSettings, reminderTime, snoozeDebt } from '../reminderSettings';
 import { DebtView } from '../selectors';
 import { Colors, M3 } from '../theme';
@@ -22,6 +23,9 @@ interface Props {
   notificationStatus?: 'checking' | 'ready' | 'denied' | 'blocked' | 'unavailable';
   onEnable?: () => void;
   onOpenSettings?: () => void;
+  /** Android delivery conditions; null where they do not apply. */
+  health?: ReminderHealth | null;
+  onRequestBattery?: () => void;
 }
 
 const leadOptions = [{ value: 0, label: 'بدون' }, { value: 1, label: 'قبل يوم' }, { value: 3, label: 'قبل 3 أيام' }, { value: 7, label: 'قبل 7 أيام' }];
@@ -32,6 +36,13 @@ function dateAndTime(stamp: string | Date): string {
   return `${arDate(date.toISOString())} · ${reminderTime({ hour: date.getHours(), minute: date.getMinutes() })}`;
 }
 
+function HealthRow({ c, ok, text }: { c: Colors; ok: boolean; text: string }) {
+  return <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
+    <T accessible={false} style={{ ...M3.type.bodyMedium, color: ok ? c.green : c.warnFg }}>{ok ? '✓' : '!'}</T>
+    <T style={{ ...M3.type.bodyMedium, flex: 1, color: ok ? c.onSurface : c.warnFg }}>{text}</T>
+  </View>;
+}
+
 function SmallAction({ c, label, accessibilityLabel, onPress }: { c: Colors; label: string; accessibilityLabel: string; onPress: () => void }) {
   return <MaterialPressable c={c} onPress={onPress} accessibilityRole="button" accessibilityLabel={accessibilityLabel}
     style={{ minHeight: 48, minWidth: 48, paddingHorizontal: 12, paddingVertical: 12, justifyContent: 'center', borderRadius: 24 }}>
@@ -39,7 +50,7 @@ function SmallAction({ c, label, accessibilityLabel, onPress }: { c: Colors; lab
   </MaterialPressable>;
 }
 
-export function Reminders({ c, debts, prefs, weekly, settings: providedSettings, onChangeSettings, onToggle, onToggleWeekly, notificationStatus, onEnable, onOpenSettings }: Props) {
+export function Reminders({ c, debts, prefs, weekly, settings: providedSettings, onChangeSettings, onToggle, onToggleWeekly, notificationStatus, onEnable, onOpenSettings, health, onRequestBattery }: Props) {
   const settings = providedSettings ?? defaultReminderSettings();
   const [timeDraft, setTimeDraft] = useState(() => reminderTime(settings));
   useEffect(() => setTimeDraft(reminderTime(settings)), [settings.hour, settings.minute]);
@@ -52,7 +63,11 @@ export function Reminders({ c, debts, prefs, weekly, settings: providedSettings,
     change(parsedTime);
   };
   const now = Date.now();
-  const planned = planReminders(debts, prefs, now, settings).slice(0, MAX_DEBT_REMINDERS);
+  const limit = Platform.OS === 'android' ? ANDROID_MAX_DEBT_REMINDERS : MAX_DEBT_REMINDERS;
+  const plan = planReminders(debts, prefs, now, settings, limit);
+  const planned = plan.slice(0, limit);
+  const queueEnds = plan.length > planned.length ? planned[planned.length - 1].when : null;
+  const samsung = Platform.OS === 'android' && /samsung/i.test(String((Platform.constants as { Manufacturer?: string }).Manufacturer ?? ''));
   const nextByDebt = new Map(planned.map(item => [item.debt.id, item] as const).reverse());
   const items = debts.filter(d => !d.closed && !d.voidedAt && d.nextDueAt).sort((a, b) => a.dueIn - b.dueIn);
   const card = { padding: 16, gap: 12, borderRadius: 12, backgroundColor: c.surfaceContainerLow } as const;
@@ -80,6 +95,20 @@ export function Reminders({ c, debts, prefs, weekly, settings: providedSettings,
           {notificationStatus === 'denied' && onEnable && <PrimaryButton label="تفعيل الإشعارات" onPress={onEnable} c={c} />}
           {notificationStatus === 'unavailable' && Platform.OS !== 'web' && onEnable && <PrimaryButton label="إعادة المحاولة" onPress={onEnable} c={c} />}
           {notificationStatus === 'blocked' && onOpenSettings && <PrimaryButton label="إعدادات الجهاز" onPress={onOpenSettings} c={c} />}
+        </View>
+      )}
+
+      {notificationStatus === 'ready' && health && (
+        <View style={card}>
+          <SectionHeading c={c}>وصول التذكيرات</SectionHeading>
+          <HealthRow c={c} ok={health.exactAlarms} text={health.exactAlarms ? 'تُضبط التنبيهات على موعدها بالضبط.' : 'لا يسمح النظام بالتنبيهات الدقيقة؛ قد تتأخر التذكيرات.'} />
+          <HealthRow c={c} ok={health.batteryUnrestricted} text={health.batteryUnrestricted
+            ? 'التطبيق مستثنى من تحسين البطارية.'
+            : 'تحسين البطارية قد يؤخر التذكيرات أو يوقفها إذا لم تفتح الدفتر لفترة.'} />
+          {health.standbyBucket >= 45 && <HealthRow c={c} ok={false} text="صنّف النظام التطبيق «مقيّداً»، فيسمح له بتنبيه واحد يومياً فقط." />}
+          {!health.batteryUnrestricted && onRequestBattery && <PrimaryButton c={c} label="السماح بالعمل في الخلفية" onPress={onRequestBattery} />}
+          {samsung && <T style={{ ...M3.type.bodySmall, color: c.onSurfaceVariant }}>في هواتف سامسونج: الإعدادات ‹ البطارية ‹ حدود استخدام الخلفية، وتأكد أن «دفتر الديون» ليس ضمن التطبيقات الخاملة أو الخاملة بعمق.</T>}
+          {queueEnds && <T style={{ ...M3.type.bodySmall, color: c.onSurfaceVariant }}>{`التذكيرات مجدولة حتى ${dateAndTime(queueEnds)}. افتح الدفتر قبل ذلك لجدولة ما بعده؛ سيصلك تنبيه للتذكير.`}</T>}
         </View>
       )}
 
@@ -155,7 +184,7 @@ export function Reminders({ c, debts, prefs, weekly, settings: providedSettings,
         })}
         {items.length === 0 && <T style={{ ...card, padding: 24, textAlign: 'center', color: c.onSurfaceVariant, ...M3.type.bodyLarge }}>لا توجد ديون مفتوحة لها تاريخ استحقاق. حدّد تاريخاً عند إضافة دين ليظهر هنا.</T>}
       </View>
-      <T style={{ ...M3.type.bodySmall, color: c.onSurfaceVariant }}>نحتفظ بأقرب 60 تنبيهاً إضافة إلى التذكير الأسبوعي. تتجدد المواعيد عند فتح الدفتر، وقد يؤخرها وضع توفير الطاقة في الجهاز.</T>
+      <T style={{ ...M3.type.bodySmall, color: c.onSurfaceVariant }}>{`نحتفظ بأقرب ${fmt(limit, 0)} تنبيهاً إضافة إلى التذكير الأسبوعي، وتتجدد المواعيد عند فتح الدفتر. إيقاف التطبيق إجبارياً يلغي التذكيرات حتى تفتحه مجدداً.`}</T>
     </ScrollView>
   );
 }

@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { AmountInput, isValidAmountInput, normalizeAmountInput } from '../components/Keypad';
+import { DateField } from '../components/DatePicker';
 import { TransactionDateField } from '../components/TransactionDateField';
 import { Chip, OutlinedField, OutlineButton, PrimaryButton, ScreenHeader, Segment, T } from '../components/ui';
 import { confirmAction } from '../confirm';
@@ -121,9 +122,8 @@ export function EntryEditor({ c, entry, people, transactions, changes, onBack, o
         </View> : linked.length ? <T style={{ ...M3.type.bodyMedium, color: c.onSurfaceVariant }}>للدين دفعات أو إعفاءات مسجلة. ألغِ العمليات المرتبطة أولاً لتغيير الشخص أو الاتجاه.</T> :
           <Segment c={c} value={dir} onChange={setDir} options={[{ value: 'me', label: 'يدين لي' }, { value: 'owe', label: 'أدين له' }]} />}
         {!payment && !installments.length && <View style={{ gap: 8 }}>
-          <OutlinedField c={c} label="تاريخ الاستحقاق (اختياري)" accessibilityLabel="تاريخ الاستحقاق" value={dueAt}
-            onChangeText={v => setDueAt(normalizeAmountInput(v))} placeholder="YYYY-MM-DD" maxLength={10}
-            style={{ writingDirection: 'ltr', textAlign: 'left' }} error={!!dueAt && !isCalendarDate(dueAt)}
+          <DateField c={c} label="تاريخ الاستحقاق (اختياري)" value={dueAt} onChange={setDueAt} placeholder="بدون موعد"
+            min={isCalendarDate(occurred) ? occurred : undefined} error={!!dueAt && !isCalendarDate(dueAt)}
             helperText="اتركه فارغاً إذا لم يُحدد موعد للسداد." />
           {!!dueAt && <Chip c={c} label="بدون موعد" onPress={() => setDueAt('')} />}
         </View>}
@@ -145,11 +145,10 @@ export function EntryEditor({ c, entry, people, transactions, changes, onBack, o
             <T style={{ ...M3.type.titleMedium, color: c.onSurface }}>دفعة {index + 1}{allocations[index]?.remainingAmount === 0 ? ' · مكتمل' : ''}</T>
             <OutlinedField c={c} label={`مبلغ القسط ${index + 1}`} value={ins.amount} keyboardType="decimal-pad" inputMode="decimal"
               onChangeText={value => setInstallments(rows => rows.map((row, i) => i === index ? { ...row, amount: normalizeAmountInput(value) } : row))} />
-            <OutlinedField c={c} label={`موعد القسط ${index + 1}`} value={ins.dueAt} placeholder="YYYY-MM-DD" maxLength={10}
-              style={{ writingDirection: 'ltr', textAlign: 'left' }}
+            <DateField c={c} label={`موعد القسط ${index + 1}`} value={ins.dueAt} min={isCalendarDate(occurred) ? occurred : undefined}
               helperText={entry.installments?.[index] && ins.dueAt !== calendarISO(localDate(entry.installments[index].dueAt))
                 ? `الموعد السابق: ${arDate(entry.installments[index].dueAt)}` : undefined}
-              onChangeText={value => { setScheduleMessage(''); setScheduleError(''); setInstallments(rows => rows.map((row, i) => i === index ? { ...row, dueAt: normalizeAmountInput(value) } : row)); }} />
+              onChange={value => { setScheduleMessage(''); setScheduleError(''); setInstallments(rows => rows.map((row, i) => i === index ? { ...row, dueAt: value } : row)); }} />
           </View>)}
           <OutlineButton c={c} label="توزيع المبلغ بالتساوي" disabled={!validAmount || busy} onPress={splitEvenly} />
           {!validSchedule && <T accessibilityRole="alert" style={{ ...M3.type.bodyMedium, color: c.error }}>يجب أن يساوي مجموع الأقساط مبلغ الدين، وأن تكون مواعيدها صحيحة ومتتابعة.</T>}

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { releaseVersion } from './android-release-version.mjs';
-import { verifyBundle, verifyInspection, verifyNativePinWorker, verifyNativeBackupDocuments, verifyNativeBackupKeyWorker } from './verify-android-release.mjs';
+import { verifyBundle, verifyInspection, verifyNativePinWorker, verifyNativeBackupDocuments, verifyNativeBackupKeyWorker, verifyNativeReminderHealth, verifyReminderPermissions } from './verify-android-release.mjs';
 import { RELEASE_FIXTURE_MARKERS } from './release-fixture-markers.mjs';
 
 let count = 0;
@@ -258,4 +258,22 @@ for (const missing of backupKeyClasses) {
 check('unused backup key descriptors cannot release the slow JavaScript fallback', () => {
   assert.throws(() => verifyNativeBackupKeyWorker([dexFixture(backupKeyClasses, [])]), /missing native backup key worker class/);
 });
+const reminderHealthClass = 'Lexpo/modules/ioureminderhealth/IouReminderHealthModule;';
+check('compiled reminder health module is accepted', () => {
+  assert.doesNotThrow(() => verifyNativeReminderHealth([dexFixture([backupDocumentClass]), dexFixture([reminderHealthClass])]));
+});
+check('release rejects a missing or unused reminder health module', () => {
+  assert.throws(() => verifyNativeReminderHealth([dexFixture([backupDocumentClass])]), /missing native reminder health module/);
+  assert.throws(() => verifyNativeReminderHealth([dexFixture([reminderHealthClass], [])]), /missing native reminder health module/);
+});
+const reminderPermissions = 'android.permission.INTERNET\nandroid.permission.POST_NOTIFICATIONS\nandroid.permission.RECEIVE_BOOT_COMPLETED\nandroid.permission.USE_EXACT_ALARM\nandroid.permission.SCHEDULE_EXACT_ALARM\' maxSdkVersion=\'32\n';
+check('release accepts exact-alarm reminder permissions in apkanalyzer format', () => {
+  assert.doesNotThrow(() => verifyReminderPermissions(reminderPermissions));
+});
+for (const missing of ['USE_EXACT_ALARM', 'SCHEDULE_EXACT_ALARM', 'POST_NOTIFICATIONS', 'RECEIVE_BOOT_COMPLETED']) {
+  check(`release rejects APK without ${missing}`, () => {
+    const without = reminderPermissions.split('\n').filter(line => !line.startsWith(`android.permission.${missing}`)).join('\n');
+    assert.throws(() => verifyReminderPermissions(without), new RegExp(missing));
+  });
+}
 console.log(`${count} Android release checks passed.`);

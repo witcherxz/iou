@@ -10,6 +10,8 @@ Implemented locally on 2026-09-12. The Arabic Material 3 interface continues to 
 | Debt forgiveness | Recording an entry → **إعفاء من الدين**, or open the debt's forgiveness action | Waive all or part of a debt with an actual date and optional reason. Cash paid and forgiven amounts remain separate in history, installments, and readable exports. |
 | Recovery and spreadsheets | Settings → **النسخ السابقة والتصدير للجداول** | Open local/folder history; export a readable report or individual CSV tables; optionally protect an export with a separate password. |
 | Custom payment schedule | New debt → **طريقة السداد** → **مخصص** | Enter each payment's own amount and date, e.g. 1,000 in November and 2,500 in April. Add or delete rows (2–120). A running total shows the unallocated or excess amount; **+ إضافة دفعة** prefills the remainder and the following month. Rows are sorted by date on save and the debt shows **جدول السداد · مخصص**. |
+| Reminder reliability | Reminders → **وصول التذكيرات** | Exact alarms (on-time even in Doze), a button to exempt IoU from battery optimisation, Samsung sleeping-apps guidance, and the date the installed reminder queue ends. See [FLEXIBLE_REMINDERS.md](FLEXIBLE_REMINDERS.md#delivery-reliability-android). |
+| Date picker | Every date field (debt/payment date, due date, installment and custom schedule dates) | Tap the field to open an in-app Arabic calendar: Sunday-first weeks, ‹ › month arrows, tap the month title to jump to a year, then **تم**. Dates outside the allowed range (e.g. future transaction dates, due dates before the debt) are disabled. It is not the Android system picker, which would trigger the privacy lock. |
 | Actual transaction dates | Debt/payment forms → **تاريخ الدين / تاريخ الدفعة** | Choose the date money changed hands; today/yesterday shortcuts are available. The original recording timestamp is retained separately. |
 | Optional privacy lock | Settings → **قفل التطبيق** | Confirm a 4–6 digit PIN; supported strong biometrics default on and prompt automatically on entry. Cancellation leaves PIN fallback available. Lock on leaving the app, or use **قفل الآن**. |
 | Flexible reminders | **التذكيرات** tab | Set a local time, advance notice, overdue cadence, weekly day, notification privacy and individual snoozes. |
@@ -72,6 +74,14 @@ Before a stable release, test native biometric success/cancellation, background/
 Alpha 2 adds native PIN derivation and bounded errors, manual Google Drive sharing/restoration, and distinct forgiveness. See [Alpha 2 release notes](releases/0.1.0-alpha.2.md) for changes and device-validation limits.
 
 Alpha 3 adds automatic biometric prompting on entry while preserving PIN fallback and existing biometric preferences. See [Alpha 3 release notes](releases/0.1.0-alpha.3.md).
+
+### Reminder reliability
+
+![Reminders screen showing exact alarms enabled, battery prompt and queue end date](screenshots/features-reminder-health.png)
+
+### Date picker
+
+![Calendar picker with 15 December 2028 selected](screenshots/features-date-picker.png)
 
 ### Custom payment schedule
 

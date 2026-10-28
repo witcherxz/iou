@@ -4,7 +4,10 @@ import { defaultReminderSettings, ReminderSettings } from './reminderSettings';
 import type { DebtView } from './selectors';
 import { isDebt } from './types';
 
+/** iOS keeps at most 64 pending requests; leave room for the weekly and renewal reminders. */
 export const MAX_DEBT_REMINDERS = 60;
+/** Android allows 500 alarms per app; a deeper queue lasts months without opening the app. */
+export const ANDROID_MAX_DEBT_REMINDERS = 200;
 export interface PlannedReminder {
   id: string;
   debt: DebtView;
@@ -29,10 +32,10 @@ function atTime(date: Date, settings: ReminderSettings, days = 0): Date {
 /**
  * Calendar scheduling stays at the selected local time across DST. Each unpaid
  * installment keeps its due reminder; overdue installments share one follow-up.
- * The native adapter installs only the nearest 60 and rebuilds on app foreground.
+ * The native adapter installs only the nearest `limit` and rebuilds on app foreground.
  */
 export function planReminders(
-  debts: DebtView[], prefs: Record<string, boolean>, now = Date.now(), settings = defaultReminderSettings(),
+  debts: DebtView[], prefs: Record<string, boolean>, now = Date.now(), settings = defaultReminderSettings(), limit = MAX_DEBT_REMINDERS,
 ): PlannedReminder[] {
   const result: PlannedReminder[] = [];
   for (const debt of debts) {
@@ -67,9 +70,9 @@ export function planReminders(
       const daysSince = dayNumber(new Date(earliest)) - dayNumber(first);
       const interval = settings.overdueRepeatDays;
       let step = Math.max(1, Math.floor(daysSince / interval));
-      // Generate enough per debt to select the nearest 60 globally, without
+      // Generate enough per debt to select the nearest `limit` globally, without
       // iterating through years of old dates for a long-overdue entry.
-      for (let count = 0; count < MAX_DEBT_REMINDERS + 1; step++) {
+      for (let count = 0; count < limit + 1; step++) {
         const when = atTime(first, settings, step * interval);
         if (when.getTime() <= now || when.getTime() < earliest) continue;
         const amount = fromCents(entries.filter(entry => dayNumber(entry.due) <= dayNumber(when)).reduce((sum, entry) => sum + toCents(entry.amount), 0));

@@ -15,11 +15,17 @@ const debt = { id: 'd1', personId: 'p1', personName: 'PRIVATE NAME', dir: 'me', 
 const settings = { ...defaultReminderSettings(), hour: 9, minute: 15, leadDays: 3, weeklyDay: 2, overdueRepeatDays: 1 };
 async function run() {
   eq('native schedule ready', await syncReminders([debt], {}, true, settings), 'ready');
-  eq('native schedules bounded to 60 plus weekly', h.scheduled.size, 61);
+  eq('Android schedules bounded to 200 plus weekly and renewal', h.scheduled.size, 202);
+  const renewal = h.scheduled.get('iou-renew')!;
+  const lastDebtReminder = Math.max(...[...h.scheduled.values()].filter(item => item.identifier !== 'iou-weekly' && item.identifier !== 'iou-renew').map(item => (item.trigger.date as Date).getTime()));
+  eq('renewal notice follows the last installed reminder', (renewal.trigger.date as Date).getTime(), lastDebtReminder + 60_000);
+  eq('renewal notice reveals no ledger details', JSON.stringify(renewal.content).includes('PRIVATE'), false);
   const week = h.scheduled.get('iou-weekly')!;
   eq('native weekly selected day and time', [week.trigger.weekday, week.trigger.hour, week.trigger.minute], [2, 9, 15]);
   eq('one-off triggers use Expo DATE type', [...h.scheduled.values()].filter(item => item.identifier !== 'iou-weekly').every(item => item.trigger.type === 'date' && item.trigger.date instanceof Date), true);
 
+  await syncReminders([debt], {}, false, { ...settings, overdueRepeatDays: 0 });
+  eq('complete queue needs no renewal notice', h.scheduled.has('iou-renew'), false);
   h.calls = [];
   await syncReminders([debt], {}, false, { ...settings, privateNotifications: true });
   eq('private rebuild removes previously delivered details', h.calls.includes('dismiss'), true);
@@ -137,6 +143,9 @@ async function run() {
   Platform.OS = 'ios';
   h.permission = { granted: false, canAskAgain: false, ios: { status: 3 } };
   eq('iOS provisional permission is usable', await syncReminders([debt], {}, false, defaultReminderSettings()), 'ready');
+  await syncReminders([debt], {}, true, settings);
+  eq('iOS stays under 64 pending: 60 plus weekly and renewal', h.scheduled.size, 62);
+  h.permission = { granted: false, canAskAgain: false, ios: { status: 3 } };
   h.permission = { granted: true, canAskAgain: false, ios: { status: 1 } };
   eq('iOS denied status overrides misleading root granted flag', await syncReminders([debt], {}, false, settings), 'blocked');
   Platform.OS = 'web'; h.calls = [];

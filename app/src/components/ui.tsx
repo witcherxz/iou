@@ -44,6 +44,10 @@ export function T({ style, ...rest }: TextProps) {
   const { fontWeight, ...others } = flat ?? {};
   return (
     <Text
+      // Samsung devices measure some Arabic words narrower than they draw them
+      // with Android's default "highQuality" breaking, so a short label's last
+      // word wraps onto a hidden second line ("كل يوم" shows as "كل").
+      textBreakStrategy="simple"
       {...rest}
       style={[
         // Native text alignment follows paragraph direction; explicit "right"

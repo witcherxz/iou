@@ -113,6 +113,26 @@ export function verifyNativeBackupDocuments(dexFiles) {
   verifyNativeClasses(dexFiles, NATIVE_BACKUP_CLASSES, 'native backup documents module');
 }
 
+const NATIVE_REMINDER_CLASSES = ['Lexpo/modules/ioureminderhealth/IouReminderHealthModule;'];
+export function verifyNativeReminderHealth(dexFiles) {
+  verifyNativeClasses(dexFiles, NATIVE_REMINDER_CLASSES, 'native reminder health module');
+}
+
+/** Without these, expo-notifications silently falls back to postponable inexact alarms. */
+const REMINDER_PERMISSIONS = [
+  'android.permission.POST_NOTIFICATIONS',
+  'android.permission.RECEIVE_BOOT_COMPLETED',
+  'android.permission.USE_EXACT_ALARM',
+  'android.permission.SCHEDULE_EXACT_ALARM',
+];
+export function verifyReminderPermissions(permissions) {
+  // apkanalyzer prints one name per line, e.g. "android.permission.X' maxSdkVersion='32".
+  const declared = new Set(String(permissions).split('\n').map(line => line.trim().split("'")[0]).filter(Boolean));
+  for (const permission of REMINDER_PERMISSIONS) {
+    assert.ok(declared.has(permission), `APK is missing reminder permission ${permission}`);
+  }
+}
+
 export function verifyNativeBackupKeyWorker(dexFiles) {
   verifyNativeClasses(dexFiles, NATIVE_BACKUP_KEY_CLASSES, 'native backup key worker class');
 }
@@ -185,11 +205,13 @@ function verifyApk(apkPath) {
   // SDK changes its output format or an unexpected certificate fails the gate.
   console.log(`Android APK signature verification:\n${inspected.signature.trim()}`);
   verifyInspection(inspected, expected);
+  verifyReminderPermissions(inspect('permissions'));
   verifyBundle(command('unzip', ['-p', apk, 'assets/index.android.bundle'], null));
   const dexFiles = dexFilesInApk(apk);
   verifyNativePinWorker(dexFiles);
   verifyNativeBackupDocuments(dexFiles);
   verifyNativeBackupKeyWorker(dexFiles);
+  verifyNativeReminderHealth(dexFiles);
 
   const destination = join(appRoot, 'release');
   mkdirSync(destination, { recursive: true });
@@ -197,7 +219,7 @@ function verifyApk(apkPath) {
   copyFileSync(apk, join(destination, name));
   const digest = createHash('sha256').update(readFileSync(apk)).digest('hex');
   writeFileSync(join(destination, `${name}.sha256`), `${digest}  ${name}\n`);
-  console.log(`Verified ${name}: non-debuggable, release certificate, correct identity/version, native PIN and backup key workers, backup documents module, no demo content, SHA-256 ${digest}`);
+  console.log(`Verified ${name}: non-debuggable, release certificate, correct identity/version, native PIN and backup key workers, backup documents and reminder health modules, exact-alarm permissions, no demo content, SHA-256 ${digest}`);
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

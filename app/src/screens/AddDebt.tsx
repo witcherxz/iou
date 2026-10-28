@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
 
 import { AmountInput, isValidAmountInput, normalizeAmountInput } from '../components/Keypad';
+import { DateField } from '../components/DatePicker';
 import { TransactionDateField } from '../components/TransactionDateField';
 import { Chip, MaterialPressable, OutlineButton, OutlinedField, PrimaryButton, ScreenHeader, Segment, T } from '../components/ui';
 import { addDays, addMonths, arDate, fmt, isCalendarDate, todayISO } from '../format';
@@ -210,13 +211,10 @@ export function AddDebt({ c, people, draft, onDraftChange, onClose, onAddPerson,
                   onChangeText={value => updateRow(index, { amount: normalizeAmountInput(value) })}
                   error={!!row.amount && !isValidAmountInput(row.amount)}
                 />
-                <OutlinedField
-                  c={c} label="التاريخ" value={row.dueAt} placeholder="YYYY-MM-DD" maxLength={10} autoCapitalize="none"
-                  accessibilityLabel={`تاريخ الدفعة ${index + 1}، سنة ثم شهر ثم يوم`}
-                  style={{ textAlign: 'left', writingDirection: 'ltr' }}
-                  onChangeText={value => updateRow(index, { dueAt: normalizeAmountInput(value) })}
+                <DateField
+                  c={c} label={`تاريخ الدفعة ${index + 1}`} value={row.dueAt} min={transactionDateValid ? transactionDate : undefined}
+                  onChange={dueAt => updateRow(index, { dueAt })}
                   error={!!row.dueAt && (!isCalendarDate(row.dueAt) || row.dueAt < transactionDate)}
-                  helperText={isCalendarDate(row.dueAt) ? arDate(row.dueAt) : 'السنة-الشهر-اليوم، مثل \u20662026-09-25\u2069.'}
                 />
               </View>
             ))}
@@ -266,23 +264,20 @@ export function AddDebt({ c, people, draft, onDraftChange, onClose, onAddPerson,
                   c={c}
                 />
               ))}
-              <Chip label="تاريخ آخر" selected={customDate} onPress={() => updateDraft({ customDate: true })} c={c} />
+              <Chip label="تاريخ آخر" selected={customDate} onPress={() => updateDraft({ customDate: true, dateText: dateText || selectedDueAt || baseDate })} c={c} />
             </View>
             {customDate ? (
-              <OutlinedField
-                c={c}
-                label={plan === 'install' ? 'تاريخ أول دفعة' : 'تاريخ الاستحقاق'}
-                value={dateText}
-                onChangeText={text => updateDraft({ dateText: normalizeAmountInput(text) })}
-                accessibilityLabel={plan === 'install' ? 'تاريخ أول دفعة، سنة ثم شهر ثم يوم' : 'تاريخ الاستحقاق، سنة ثم شهر ثم يوم'}
-                placeholder="YYYY-MM-DD"
-                autoCapitalize="none"
-                maxLength={10}
-                containerStyle={{ marginTop: 16 }}
-                style={{ textAlign: 'left', writingDirection: 'ltr' }}
-                error={!!dateText && !dueDateValid}
-                helperText={dateText && !dateIsValid ? 'أدخل تاريخاً ميلادياً صحيحاً، مثل \u20662026-09-25\u2069.' : dateIsValid && !dueDateValid ? 'لا يمكن أن يسبق الاستحقاق تاريخ الدين.' : 'تاريخ ميلادي: السنة-الشهر-اليوم، مثل \u20662026-09-25\u2069.'}
-              />
+              <View style={{ marginTop: 8 }}>
+                <DateField
+                  c={c}
+                  label={plan === 'install' ? 'تاريخ أول دفعة' : 'تاريخ الاستحقاق'}
+                  value={dateText}
+                  min={transactionDateValid ? transactionDate : undefined}
+                  onChange={dateText => updateDraft({ dateText })}
+                  error={!!dateText && !dueDateValid}
+                  helperText={dateIsValid && !dueDateValid ? 'لا يمكن أن يسبق الاستحقاق تاريخ الدين.' : undefined}
+                />
+              </View>
             ) : (
               <T style={{ fontSize: 14, lineHeight: 20, color: c.onSurfaceVariant, marginTop: 8 }}>
                 {selectedDueAt === null ? 'يمكنك تسجيل السداد في أي وقت.' : `${plan === 'install' ? 'أول دفعة' : 'الاستحقاق'}: ${arDate(selectedDueAt)}`}

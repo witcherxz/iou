@@ -1,0 +1,13 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <!-- Debt reminders are user-chosen times. Without an exact-alarm permission
+       expo-notifications falls back to inexact alarms that Doze and the
+       restricted standby bucket can postpone for hours or a whole day.
+       USE_EXACT_ALARM is granted at install (Android 13+) and also keeps the app
+       out of the restricted bucket; Android 12/12L use SCHEDULE_EXACT_ALARM,
+       which is granted by default there. Google Play limits USE_EXACT_ALARM to
+       alarm and calendar apps; IoU is distributed as a GitHub APK. -->
+  <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+  <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" android:maxSdkVersion="32" />
+  <!-- Lets the owner exempt IoU from battery optimisation through the system dialog. -->
+  <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+</manifest>

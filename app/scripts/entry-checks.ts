@@ -10,6 +10,7 @@ import { validateState } from '../src/validation';
 import { STORAGE_KEY, STORAGE_RECOVERY_KEY } from '../src/config/app';
 import { availableLocalHistory, keepLocalSnapshot, LOCAL_HISTORY_KEY, LOCAL_HISTORY_LIMIT, LOCAL_HISTORY_QUARANTINE_KEY, readLocalHistory } from '../src/store/history';
 import { createWriteQueue, readStoredLedger } from '../src/store/persistence';
+import { clampDate, fullArDate, monthCells, monthInRange, shiftMonth } from '../src/calendar';
 import { buildCustomSchedule, customScheduleIssue, preserveUnchangedDate, rescheduleRemainingInstallments } from '../src/installmentSchedule';
 
 declare const process: { exit(code: number): never };
@@ -215,6 +216,19 @@ async function main() {
   const monthly = createDebt(original, { ...input, dueInDays: null, installmentCount: 3 }, 'monthly', '2026-09-12')!;
   eq('backdated installments retain month-end anchor', monthly.installments!.map(row => row.dueAt), ['2026-02-28', '2026-03-31', '2026-04-30']);
   eq('backdated installments preserve cents', monthly.installments!.map(row => row.amount), [3.33, 3.33, 3.35]);
+
+  // Calendar picker grid and bounds.
+  const nov = monthCells(2026, 10);
+  eq('calendar month starts on its weekday (Sunday first)', nov.indexOf('2026-11-01'), 0);
+  eq('calendar always has six weeks', [nov.length, monthCells(2026, 1).length], [42, 42]);
+  eq('calendar lists every day once', nov.filter(Boolean).length, 30);
+  const feb = monthCells(2028, 1);
+  eq('calendar leap February', [feb.filter(Boolean).length, feb.indexOf('2028-02-01')], [29, 2]);
+  eq('calendar shift across year end', [shiftMonth(2026, 11, 1), shiftMonth(2026, 0, -1)], [{ year: 2027, month: 0 }, { year: 2025, month: 11 }]);
+  eq('calendar month bounds', [monthInRange(2026, 9, '2026-10-31'), monthInRange(2026, 8, '2026-10-01'), monthInRange(2026, 11, undefined, '2026-11-30')], [true, false, false]);
+  eq('calendar clamps initial selection', [clampDate('2026-01-01', '2026-02-01'), clampDate('2026-12-01', undefined, '2026-10-28'), clampDate('2026-05-05', '2026-01-01', '2026-12-31')], ['2026-02-01', '2026-10-28', '2026-05-05']);
+  eq('calendar full Arabic date includes weekday and year', fullArDate('2026-11-27'), 'الجمعة 27 نوفمبر 2026');
+  eq('calendar rejects invalid label date', fullArDate('2026-02-30'), '');
 
   // Hand-written schedules keep each chosen amount and date, in any spacing.
   const rows = [{ amount: '6', dueAt: '2026-07-01' }, { amount: '1.5', dueAt: '2026-02-15' }, { amount: '2.51', dueAt: '2026-03-20' }];

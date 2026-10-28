@@ -16,6 +16,7 @@ import { fmt, todayISO } from './src/format';
 import { PrimaryButton, OutlineButton, T } from './src/components/ui';
 import { confirmAction } from './src/confirm';
 import { ConfirmationDialog } from './src/components/ConfirmationDialog';
+import { DatePickerHost } from './src/components/DatePicker';
 import { AppDialogLayer } from './src/components/AppDialog';
 import { exportToFile } from './src/backup/fileShare';
 import { portableData, serialize } from './src/backup/types';
@@ -30,6 +31,7 @@ import { PrivacySettings } from './src/privacy/PrivacySettings';
 import { PersistedState } from './src/types';
 import { ensurePermission, openReminderSettings, ReminderStatus, syncReminders } from './src/reminders';
 import { readReminderClock, reminderClockChanged } from './src/reminderClock';
+import { readReminderHealth, ReminderHealth, requestBatteryUnrestricted } from './src/reminderHealth';
 import { allDebts, peopleView } from './src/selectors';
 import { AddDebt, createAddDebtDraft } from './src/screens/AddDebt';
 import { DebtDetail } from './src/screens/DebtDetail';
@@ -108,6 +110,7 @@ function Root() {
   const [recovering, setRecovering] = useState(false);
   const [notificationStatus, setNotificationStatus] = useState<ReminderStatus | 'checking'>('checking');
   const [foregroundRevision, setForegroundRevision] = useState(0);
+  const [reminderHealth, setReminderHealth] = useState<ReminderHealth | null>(null);
 
   useEffect(() => {
     let clock = readReminderClock();
@@ -163,6 +166,13 @@ function Root() {
     syncReminders(debts, state.reminderPrefs, state.weekly, state.reminderSettings).then(status => { if (active) setNotificationStatus(status); });
     return () => { active = false; };
   }, [ready, storageError, state.onboarded, debts, state.reminderPrefs, state.weekly, state.reminderSettings, foregroundRevision]);
+
+  // Battery exemption is changed in system settings; re-read it whenever IoU returns.
+  useEffect(() => {
+    let active = true;
+    readReminderHealth().then(health => { if (active) setReminderHealth(health); });
+    return () => { active = false; };
+  }, [foregroundRevision]);
 
   const goHome = useCallback(() => {
     setScreen('main');
@@ -274,6 +284,7 @@ function Root() {
       <StatusBar style={dark ? 'light' : 'dark'} />
       <AppDialogLayer onOpenChange={setDialogOpen} dialogs={<>
         <ConfirmationDialog c={c} />
+        <DatePickerHost c={c} />
         <BackupPasswordDialog c={c} request={passwordRequest} onSubmit={submitPassword} onCancel={cancelPassword} />
         <BackupRestoreHost onMount={mountRestoreHost} />
       </>}>
@@ -344,6 +355,8 @@ function Root() {
                       settings={state.reminderSettings}
                       onChangeSettings={reminderSettings => set({ reminderSettings })}
                       notificationStatus={notificationStatus}
+                      health={reminderHealth}
+                      onRequestBattery={() => { void requestBatteryUnrestricted().catch(() => showToast('تعذر فتح إعدادات البطارية. افتحها من إعدادات التطبيق على جهازك.')); }}
                       onOpenSettings={() => { void openReminderSettings().catch(() => showToast('تعذر فتح إعدادات الجهاز. افتحها من شاشة التطبيقات.')); }}
                       onEnable={async () => {
                         setNotificationStatus('checking');

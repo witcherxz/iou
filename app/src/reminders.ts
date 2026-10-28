@@ -1,7 +1,7 @@
 import * as Notifications from 'expo-notifications';
 import { Linking, Platform } from 'react-native';
 
-import { MAX_DEBT_REMINDERS, planReminders } from './reminderPlan';
+import { ANDROID_MAX_DEBT_REMINDERS, MAX_DEBT_REMINDERS, planReminders } from './reminderPlan';
 import { defaultReminderSettings, ReminderSettings } from './reminderSettings';
 import { reminderContent } from './reminderContent';
 import { isCurrentDelayedReminder, pendingReminderTime } from './pendingReminders';
@@ -9,6 +9,8 @@ import type { DebtView } from './selectors';
 
 export type ReminderStatus = 'ready' | 'denied' | 'blocked' | 'unavailable';
 const CHANNEL_ID = 'iou-reminders';
+/** Shown once after the last installed reminder when more remain unscheduled. */
+export const RENEWAL_ID = 'iou-renew';
 let configured = false;
 
 function configure() {
@@ -99,10 +101,11 @@ export function syncReminders(
         await Notifications.cancelAllScheduledNotificationsAsync();
         return 'blocked';
       }
+      const limit = Platform.OS === 'android' ? ANDROID_MAX_DEBT_REMINDERS : MAX_DEBT_REMINDERS;
       const pending = await Notifications.getAllScheduledNotificationsAsync();
       const now = Date.now();
       const delayed = pending.filter(request => isCurrentDelayedReminder(request, debts, prefs, settings, now))
-        .sort((a, b) => pendingReminderTime(a)! - pendingReminderTime(b)!).slice(0, MAX_DEBT_REMINDERS);
+        .sort((a, b) => pendingReminderTime(a)! - pendingReminderTime(b)!).slice(0, limit);
       // Past requests may survive in Expo's store after Android force-stop even
       // though AlarmManager lost their PendingIntents. Do not retain dead rows.
       await Notifications.cancelAllScheduledNotificationsAsync();
@@ -123,7 +126,9 @@ export function syncReminders(
       // Reinstall future alarms even if unchanged: Android force-stop can clear
       // AlarmManager while Expo's stored requests still exist at the next launch.
       // Leave room beneath iOS's pending-notification limit for the weekly reminder.
-      for (const item of planReminders(debts, prefs, now, settings).slice(0, MAX_DEBT_REMINDERS)) {
+      const plan = planReminders(debts, prefs, now, settings, limit);
+      const installed = plan.slice(0, limit);
+      for (const item of installed) {
         if (requestedRevision !== revision) return lastStatus;
         await Notifications.scheduleNotificationAsync({
           identifier: `iou-${item.id}`,
@@ -132,6 +137,15 @@ export function syncReminders(
             data: { debtId: item.debt.id, plannedAt: item.when.toISOString() },
           },
           trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: item.when, channelId: CHANNEL_ID },
+        });
+      }
+      // Reminders beyond the queue need the app to run again. Say so instead of
+      // silently going quiet when the owner has not opened IoU for a long time.
+      if (plan.length > installed.length && requestedRevision === revision) {
+        await Notifications.scheduleNotificationAsync({
+          identifier: RENEWAL_ID,
+          content: { title: 'افتح الدفتر لمتابعة التذكيرات', body: 'انتهت التذكيرات المجدولة مسبقاً. افتح التطبيق لجدولة التذكيرات التالية.' },
+          trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: new Date(installed[installed.length - 1].when.getTime() + 60_000), channelId: CHANNEL_ID },
         });
       }
       if (weekly && requestedRevision === revision) {
